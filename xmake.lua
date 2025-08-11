@@ -107,8 +107,8 @@ target( "SfgGenerator" )
     local args = {
       "validate",
       --"--in-process",  -- to test
-      "--test-filter",  -- to test
-      "state-reproducibility-flush",  -- to test
+      --"--test-filter",  -- to test
+      --"state-reproducibility-basic",  -- to test
       path.join( target:scriptdir(), target:targetdir(), "SfgGenerator.clap" )
     }
     os.vrunv( "C:\\_Programs\\clap-validator\\clap-validator", args )

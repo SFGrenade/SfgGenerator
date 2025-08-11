@@ -1,10 +1,8 @@
 #include "noise_generator.hpp"
 
-#include <iostream>
 #include <numbers>
 
 #include "clap/process.h"
-
 
 NoiseGenerator::NoiseGenerator() : _base_() {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
@@ -102,7 +100,6 @@ bool NoiseGenerator::init( void ) {
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
   synth_type_ = SynthType::SineWave;
-  synth_type_dbl_ = static_cast< double >( synth_type_ ) / static_cast< double >( SynthType::MAX_VALUE );
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -124,7 +121,6 @@ void NoiseGenerator::reset( void ) {
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
   synth_type_ = SynthType::SineWave;
-  synth_type_dbl_ = static_cast< double >( synth_type_ ) / static_cast< double >( SynthType::MAX_VALUE );
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -239,10 +235,9 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
                        ev->key,
                        ev->value );
         if( ev->param_id == 0 ) {
-          synth_type_dbl_ = ev->value;
-          synth_type_ = static_cast< SynthType >( synth_type_dbl_ );
-          if( synth_type_ == SynthType::MAX_VALUE )
-            synth_type_ = static_cast< SynthType >( static_cast< uint16_t >( synth_type_ ) - 1 );
+          synth_type_ = static_cast< SynthType >( ev->value );
+          if( synth_type_ >= SynthType::MAX_VALUE )
+            synth_type_ = static_cast< SynthType >( static_cast< uint16_t >( SynthType::MAX_VALUE ) - 1 );
         }
         break;
       }
@@ -519,11 +514,12 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
   switch( param_index ) {
     case 0:
       out_param_info->id = 0;
-      out_param_info->cookie = &synth_type_dbl_;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = &synth_type_;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Synth" );
       out_param_info->min_value = static_cast< double >( SynthType::SineWave );
-      out_param_info->max_value = static_cast< double >( SynthType::MAX_VALUE );
+      out_param_info->max_value = static_cast< double >( static_cast< uint16_t >( SynthType::MAX_VALUE ) - 1 );
       out_param_info->default_value = static_cast< double >( SynthType::SineWave );
       break;
   }
@@ -540,7 +536,7 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
   if( !out_value )
     return false;
   if( param_id == 0 ) {
-    *out_value = synth_type_dbl_;
+    *out_value = static_cast< double >( synth_type_ );
     return true;
   }
   return false;
@@ -661,15 +657,15 @@ void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_ev
 bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
-  ret = ret && stream->write( stream, &synth_type_dbl_, sizeof( synth_type_dbl_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b3_, sizeof( pink_refined_b3_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b4_, sizeof( pink_refined_b4_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) );
-  ret = ret && stream->write( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) );
-  ret = ret && stream->write( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) );
+  ret = ( ( -1 ) != stream->write( stream, &synth_type_, sizeof( synth_type_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b3_, sizeof( pink_refined_b3_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b4_, sizeof( pink_refined_b4_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) ) ) && ret;
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }
@@ -677,18 +673,17 @@ bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
 bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
-  ret = ret && stream->read( stream, &synth_type_dbl_, sizeof( synth_type_dbl_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b3_, sizeof( pink_refined_b3_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b4_, sizeof( pink_refined_b4_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) );
-  ret = ret && stream->read( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) );
-  ret = ret && stream->read( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) );
-  synth_type_ = static_cast< SynthType >( synth_type_dbl_ );
-  if( synth_type_ == SynthType::MAX_VALUE )
-    synth_type_ = static_cast< SynthType >( static_cast< uint16_t >( synth_type_ ) - 1 );
+  ret = ( 0 < stream->read( stream, &synth_type_, sizeof( synth_type_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b3_, sizeof( pink_refined_b3_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b4_, sizeof( pink_refined_b4_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) ) ) && ret;
+  if( synth_type_ >= SynthType::MAX_VALUE )
+    synth_type_ = static_cast< SynthType >( static_cast< uint16_t >( SynthType::MAX_VALUE ) - 1 );
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }
@@ -718,7 +713,6 @@ bool NoiseGenerator::supports_state() const {
 #pragma region shit for the factory
 
 clap_plugin_t* NoiseGenerator::s_create( clap_host_t const* host ) {
-  std::cout << __FUNCTION__ << std::endl;  // TODO: FIXME: REMOVE THIS!!!
   clap_plugin_t* plugin = new clap_plugin_t();
   plugin->desc = descriptor_get();
   plugin->init = s_init;
@@ -737,7 +731,6 @@ clap_plugin_t* NoiseGenerator::s_create( clap_host_t const* host ) {
 };
 
 clap_plugin_descriptor_t* NoiseGenerator::descriptor_get( void ) {
-  std::cout << __FUNCTION__ << std::endl;  // TODO: FIXME: REMOVE THIS!!!
   static clap_plugin_descriptor_t clap_descriptor_;
   static std::vector< char const* > clap_descriptor_features_;
 

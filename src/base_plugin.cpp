@@ -140,11 +140,11 @@ void BasePlugin::init_logger( void ) {
   if( !std::filesystem::is_directory( plugin_folder_path ) ) {
     plugin_folder_path = plugin_path_fs.parent_path();
   }
-  std::filesystem::path log_file_name_fs = plugin_folder_path / fmt::format( "log_{:s}.log", get_name() );
+  std::filesystem::path log_file_name_fs = plugin_folder_path / fmt::format( "log_{:s}_{:p}.log", get_name(), static_cast< void* >( this ) );
   std::string const c_log_file_name = log_file_name_fs.string();
   std::shared_ptr< ClapSink > clap_sink = std::make_shared< ClapSink >( host_, host_log_ );
   clap_sink->set_level( spdlog::level::level_enum::trace );
-  std::shared_ptr< spdlog::sinks::basic_file_sink_mt > file_sink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( c_log_file_name, false );
+  std::shared_ptr< spdlog::sinks::basic_file_sink_mt > file_sink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( c_log_file_name, true );
   file_sink->set_level( spdlog::level::level_enum::trace );
 
   spdlog::sinks_init_list truncatedSinkList = { clap_sink, file_sink };
@@ -152,7 +152,8 @@ void BasePlugin::init_logger( void ) {
   logger_->set_level( spdlog::level::level_enum::trace );
   logger_->flush_on( spdlog::level::level_enum::trace );
   logger_->set_pattern( c_logger_pattern );
-  spdlog::register_logger( logger_ );
+  // can't have this because it's like not shared and shit
+  // spdlog::register_logger( logger_ );
 }
 
 #pragma endregion

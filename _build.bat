@@ -37,11 +37,15 @@ CALL :doCommand "00_made_build_logs" "echo we did it" && cd>NUL || Goto :END
 
 CALL :doCommand "01_xmake_set_theme" "xmake global --theme=plain" && cd>NUL || Goto :END
 
-CALL :doCommand "02_xmake_configure" "xmake config --import=.vscode\xmake.windows.static.release.MD.conf -vD -y" && cd>NUL || Goto :END
+CALL :doCommand "02_xmake_configure_debug" "xmake config --import=.vscode\xmake.windows.static.debug.MD.conf -vD -y" && cd>NUL || Goto :END
 
-CALL :doCommand "03_xmake_build" "xmake build -a -vD" && cd>NUL || Goto :END
+CALL :doCommand "03_xmake_build_debug" "xmake build -a -vD" && cd>NUL || Goto :END
 
-CALL :doCommand "05_xmake_run" "xmake run -vD SfgGenerator '%ORIGINAL_DIR%'" && cd>NUL || Goto :END
+CALL :doCommand "04_xmake_configure_release" "xmake config --import=.vscode\xmake.windows.static.release.MD.conf -vD -y" && cd>NUL || Goto :END
+
+CALL :doCommand "05_xmake_build_release" "xmake build -a -vD" && cd>NUL || Goto :END
+
+CALL :doCommand "06_xmake_run" "xmake run -vD SfgGenerator '%ORIGINAL_DIR%'" && cd>NUL || Goto :END
 
 CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL || Goto :END
 

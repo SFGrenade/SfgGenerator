@@ -8,7 +8,6 @@
 extern "C" {
 #endif
 
-
 class NoiseGenerator : BasePlugin {
   using _base_ = BasePlugin;
   using _base_::_base_;
@@ -87,11 +86,10 @@ class NoiseGenerator : BasePlugin {
   protected:
   std::mt19937_64 eng_;
   std::uniform_real_distribution< double > dist_;
-  SynthType synth_type_ = SynthType::SineWave;
 
   // members to save and load
   protected:
-  double synth_type_dbl_ = static_cast< double >( synth_type_ ) / static_cast< double >( SynthType::MAX_VALUE );
+  SynthType synth_type_ = SynthType::SineWave;
   double pink_refined_b0_ = 0.0;
   double pink_refined_b1_ = 0.0;
   double pink_refined_b2_ = 0.0;

@@ -9,33 +9,27 @@
 
 #define SFG_LOG_TRACE( logger, fmt_string, ... ) \
   if( logger )                                   \
-    logger->trace( fmt_string, ##__VA_ARGS__ );  \
-  std::cout << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+    logger->trace( fmt_string, ##__VA_ARGS__ );
 
 #define SFG_LOG_DEBUG( logger, fmt_string, ... ) \
   if( logger )                                   \
-    logger->debug( fmt_string, ##__VA_ARGS__ );  \
-  std::cout << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+    logger->debug( fmt_string, ##__VA_ARGS__ );
 
 #define SFG_LOG_INFO( logger, fmt_string, ... ) \
   if( logger )                                  \
-    logger->info( fmt_string, ##__VA_ARGS__ );  \
-  std::cout << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+    logger->info( fmt_string, ##__VA_ARGS__ );
 
 #define SFG_LOG_WARN( logger, fmt_string, ... ) \
   if( logger )                                  \
-    logger->warn( fmt_string, ##__VA_ARGS__ );  \
-  std::cout << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+    logger->warn( fmt_string, ##__VA_ARGS__ );
 
 #define SFG_LOG_ERROR( logger, fmt_string, ... ) \
   if( logger )                                   \
-    logger->error( fmt_string, ##__VA_ARGS__ );  \
-  std::cout << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+    logger->error( fmt_string, ##__VA_ARGS__ );
 
 #define SFG_LOG_CRITICAL( logger, fmt_string, ... ) \
   if( logger )                                      \
-    logger->critical( fmt_string, ##__VA_ARGS__ );  \
-  std::cout << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+    logger->critical( fmt_string, ##__VA_ARGS__ );
 
 // #undef SFG_LOG_TRACE
 // #undef SFG_LOG_DEBUG
