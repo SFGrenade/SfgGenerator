@@ -1,14 +1,10 @@
-# Cpp Network Testing
+# CLAPping those cheeks
 
-Testing networking with Xmake.
+Testing a CLAP plugin with Xmake.
 
-Attempted maintainability.
+Attempted maintainability. who knows how well it'll go.
 
-## temp stuff
-
-```
-cd "E:\Documents\Projects\Misc\CppNetwork\" && xmake -w && xmake r --detach CppNetwork server
-cd "E:\Documents\Projects\Misc\CppNetwork\" && xmake -w && xmake r --detach CppNetwork client
-cd "E:\Documents\Projects\Misc\CppNetwork\build\windows\x64\release\" && CppNetwork.exe server
-cd "E:\Documents\Projects\Misc\CppNetwork\build\windows\x64\release\" && CppNetwork.exe client
-```
+# EUPL
+                      Copyright (c) 2025 SFGrenade
+                      Licensed under the EUPL-1.2
+https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
