@@ -1,5 +1,6 @@
 #include "noise_generator.hpp"
 
+#include <exception>
 #include <numbers>
 
 #include "clap/process.h"
@@ -20,33 +21,45 @@ std::string NoiseGenerator::get_name( void ) const {
 #pragma region wave generators
 
 double NoiseGenerator::get_sample_sine_wave( double phase ) {
-  return std::sin( phase * 2.0 * std::numbers::pi_v< double > );
+  if( synth_sine_wave_mix_ <= 0.0 )
+    return 0.0;
+  return std::sin( phase * 2.0 * std::numbers::pi_v< double > ) * synth_sine_wave_mix_;
 }
 
 double NoiseGenerator::get_sample_square_wave( double phase ) {
-  return ( phase < 0.5 ) ? ( 1.0 ) : ( -1.0 );
+  if( synth_square_wave_mix_ <= 0.0 )
+    return 0.0;
+  return ( phase < synth_square_wave_pwm_ ) ? ( synth_square_wave_mix_ ) : ( -synth_square_wave_mix_ );
 }
 
 double NoiseGenerator::get_sample_saw_wave( double phase ) {
-  return ( 2.0 * phase ) - 1.0;
+  if( synth_saw_wave_mix_ <= 0.0 )
+    return 0.0;
+  return ( ( 2.0 * phase ) - 1.0 ) * synth_saw_wave_mix_;
 }
 
 double NoiseGenerator::get_sample_triangle_wave( double phase ) {
+  if( synth_triangle_wave_mix_ <= 0.0 )
+    return 0.0;
   if( phase < 0.25 ) {
-    return std::lerp( 0.0, 1.0, ( phase - 0.0 ) * 4.0 );
+    return std::lerp( 0.0, 1.0, ( phase - 0.0 ) * 4.0 ) * synth_triangle_wave_mix_;
   }
   if( phase < 0.75 ) {
-    return std::lerp( 1.0, -1.0, ( phase - 0.25 ) * 2.0 );
+    return std::lerp( 1.0, -1.0, ( phase - 0.25 ) * 2.0 ) * synth_triangle_wave_mix_;
   }
-  return std::lerp( -1.0, 0.0, ( phase - 0.75 ) * 4.0 );
+  return std::lerp( -1.0, 0.0, ( phase - 0.75 ) * 4.0 ) * synth_triangle_wave_mix_;
 }
 
 double NoiseGenerator::get_sample_white_noise( double phase ) {
-  return dist_( eng_ );
+  if( synth_white_noise_mix_ <= 0.0 )
+    return 0.0;
+  return dist_( eng_ ) * synth_white_noise_mix_;
 }
 
 // Paul Kellett's refined method
 double NoiseGenerator::get_sample_pink_noise( double phase ) {
+  if( synth_pink_noise_mix_ <= 0.0 )
+    return 0.0;
   double white = get_sample_white_noise( phase );
   pink_refined_b0_ = 0.99886 * pink_refined_b0_ + white * 0.0555179;
   pink_refined_b1_ = 0.99332 * pink_refined_b1_ + white * 0.0750759;
@@ -57,36 +70,46 @@ double NoiseGenerator::get_sample_pink_noise( double phase ) {
   double pink
       = pink_refined_b0_ + pink_refined_b1_ + pink_refined_b2_ + pink_refined_b3_ + pink_refined_b4_ + pink_refined_b5_ + pink_refined_b6_ + white * 0.5362;
   pink_refined_b6_ = white * 0.115926;
-  return std::clamp( pink * 0.11, -1.0, 1.0 );  // empirically estimated
+  return std::clamp( pink * 0.11, -1.0, 1.0 ) * synth_pink_noise_mix_;  // empirically estimated
 }
 
 // recursive 1-pole iir filter
 double NoiseGenerator::get_sample_red_noise( double phase ) {
+  if( synth_red_noise_mix_ <= 0.0 )
+    return 0.0;
   static const double gain = 0.01;
   double white = get_sample_white_noise( phase );
   red_leaky_integrator_prev_ += gain * ( white - red_leaky_integrator_prev_ );
   double red = red_leaky_integrator_prev_;
-  return std::clamp( red, -1.0, 1.0 );
+  return std::clamp( red, -1.0, 1.0 ) * synth_red_noise_mix_;
 }
 
 double NoiseGenerator::get_sample_blue_noise( double phase ) {
+  if( synth_blue_noise_mix_ <= 0.0 )
+    return 0.0;
   double blue = 0.0;
-  return std::clamp( blue, -1.0, 1.0 );
+  return std::clamp( blue, -1.0, 1.0 ) * synth_blue_noise_mix_;
 }
 
 double NoiseGenerator::get_sample_violet_noise( double phase ) {
+  if( synth_violet_noise_mix_ <= 0.0 )
+    return 0.0;
   double violet = 0.0;
-  return std::clamp( violet, -1.0, 1.0 );
+  return std::clamp( violet, -1.0, 1.0 ) * synth_violet_noise_mix_;
 }
 
 double NoiseGenerator::get_sample_grey_noise( double phase ) {
+  if( synth_grey_noise_mix_ <= 0.0 )
+    return 0.0;
   double grey = 0.0;
-  return std::clamp( grey, -1.0, 1.0 );
+  return std::clamp( grey, -1.0, 1.0 ) * synth_grey_noise_mix_;
 }
 
 double NoiseGenerator::get_sample_velvet_noise( double phase ) {
+  if( synth_velvet_noise_mix_ <= 0.0 )
+    return 0.0;
   double velvet = 0.0;
-  return std::clamp( velvet, -1.0, 1.0 );
+  return std::clamp( velvet, -1.0, 1.0 ) * synth_velvet_noise_mix_;
 }
 
 #pragma endregion
@@ -99,7 +122,18 @@ bool NoiseGenerator::init( void ) {
 
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
-  synth_type_ = SynthType::SineWave;
+  synth_sine_wave_mix_ = 1.0;
+  synth_square_wave_mix_ = 0.0;
+  synth_saw_wave_mix_ = 0.0;
+  synth_triangle_wave_mix_ = 0.0;
+  synth_white_noise_mix_ = 0.0;
+  synth_pink_noise_mix_ = 0.0;
+  synth_red_noise_mix_ = 0.0;
+  synth_blue_noise_mix_ = 0.0;
+  synth_violet_noise_mix_ = 0.0;
+  synth_grey_noise_mix_ = 0.0;
+  synth_velvet_noise_mix_ = 0.0;
+  synth_square_wave_pwm_ = 0.5;
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -120,7 +154,18 @@ void NoiseGenerator::reset( void ) {
 
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
-  synth_type_ = SynthType::SineWave;
+  synth_sine_wave_mix_ = 1.0;
+  synth_square_wave_mix_ = 0.0;
+  synth_saw_wave_mix_ = 0.0;
+  synth_triangle_wave_mix_ = 0.0;
+  synth_white_noise_mix_ = 0.0;
+  synth_pink_noise_mix_ = 0.0;
+  synth_red_noise_mix_ = 0.0;
+  synth_blue_noise_mix_ = 0.0;
+  synth_violet_noise_mix_ = 0.0;
+  synth_grey_noise_mix_ = 0.0;
+  synth_velvet_noise_mix_ = 0.0;
+  synth_square_wave_pwm_ = 0.5;
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -235,95 +280,163 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
                        ev->key,
                        ev->value );
         if( ev->param_id == 0 ) {
-          synth_type_ = static_cast< SynthType >( ev->value );
-          if( synth_type_ >= SynthType::MAX_VALUE )
-            synth_type_ = static_cast< SynthType >( static_cast< uint16_t >( SynthType::MAX_VALUE ) - 1 );
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_sine_wave_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 1 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_square_wave_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 2 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_saw_wave_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 3 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_triangle_wave_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 4 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_white_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 5 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_pink_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 6 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_red_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 7 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_blue_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 8 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_violet_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 9 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_grey_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 10 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_velvet_noise_mix_;
+          ( *val_ptr ) = ev->value;
+        } else if( ev->param_id == 11 ) {
+          double* val_ptr = static_cast< double* >( ev->cookie );
+          [[unlikely]]
+          if( !val_ptr )
+            val_ptr = &synth_square_wave_pwm_;
+          ( *val_ptr ) = ev->value;
         }
         break;
       }
       case CLAP_EVENT_PARAM_MOD: {
         clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
-                       "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->param_id,
-                       ev->cookie,
-                       ev->note_id,
-                       ev->port_index,
-                       ev->channel,
-                       ev->key,
-                       ev->amount );
+        // SFG_LOG_TRACE( logger_,
+        //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
+        //                __FUNCTION__,
+        //                static_cast< void* >( this ),
+        //                ev->param_id,
+        //                ev->cookie,
+        //                ev->note_id,
+        //                ev->port_index,
+        //                ev->channel,
+        //                ev->key,
+        //                ev->amount );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_PARAM_GESTURE_BEGIN: {
         clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+        // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_PARAM_GESTURE_END: {
         clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+        // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_TRANSPORT: {
         clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
-                       "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
-                       "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
-                       "tsig_num={:d}, tsig_denom={:d}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->flags,
-                       ev->song_pos_beats,
-                       ev->song_pos_seconds,
-                       ev->tempo,
-                       ev->tempo_inc,
-                       ev->loop_start_beats,
-                       ev->loop_end_beats,
-                       ev->loop_start_seconds,
-                       ev->loop_end_seconds,
-                       ev->bar_start,
-                       ev->bar_number,
-                       ev->tsig_num,
-                       ev->tsig_denom );
+        // SFG_LOG_TRACE( logger_,
+        //                "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
+        //                "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
+        //                "tsig_num={:d}, tsig_denom={:d}",
+        //                __FUNCTION__,
+        //                static_cast< void* >( this ),
+        //                ev->flags,
+        //                ev->song_pos_beats,
+        //                ev->song_pos_seconds,
+        //                ev->tempo,
+        //                ev->tempo_inc,
+        //                ev->loop_start_beats,
+        //                ev->loop_end_beats,
+        //                ev->loop_start_seconds,
+        //                ev->loop_end_seconds,
+        //                ev->bar_start,
+        //                ev->bar_number,
+        //                ev->tsig_num,
+        //                ev->tsig_denom );
         // TODO: handle transport event
         break;
       }
       case CLAP_EVENT_MIDI: {
         clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
-                       "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->port_index,
-                       std::vector< uint8_t >( ev->data, ev->data + 3 ) );
+        // SFG_LOG_TRACE( logger_,
+        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
+        //                __FUNCTION__,
+        //                static_cast< void* >( this ),
+        //                ev->port_index,
+        //                std::vector< uint8_t >( ev->data, ev->data + 3 ) );
         // TODO: handle MIDI event
         break;
       }
       case CLAP_EVENT_MIDI_SYSEX: {
         clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
-                       "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->port_index,
-                       static_cast< void const* >( ev->buffer ),
-                       ev->size );
+        // SFG_LOG_TRACE( logger_,
+        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
+        //                __FUNCTION__,
+        //                static_cast< void* >( this ),
+        //                ev->port_index,
+        //                static_cast< void const* >( ev->buffer ),
+        //                ev->size );
         // TODO: handle MIDI Sysex event
         break;
       }
       case CLAP_EVENT_MIDI2: {
         clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
-                       "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->port_index,
-                       std::vector< uint8_t >( ev->data, ev->data + 4 ) );
+        // SFG_LOG_TRACE( logger_,
+        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
+        //                __FUNCTION__,
+        //                static_cast< void* >( this ),
+        //                ev->port_index,
+        //                std::vector< uint8_t >( ev->data, ev->data + 4 ) );
         // TODO: handle MIDI2 event
         break;
       }
@@ -371,49 +484,23 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
 
             double sample = 0.0;
             // phase is 0.0 .. 1.0
-            switch( synth_type_ ) {
-              case SynthType::SineWave:
-                sample = get_sample_sine_wave( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::SquareWave:
-                sample = get_sample_square_wave( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::SawWave:
-                sample = get_sample_saw_wave( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::TriangleWave:
-                sample = get_sample_triangle_wave( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::WhiteNoise:
-                sample = get_sample_white_noise( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::PinkNoise:
-                sample = get_sample_pink_noise( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::RedNoise:
-                sample = get_sample_red_noise( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::BlueNoise:
-                sample = get_sample_blue_noise( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::VioletNoise:
-                sample = get_sample_violet_noise( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::GreyNoise:
-                sample = get_sample_grey_noise( item.second.phase ) * item.second.velocity;
-                break;
-              case SynthType::VelvetNoise:
-                sample = get_sample_velvet_noise( item.second.phase ) * item.second.velocity;
-                break;
-              default:
-                break;
-            }
+            sample += get_sample_sine_wave( item.second.phase );
+            sample += get_sample_square_wave( item.second.phase );
+            sample += get_sample_saw_wave( item.second.phase );
+            sample += get_sample_triangle_wave( item.second.phase );
+            sample += get_sample_white_noise( item.second.phase );
+            sample += get_sample_pink_noise( item.second.phase );
+            sample += get_sample_red_noise( item.second.phase );
+            sample += get_sample_blue_noise( item.second.phase );
+            sample += get_sample_violet_noise( item.second.phase );
+            sample += get_sample_grey_noise( item.second.phase );
+            sample += get_sample_velvet_noise( item.second.phase );
 
             item.second.phase += freq / sample_rate_;
             if( item.second.phase >= 1.0 )
               item.second.phase -= 1.0;
 
-            out += sample;
+            out += sample * item.second.velocity;
           }
         }
         // store output
@@ -496,8 +583,8 @@ bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_po
 
 uint32_t NoiseGenerator::params_count( void ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
-  // we have 1 param, which is synth_type_
-  return 1;
+  // we have 12 params
+  return 12;
 }
 
 bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
@@ -514,13 +601,123 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
   switch( param_index ) {
     case 0:
       out_param_info->id = 0;
-      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_IS_ENUM;
-      out_param_info->cookie = &synth_type_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Synth" );
-      out_param_info->min_value = static_cast< double >( SynthType::SineWave );
-      out_param_info->max_value = static_cast< double >( static_cast< uint16_t >( SynthType::MAX_VALUE ) - 1 );
-      out_param_info->default_value = static_cast< double >( SynthType::SineWave );
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_sine_wave_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Sine Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 1.0;
+      break;
+    case 1:
+      out_param_info->id = 1;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_square_wave_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 2:
+      out_param_info->id = 2;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_saw_wave_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Saw Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 3:
+      out_param_info->id = 3;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_triangle_wave_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Triangle Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 4:
+      out_param_info->id = 4;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_white_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "White Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 5:
+      out_param_info->id = 5;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_pink_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 6:
+      out_param_info->id = 6;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_red_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Red Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 7:
+      out_param_info->id = 7;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_blue_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Blue Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 8:
+      out_param_info->id = 8;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_violet_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Violet Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 9:
+      out_param_info->id = 9;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_grey_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Grey Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 10:
+      out_param_info->id = 10;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_velvet_noise_mix_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Velvet Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.0;
+      break;
+    case 11:
+      out_param_info->id = 11;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = &synth_square_wave_pwm_;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "PWM" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = 0.5;
       break;
   }
   return true;
@@ -536,7 +733,40 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
   if( !out_value )
     return false;
   if( param_id == 0 ) {
-    *out_value = static_cast< double >( synth_type_ );
+    ( *out_value ) = synth_sine_wave_mix_;
+    return true;
+  } else if( param_id == 1 ) {
+    ( *out_value ) = synth_square_wave_mix_;
+    return true;
+  } else if( param_id == 2 ) {
+    ( *out_value ) = synth_saw_wave_mix_;
+    return true;
+  } else if( param_id == 3 ) {
+    ( *out_value ) = synth_triangle_wave_mix_;
+    return true;
+  } else if( param_id == 4 ) {
+    ( *out_value ) = synth_white_noise_mix_;
+    return true;
+  } else if( param_id == 5 ) {
+    ( *out_value ) = synth_pink_noise_mix_;
+    return true;
+  } else if( param_id == 6 ) {
+    ( *out_value ) = synth_red_noise_mix_;
+    return true;
+  } else if( param_id == 7 ) {
+    ( *out_value ) = synth_blue_noise_mix_;
+    return true;
+  } else if( param_id == 8 ) {
+    ( *out_value ) = synth_violet_noise_mix_;
+    return true;
+  } else if( param_id == 9 ) {
+    ( *out_value ) = synth_grey_noise_mix_;
+    return true;
+  } else if( param_id == 10 ) {
+    ( *out_value ) = synth_velvet_noise_mix_;
+    return true;
+  } else if( param_id == 11 ) {
+    ( *out_value ) = synth_square_wave_pwm_;
     return true;
   }
   return false;
@@ -553,49 +783,36 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
                  out_buffer_capacity );
   if( !out_buffer || ( out_buffer_capacity == 0 ) )
     return false;
+  std::function< bool( double, char*, uint32_t ) > to_percent_string = []( double value, char* out_buffer, uint32_t out_buffer_capacity ) {
+    return 0 <= std::snprintf( out_buffer, out_buffer_capacity, "%f %%", value * 100.0 );
+  };
+  bool ret = false;
   if( param_id == 0 ) {
-    SynthType val = static_cast< SynthType >( value );
-    switch( val ) {
-      case SynthType::SineWave:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Sine Wave" );
-        break;
-      case SynthType::SquareWave:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Square Wave" );
-        break;
-      case SynthType::SawWave:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Saw Wave" );
-        break;
-      case SynthType::TriangleWave:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Triangle Wave" );
-        break;
-      case SynthType::WhiteNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "White Noise" );
-        break;
-      case SynthType::PinkNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Pink Noise" );
-        break;
-      case SynthType::RedNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Red Noise" );
-        break;
-      case SynthType::BlueNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Blue Noise" );
-        break;
-      case SynthType::VioletNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Violet Noise" );
-        break;
-      case SynthType::GreyNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Grey Noise" );
-        break;
-      case SynthType::VelvetNoise:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "Velvet Noise" );
-        break;
-      default:
-        std::snprintf( out_buffer, out_buffer_capacity, "%s", "__UNKNOWN__" );
-        break;
-    }
-    return true;
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 1 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 2 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 3 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 4 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 5 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 6 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 7 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 8 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 9 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 10 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  } else if( param_id == 11 ) {
+    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
   }
-  return false;
+  return ret;
 }
 
 bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
@@ -608,35 +825,65 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
                  static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
-  if( param_id == 0 ) {
-    if( param_value_text == "Sine Wave" ) {
-      *out_value = static_cast< double >( SynthType::SineWave );
-    } else if( param_value_text == "Square Wave" ) {
-      *out_value = static_cast< double >( SynthType::SquareWave );
-    } else if( param_value_text == "Saw Wave" ) {
-      *out_value = static_cast< double >( SynthType::SawWave );
-    } else if( param_value_text == "Triangle Wave" ) {
-      *out_value = static_cast< double >( SynthType::TriangleWave );
-    } else if( param_value_text == "White Noise" ) {
-      *out_value = static_cast< double >( SynthType::WhiteNoise );
-    } else if( param_value_text == "Pink Noise" ) {
-      *out_value = static_cast< double >( SynthType::PinkNoise );
-    } else if( param_value_text == "Red Noise" ) {
-      *out_value = static_cast< double >( SynthType::RedNoise );
-    } else if( param_value_text == "Blue Noise" ) {
-      *out_value = static_cast< double >( SynthType::BlueNoise );
-    } else if( param_value_text == "Violet Noise" ) {
-      *out_value = static_cast< double >( SynthType::VioletNoise );
-    } else if( param_value_text == "Grey Noise" ) {
-      *out_value = static_cast< double >( SynthType::GreyNoise );
-    } else if( param_value_text == "Velvet Noise" ) {
-      *out_value = static_cast< double >( SynthType::VelvetNoise );
-    } else {
-      *out_value = static_cast< double >( SynthType::SineWave );
+  std::function< bool( std::string const&, double* ) > from_float_string = []( std::string const& param_value_text, double* out_value ) {
+    try {
+      ( *out_value ) = std::stod( param_value_text );
+      if( ( *out_value ) > 1.0 )
+        ( *out_value ) = ( *out_value ) / 100.0;
+      return true;
+    } catch( std::exception const& ) {
+      return false;
     }
-    return true;
+  };
+  std::function< bool( std::string const&, double* ) > from_percent_string = []( std::string const& param_value_text, double* out_value ) {
+    if( param_value_text.find( "%" ) == std::string::npos )
+      return false;
+    try {
+      ( *out_value ) = std::stod( param_value_text ) / 100.0;
+      return true;
+    } catch( std::exception const& ) {
+      return false;
+    }
+  };
+  bool ret = false;
+  if( param_id == 0 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 1 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 2 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 3 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 4 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 5 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 6 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 7 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 8 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 9 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 10 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
+  } else if( param_id == 11 ) {
+    ret = ret || from_percent_string( param_value_text, out_value );
+    ret = ret || from_float_string( param_value_text, out_value );
   }
-  return false;
+  return ret;
 }
 
 void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
@@ -657,7 +904,18 @@ void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_ev
 bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
-  ret = ( ( -1 ) != stream->write( stream, &synth_type_, sizeof( synth_type_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_sine_wave_mix_, sizeof( synth_sine_wave_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_square_wave_mix_, sizeof( synth_square_wave_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_saw_wave_mix_, sizeof( synth_saw_wave_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_triangle_wave_mix_, sizeof( synth_triangle_wave_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_white_noise_mix_, sizeof( synth_white_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_pink_noise_mix_, sizeof( synth_pink_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_red_noise_mix_, sizeof( synth_red_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_blue_noise_mix_, sizeof( synth_blue_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_violet_noise_mix_, sizeof( synth_violet_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_grey_noise_mix_, sizeof( synth_grey_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_velvet_noise_mix_, sizeof( synth_velvet_noise_mix_ ) ) ) && ret;
+  ret = ( ( -1 ) != stream->write( stream, &synth_square_wave_pwm_, sizeof( synth_square_wave_pwm_ ) ) ) && ret;
   ret = ( ( -1 ) != stream->write( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) ) ) && ret;
   ret = ( ( -1 ) != stream->write( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) ) ) && ret;
   ret = ( ( -1 ) != stream->write( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) ) ) && ret;
@@ -673,7 +931,18 @@ bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
 bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
-  ret = ( 0 < stream->read( stream, &synth_type_, sizeof( synth_type_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_sine_wave_mix_, sizeof( synth_sine_wave_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_square_wave_mix_, sizeof( synth_square_wave_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_saw_wave_mix_, sizeof( synth_saw_wave_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_triangle_wave_mix_, sizeof( synth_triangle_wave_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_white_noise_mix_, sizeof( synth_white_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_pink_noise_mix_, sizeof( synth_pink_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_red_noise_mix_, sizeof( synth_red_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_blue_noise_mix_, sizeof( synth_blue_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_violet_noise_mix_, sizeof( synth_violet_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_grey_noise_mix_, sizeof( synth_grey_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_velvet_noise_mix_, sizeof( synth_velvet_noise_mix_ ) ) ) && ret;
+  ret = ( 0 < stream->read( stream, &synth_square_wave_pwm_, sizeof( synth_square_wave_pwm_ ) ) ) && ret;
   ret = ( 0 < stream->read( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) ) ) && ret;
   ret = ( 0 < stream->read( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) ) ) && ret;
   ret = ( 0 < stream->read( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) ) ) && ret;
@@ -682,8 +951,6 @@ bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
   ret = ( 0 < stream->read( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) ) ) && ret;
   ret = ( 0 < stream->read( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) ) ) && ret;
   ret = ( 0 < stream->read( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) ) ) && ret;
-  if( synth_type_ >= SynthType::MAX_VALUE )
-    synth_type_ = static_cast< SynthType >( static_cast< uint16_t >( SynthType::MAX_VALUE ) - 1 );
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }

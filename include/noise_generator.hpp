@@ -12,20 +12,6 @@ class NoiseGenerator : BasePlugin {
   using _base_ = BasePlugin;
   using _base_::_base_;
 
-  enum class SynthType : uint16_t {
-    SineWave,
-    SquareWave,
-    SawWave,
-    TriangleWave,
-    WhiteNoise,
-    PinkNoise,
-    RedNoise,
-    BlueNoise,
-    VioletNoise,
-    GreyNoise,
-    VelvetNoise,
-    MAX_VALUE,
-  };
   // see `clap_event_note_t`, this is a map of key to note
   struct NoteData {
     double phase = 0.0;
@@ -89,7 +75,20 @@ class NoiseGenerator : BasePlugin {
 
   // members to save and load
   protected:
-  SynthType synth_type_ = SynthType::SineWave;
+  // params
+  double synth_sine_wave_mix_ = 1.0;
+  double synth_square_wave_mix_ = 0.0;
+  double synth_saw_wave_mix_ = 0.0;
+  double synth_triangle_wave_mix_ = 0.0;
+  double synth_white_noise_mix_ = 0.0;
+  double synth_pink_noise_mix_ = 0.0;
+  double synth_red_noise_mix_ = 0.0;
+  double synth_blue_noise_mix_ = 0.0;
+  double synth_violet_noise_mix_ = 0.0;
+  double synth_grey_noise_mix_ = 0.0;
+  double synth_velvet_noise_mix_ = 0.0;
+  double synth_square_wave_pwm_ = 0.5;
+  // internal values
   double pink_refined_b0_ = 0.0;
   double pink_refined_b1_ = 0.0;
   double pink_refined_b2_ = 0.0;
