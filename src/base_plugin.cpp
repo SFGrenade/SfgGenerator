@@ -4,6 +4,7 @@
 #include <iostream>
 #include <numbers>
 
+#include "_folders.hpp"
 #include "clap_sink.hpp"
 
 #pragma region Base Methods
@@ -133,14 +134,16 @@ std::string BasePlugin::get_name( void ) const {
 void BasePlugin::init_logger( void ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   std::string const c_logger_pattern = "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%n] [%l] %v";
-  // TODO: FIXME: add correct way to get documents folder
-  // std::filesystem::path plugin_path_fs( plugin_path_ );
-  std::filesystem::path plugin_path_fs( "C:\\Users\\SFG\\Documents\\CLAP-Logs" );
-  std::filesystem::path plugin_folder_path = plugin_path_fs;
-  if( !std::filesystem::is_directory( plugin_folder_path ) ) {
-    plugin_folder_path = plugin_path_fs.parent_path();
+
+  std::filesystem::path plugin_data_path = get_data_path( "SfgGenerator", "SFGrenade" );
+  if( !std::filesystem::exists( plugin_data_path ) ) {
+    std::filesystem::create_directories( plugin_data_path );
   }
-  std::filesystem::path log_file_name_fs = plugin_folder_path / fmt::format( "log_{:s}_{:p}.log", get_name(), static_cast< void* >( this ) );
+  std::filesystem::path plugin_log_path = plugin_data_path / "logs";
+  if( !std::filesystem::exists( plugin_log_path ) ) {
+    std::filesystem::create_directories( plugin_log_path );
+  }
+  std::filesystem::path log_file_name_fs = plugin_log_path / fmt::format( "log_{:s}_{:p}.log", get_name(), static_cast< void* >( this ) );
   std::string const c_log_file_name = log_file_name_fs.string();
   std::shared_ptr< ClapSink > clap_sink = std::make_shared< ClapSink >( host_, host_log_ );
   clap_sink->set_level( spdlog::level::level_enum::trace );

@@ -36,6 +36,8 @@ end
 
 if is_plat( "windows" ) then
   add_cxxflags( "/utf-8", "/Zi", "/FS" )
+  add_links( "Ole32" )
+  add_links( "Shell32" )
   if is_mode( "release" ) then
     add_ldflags( "/OPT:REF", "/OPT:ICF=3", "/Qvec", "/GR", { force = true } )
     --add_ldflags( "/OPT:ICF=3", "/Qvec", "/GR", { force = true } )
@@ -87,17 +89,18 @@ target( "SfgGenerator" )
   end )
 
   --on_run( function ( target )
-  --  print( "basename", target:basename() )
-  --  print( "filename", target:filename() )
-  --  print( "soname", target:soname() )
-  --  print( "targetfile", target:targetfile() )
-  --  print( "name", target:name() )
+  --  print( "basename:", target:basename() )
+  --  print( "filename:", target:filename() )
+  --  print( "soname:", target:soname() )
+  --  print( "targetfile:", target:targetfile() )
+  --  print( "name:", target:name() )
   --  --print( target )
   --  local args = {
+  --    "--verbosity", "quiet",
   --    "validate",
+  --    "--hide-output", "--only-failed",
   --    --"--in-process",  -- to test
-  --    --"--test-filter",  -- to test
-  --    --"state-reproducibility-basic",  -- to test
+  --    --"--test-filter", "state-reproducibility-basic",  -- to test
   --    path.join( target:scriptdir(), target:targetfile() )
   --  }
   --  os.vrunv( "C:\\_Programs\\clap-validator\\clap-validator", args )
@@ -105,15 +108,29 @@ target( "SfgGenerator" )
 
   on_test( function ( target, opt )
     local args = {
+      "--verbosity", "quiet",
       "validate",
+      "--hide-output", "--only-failed",
       --"--in-process",  -- to test
-      --"--test-filter",  -- to test
-      --"state-reproducibility-basic",  -- to test
+      --"--test-filter", "state-reproducibility-basic",  -- to test
       path.join( target:scriptdir(), target:targetdir(), "SfgGenerator.clap" )
     }
-    os.vrunv( "C:\\_Programs\\clap-validator\\clap-validator", args )
+    local out_file = os.tmpfile()
+    local err_file = os.tmpfile()
+    os.vrunv( "C:\\_Programs\\clap-validator\\clap-validator", args, { stdout = out_file, stderr = err_file } )
+    local cmd_std_out = io.readfile(out_file)
+    local cmd_std_err = io.readfile(err_file)
+    local return_val = string.match( cmd_std_out, opt.pass_outputs ) and true or false
+    if return_val then
+      os.rm(out_file)
+      os.rm(err_file)
+    else
+      print( "stdout file at:", out_file )
+      print( "stderr file at:", err_file )
+    end
+    return return_val
   end )
-  add_tests( "clap-validator" )
+  add_tests( "clap-validator", { pass_outputs = ", 0 failed, " } )
 target_end()
 
 target( "clap-validator" )
