@@ -60,7 +60,7 @@ double NoiseGenerator::get_sample_white_noise( double phase ) {
 double NoiseGenerator::get_sample_pink_noise( double phase ) {
   if( synth_pink_noise_mix_ <= 0.0 )
     return 0.0;
-  double white = get_sample_white_noise( phase );
+  double white = dist_( eng_ );
   pink_refined_b0_ = 0.99886 * pink_refined_b0_ + white * 0.0555179;
   pink_refined_b1_ = 0.99332 * pink_refined_b1_ + white * 0.0750759;
   pink_refined_b2_ = 0.96900 * pink_refined_b2_ + white * 0.1538520;
@@ -78,7 +78,7 @@ double NoiseGenerator::get_sample_red_noise( double phase ) {
   if( synth_red_noise_mix_ <= 0.0 )
     return 0.0;
   static const double gain = 0.01;
-  double white = get_sample_white_noise( phase );
+  double white = dist_( eng_ );
   red_leaky_integrator_prev_ += gain * ( white - red_leaky_integrator_prev_ );
   double red = red_leaky_integrator_prev_;
   return std::clamp( red, -1.0, 1.0 ) * synth_red_noise_mix_;
@@ -981,7 +981,10 @@ bool NoiseGenerator::supports_state() const {
 
 clap_plugin_t* NoiseGenerator::s_create( clap_host_t const* host ) {
   clap_plugin_t* plugin = new clap_plugin_t();
+  NoiseGenerator* noise_gen = new NoiseGenerator();
+  noise_gen->host_ = host;
   plugin->desc = descriptor_get();
+  plugin->plugin_data = noise_gen;
   plugin->init = s_init;
   plugin->destroy = s_destroy;
   plugin->activate = s_activate;
@@ -992,8 +995,6 @@ clap_plugin_t* NoiseGenerator::s_create( clap_host_t const* host ) {
   plugin->process = s_process;
   plugin->get_extension = s_get_extension;
   plugin->on_main_thread = s_on_main_thread;
-  plugin->plugin_data = new NoiseGenerator();
-  static_cast< NoiseGenerator* >( plugin->plugin_data )->host_ = host;
   return plugin;
 };
 
