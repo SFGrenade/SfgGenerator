@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package SfgGenerator.Proto;
+
+// this is the state of the generator
+message NoiseGenerator {
+  // internal types
+  enum SineWaveType {
+    StdSin = 0;
+    CSin = 1;
+  }
+  enum SquareWaveType {
+    PhaseWidth = 0;
+    InversePhaseWidth = 1;
+  }
+  enum SawWaveType {
+    Phase = 0;
+    InversePhase = 1;
+  }
+  enum TriangleWaveType {
+    ChunkLerp = 0;
+  }
+  enum WhiteNoiseType {
+    StdRandom = 0;
+    RandMaxRand = 1;
+  }
+  enum PinkNoiseType {
+    PaulKellettRefined = 0;
+    PaulKellettEconomy = 1;
+    VossMcCartney = 2;
+    IirFilterApproximation = 3;
+  }
+  enum RedNoiseType {
+    BasicIntegration = 0;
+    LeakyIntegration = 1;
+    IntegerWalk = 2;
+    OnePoleIirFilter = 3;
+    CumulativeWithClamp = 4;
+  }
+  enum BlueNoiseType {
+    VoidAndCluster = 0;
+    PoissonDiskSampling = 1;
+    SimpleSpectralShaping = 2;
+    R2JitteredSampling = 3;
+    PermutedGradientNoise = 4;
+  }
+  enum VioletNoiseType {
+    FirstOrderDifference = 0;
+    FirstOrderIirFilter = 1;
+  }
+  enum GreyNoiseType {
+    PsychoacousticFilter = 0;
+    AweightingInversion = 1;
+    MultiBandpass = 2;
+    EqualLoudnessApproximation = 3;
+  }
+  enum VelvetNoiseType {
+    SporadicImpulse = 0;
+  }
+
+  // params
+  SineWaveType synth_sine_wave_type = 1;
+  double synth_sine_wave_mix = 2;
+  SquareWaveType synth_square_wave_type = 3;
+  double synth_square_wave_pwm = 4;
+  double synth_square_wave_mix = 5;
+  SawWaveType synth_saw_wave_type = 6;
+  double synth_saw_wave_mix = 7;
+  TriangleWaveType synth_triangle_wave_type = 8;
+  double synth_triangle_wave_mix = 9;
+  WhiteNoiseType synth_white_noise_type = 10;
+  double synth_white_noise_mix = 11;
+  PinkNoiseType synth_pink_noise_type = 12;
+  double synth_pink_noise_mix = 13;
+  RedNoiseType synth_red_noise_type = 14;
+  double synth_red_noise_mix = 15;
+  BlueNoiseType synth_blue_noise_type = 16;
+  double synth_blue_noise_mix = 17;
+  VioletNoiseType synth_violet_noise_type = 18;
+  double synth_violet_noise_mix = 19;
+  GreyNoiseType synth_grey_noise_type = 20;
+  double synth_grey_noise_mix = 21;
+  VelvetNoiseType synth_velvet_noise_type = 22;
+  double synth_velvet_noise_mix = 23;
+}

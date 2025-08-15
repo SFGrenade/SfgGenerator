@@ -3,6 +3,7 @@
 #include <random>
 
 #include "base_plugin.hpp"
+#include "noise_generator.pb.h"
 
 #if __cplusplus
 extern "C" {
@@ -76,19 +77,9 @@ class NoiseGenerator : BasePlugin {
   // members to save and load
   protected:
   // params
-  double synth_sine_wave_mix_ = 1.0;
-  double synth_square_wave_mix_ = 0.0;
-  double synth_saw_wave_mix_ = 0.0;
-  double synth_triangle_wave_mix_ = 0.0;
-  double synth_white_noise_mix_ = 0.0;
-  double synth_pink_noise_mix_ = 0.0;
-  double synth_red_noise_mix_ = 0.0;
-  double synth_blue_noise_mix_ = 0.0;
-  double synth_violet_noise_mix_ = 0.0;
-  double synth_grey_noise_mix_ = 0.0;
-  double synth_velvet_noise_mix_ = 0.0;
-  double synth_square_wave_pwm_ = 0.5;
-  // internal values
+  SfgGenerator::Proto::NoiseGenerator state_;
+
+  // internal values (no need to save these)
   double pink_refined_b0_ = 0.0;
   double pink_refined_b1_ = 0.0;
   double pink_refined_b2_ = 0.0;
@@ -96,7 +87,14 @@ class NoiseGenerator : BasePlugin {
   double pink_refined_b4_ = 0.0;
   double pink_refined_b5_ = 0.0;
   double pink_refined_b6_ = 0.0;
+
+  double pink_economy_b0_ = 0.0;
+  double pink_economy_b1_ = 0.0;
+  double pink_economy_b2_ = 0.0;
+
   double red_leaky_integrator_prev_ = 0.0;
+
+  // temporary values
   NoteMap note_map_;
 
   // shit for the factory

@@ -4,6 +4,9 @@
 #include <numbers>
 
 #include "clap/process.h"
+#include "noise_generator.pb.h"
+
+using SGPNG = SfgGenerator::Proto::NoiseGenerator;
 
 NoiseGenerator::NoiseGenerator() : _base_() {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
@@ -20,96 +23,351 @@ std::string NoiseGenerator::get_name( void ) const {
 
 #pragma region wave generators
 
-double NoiseGenerator::get_sample_sine_wave( double phase ) {
-  if( synth_sine_wave_mix_ <= 0.0 )
+namespace SFG_PRIVATE {
+double sine_wave_StdSin( double phase, double mix ) {
+  if( mix <= 0.0 )
     return 0.0;
-  return std::sin( phase * 2.0 * std::numbers::pi_v< double > ) * synth_sine_wave_mix_;
+  return std::sin( phase * 2.0 * std::numbers::pi_v< double > ) * mix;
+}
+double sine_wave_CSin( double phase, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return sin( phase * 2.0 * std::numbers::pi_v< double > ) * mix;
+}
+double square_wave_PhaseWidth( double phase, double pwm, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return ( phase < pwm ) ? ( mix ) : ( -mix );
+}
+double square_wave_InversePhaseWidth( double phase, double pwm, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return ( phase < pwm ) ? ( -mix ) : ( mix );
+}
+double saw_wave_Phase( double phase, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return ( ( 2.0 * phase ) - 1.0 ) * mix;
+}
+double saw_wave_InversePhase( double phase, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return ( ( 2.0 * ( 1.0 - phase ) ) - 1.0 ) * mix;
+}
+double triangle_wave_ChunkLerp( double phase, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  if( phase < 0.25 ) {
+    return std::lerp( 0.0, 1.0, ( phase - 0.0 ) * 4.0 ) * mix;
+  }
+  if( phase < 0.75 ) {
+    return std::lerp( 1.0, -1.0, ( phase - 0.25 ) * 2.0 ) * mix;
+  }
+  return std::lerp( -1.0, 0.0, ( phase - 0.75 ) * 4.0 ) * mix;
+}
+double white_noise_StdRandom( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return dist( eng ) * mix;
+}
+double white_noise_RandMaxRand( double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  return ( ( 2.0 * static_cast< double >( rand() ) / static_cast< double >( RAND_MAX ) ) - 1.0 ) * mix;
+}
+double pink_noise_PaulKellettRefined( std::uniform_real_distribution< double >& dist,
+                                      std::mt19937_64& eng,
+                                      double& b0,
+                                      double& b1,
+                                      double& b2,
+                                      double& b3,
+                                      double& b4,
+                                      double& b5,
+                                      double& b6,
+                                      double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  double white = dist( eng );
+  b0 = 0.99886 * b0 + white * 0.0555179;
+  b1 = 0.99332 * b1 + white * 0.0750759;
+  b2 = 0.96900 * b2 + white * 0.1538520;
+  b3 = 0.86650 * b3 + white * 0.3104856;
+  b4 = 0.55000 * b4 + white * 0.5329522;
+  b5 = -0.7616 * b5 - white * 0.0168980;
+  double pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+  b6 = white * 0.115926;
+  return std::clamp( pink * 0.11, -1.0, 1.0 ) * mix;  // empirically estimated
+}
+double pink_noise_PaulKellettEconomy( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double& b0, double& b1, double& b2, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  double white = dist( eng );
+  b0 = 0.99765 * b0 + white * 0.0990460;
+  b1 = 0.96300 * b1 + white * 0.2965164;
+  b2 = 0.57000 * b2 + white * 1.0526913;
+  double pink = b0 + b1 + b2 + white * 0.1848;
+  return std::clamp( pink * 0.05, -1.0, 1.0 ) * mix;  // empirically estimated
+}
+double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double pink_noise_IirFilterApproximation( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double red_noise_BasicIntegration( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double red_noise_LeakyIntegration( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double red_noise_IntegerWalk( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double red_noise_OnePoleIirFilter( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double red_noise_CumulativeWithClamp( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double blue_noise_VoidAndCluster( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double blue_noise_PoissonDiskSampling( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double blue_noise_SimpleSpectralShaping( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double blue_noise_R2JitteredSampling( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double blue_noise_PermutedGradientNoise( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double violet_noise_FirstOrderDifference( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double violet_noise_FirstOrderIirFilter( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double grey_noise_PsychoacousticFilter( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double grey_noise_AweightingInversion( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double grey_noise_MultiBandpass( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double grey_noise_EqualLoudnessApproximation( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+double velvet_noise_SporadicImpulse( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+  if( mix <= 0.0 )
+    return 0.0;
+  // TODO: FIXME: ADD IMPLEMENTATION
+  return 0.0;
+}
+}  // namespace SFG_PRIVATE
+
+double NoiseGenerator::get_sample_sine_wave( double phase ) {
+  switch( state_.synth_sine_wave_type() ) {
+    case SGPNG::SineWaveType::NoiseGenerator_SineWaveType_StdSin:
+      return SFG_PRIVATE::sine_wave_StdSin( phase, state_.synth_sine_wave_mix() );
+    case SGPNG::SineWaveType::NoiseGenerator_SineWaveType_CSin:
+      return SFG_PRIVATE::sine_wave_CSin( phase, state_.synth_sine_wave_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_square_wave( double phase ) {
-  if( synth_square_wave_mix_ <= 0.0 )
-    return 0.0;
-  return ( phase < synth_square_wave_pwm_ ) ? ( synth_square_wave_mix_ ) : ( -synth_square_wave_mix_ );
+  switch( state_.synth_square_wave_type() ) {
+    case SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth:
+      return SFG_PRIVATE::square_wave_PhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
+    case SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth:
+      return SFG_PRIVATE::square_wave_InversePhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_saw_wave( double phase ) {
-  if( synth_saw_wave_mix_ <= 0.0 )
-    return 0.0;
-  return ( ( 2.0 * phase ) - 1.0 ) * synth_saw_wave_mix_;
+  switch( state_.synth_saw_wave_type() ) {
+    case SGPNG::SawWaveType::NoiseGenerator_SawWaveType_Phase:
+      return SFG_PRIVATE::saw_wave_Phase( phase, state_.synth_saw_wave_mix() );
+    case SGPNG::SawWaveType::NoiseGenerator_SawWaveType_InversePhase:
+      return SFG_PRIVATE::saw_wave_InversePhase( phase, state_.synth_saw_wave_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_triangle_wave( double phase ) {
-  if( synth_triangle_wave_mix_ <= 0.0 )
-    return 0.0;
-  if( phase < 0.25 ) {
-    return std::lerp( 0.0, 1.0, ( phase - 0.0 ) * 4.0 ) * synth_triangle_wave_mix_;
+  switch( state_.synth_triangle_wave_type() ) {
+    case SGPNG::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp:
+      return SFG_PRIVATE::triangle_wave_ChunkLerp( phase, state_.synth_triangle_wave_mix() );
+    default:
+      return 0.0;
   }
-  if( phase < 0.75 ) {
-    return std::lerp( 1.0, -1.0, ( phase - 0.25 ) * 2.0 ) * synth_triangle_wave_mix_;
-  }
-  return std::lerp( -1.0, 0.0, ( phase - 0.75 ) * 4.0 ) * synth_triangle_wave_mix_;
 }
 
 double NoiseGenerator::get_sample_white_noise( double phase ) {
-  if( synth_white_noise_mix_ <= 0.0 )
-    return 0.0;
-  return dist_( eng_ ) * synth_white_noise_mix_;
+  switch( state_.synth_white_noise_type() ) {
+    case SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom:
+      return SFG_PRIVATE::white_noise_StdRandom( dist_, eng_, state_.synth_white_noise_mix() );
+    case SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand:
+      return SFG_PRIVATE::white_noise_RandMaxRand( state_.synth_white_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
-// Paul Kellett's refined method
 double NoiseGenerator::get_sample_pink_noise( double phase ) {
-  if( synth_pink_noise_mix_ <= 0.0 )
-    return 0.0;
-  double white = dist_( eng_ );
-  pink_refined_b0_ = 0.99886 * pink_refined_b0_ + white * 0.0555179;
-  pink_refined_b1_ = 0.99332 * pink_refined_b1_ + white * 0.0750759;
-  pink_refined_b2_ = 0.96900 * pink_refined_b2_ + white * 0.1538520;
-  pink_refined_b3_ = 0.86650 * pink_refined_b3_ + white * 0.3104856;
-  pink_refined_b4_ = 0.55000 * pink_refined_b4_ + white * 0.5329522;
-  pink_refined_b5_ = -0.7616 * pink_refined_b5_ - white * 0.0168980;
-  double pink
-      = pink_refined_b0_ + pink_refined_b1_ + pink_refined_b2_ + pink_refined_b3_ + pink_refined_b4_ + pink_refined_b5_ + pink_refined_b6_ + white * 0.5362;
-  pink_refined_b6_ = white * 0.115926;
-  return std::clamp( pink * 0.11, -1.0, 1.0 ) * synth_pink_noise_mix_;  // empirically estimated
+  switch( state_.synth_pink_noise_type() ) {
+    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined:
+      return SFG_PRIVATE::pink_noise_PaulKellettRefined( dist_,
+                                                         eng_,
+                                                         pink_refined_b0_,
+                                                         pink_refined_b1_,
+                                                         pink_refined_b2_,
+                                                         pink_refined_b3_,
+                                                         pink_refined_b4_,
+                                                         pink_refined_b5_,
+                                                         pink_refined_b6_,
+                                                         state_.synth_pink_noise_mix() );
+    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettEconomy:
+      return SFG_PRIVATE::pink_noise_PaulKellettEconomy( dist_, eng_, pink_economy_b0_, pink_economy_b1_, pink_economy_b2_, state_.synth_pink_noise_mix() );
+    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_VossMcCartney:
+      return SFG_PRIVATE::pink_noise_VossMcCartney( dist_, eng_, state_.synth_pink_noise_mix() );
+    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation:
+      return SFG_PRIVATE::pink_noise_IirFilterApproximation( dist_, eng_, state_.synth_pink_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
-// recursive 1-pole iir filter
 double NoiseGenerator::get_sample_red_noise( double phase ) {
-  if( synth_red_noise_mix_ <= 0.0 )
-    return 0.0;
-  static const double gain = 0.01;
-  double white = dist_( eng_ );
-  red_leaky_integrator_prev_ += gain * ( white - red_leaky_integrator_prev_ );
-  double red = red_leaky_integrator_prev_;
-  return std::clamp( red, -1.0, 1.0 ) * synth_red_noise_mix_;
+  switch( state_.synth_red_noise_type() ) {
+    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration:
+      return SFG_PRIVATE::red_noise_BasicIntegration( dist_, eng_, state_.synth_red_noise_mix() );
+    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_LeakyIntegration:
+      return SFG_PRIVATE::red_noise_LeakyIntegration( dist_, eng_, state_.synth_red_noise_mix() );
+    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_IntegerWalk:
+      return SFG_PRIVATE::red_noise_IntegerWalk( dist_, eng_, state_.synth_red_noise_mix() );
+    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_OnePoleIirFilter:
+      return SFG_PRIVATE::red_noise_OnePoleIirFilter( dist_, eng_, state_.synth_red_noise_mix() );
+    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp:
+      return SFG_PRIVATE::red_noise_CumulativeWithClamp( dist_, eng_, state_.synth_red_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_blue_noise( double phase ) {
-  if( synth_blue_noise_mix_ <= 0.0 )
-    return 0.0;
-  double blue = 0.0;
-  return std::clamp( blue, -1.0, 1.0 ) * synth_blue_noise_mix_;
+  switch( state_.synth_blue_noise_type() ) {
+    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster:
+      return SFG_PRIVATE::blue_noise_VoidAndCluster( dist_, eng_, state_.synth_blue_noise_mix() );
+    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_PoissonDiskSampling:
+      return SFG_PRIVATE::blue_noise_PoissonDiskSampling( dist_, eng_, state_.synth_blue_noise_mix() );
+    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_SimpleSpectralShaping:
+      return SFG_PRIVATE::blue_noise_SimpleSpectralShaping( dist_, eng_, state_.synth_blue_noise_mix() );
+    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_R2JitteredSampling:
+      return SFG_PRIVATE::blue_noise_R2JitteredSampling( dist_, eng_, state_.synth_blue_noise_mix() );
+    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise:
+      return SFG_PRIVATE::blue_noise_PermutedGradientNoise( dist_, eng_, state_.synth_blue_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_violet_noise( double phase ) {
-  if( synth_violet_noise_mix_ <= 0.0 )
-    return 0.0;
-  double violet = 0.0;
-  return std::clamp( violet, -1.0, 1.0 ) * synth_violet_noise_mix_;
+  switch( state_.synth_violet_noise_type() ) {
+    case SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference:
+      return SFG_PRIVATE::violet_noise_FirstOrderDifference( dist_, eng_, state_.synth_violet_noise_mix() );
+    case SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter:
+      return SFG_PRIVATE::violet_noise_FirstOrderIirFilter( dist_, eng_, state_.synth_violet_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_grey_noise( double phase ) {
-  if( synth_grey_noise_mix_ <= 0.0 )
-    return 0.0;
-  double grey = 0.0;
-  return std::clamp( grey, -1.0, 1.0 ) * synth_grey_noise_mix_;
+  switch( state_.synth_grey_noise_type() ) {
+    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter:
+      return SFG_PRIVATE::grey_noise_PsychoacousticFilter( dist_, eng_, state_.synth_grey_noise_mix() );
+    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_AweightingInversion:
+      return SFG_PRIVATE::grey_noise_AweightingInversion( dist_, eng_, state_.synth_grey_noise_mix() );
+    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_MultiBandpass:
+      return SFG_PRIVATE::grey_noise_MultiBandpass( dist_, eng_, state_.synth_grey_noise_mix() );
+    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation:
+      return SFG_PRIVATE::grey_noise_EqualLoudnessApproximation( dist_, eng_, state_.synth_grey_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 double NoiseGenerator::get_sample_velvet_noise( double phase ) {
-  if( synth_velvet_noise_mix_ <= 0.0 )
-    return 0.0;
-  double velvet = 0.0;
-  return std::clamp( velvet, -1.0, 1.0 ) * synth_velvet_noise_mix_;
+  switch( state_.synth_velvet_noise_type() ) {
+    case SGPNG::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse:
+      return SFG_PRIVATE::velvet_noise_SporadicImpulse( dist_, eng_, state_.synth_velvet_noise_mix() );
+    default:
+      return 0.0;
+  }
 }
 
 #pragma endregion
@@ -122,18 +380,8 @@ bool NoiseGenerator::init( void ) {
 
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
-  synth_sine_wave_mix_ = 1.0;
-  synth_square_wave_mix_ = 0.0;
-  synth_saw_wave_mix_ = 0.0;
-  synth_triangle_wave_mix_ = 0.0;
-  synth_white_noise_mix_ = 0.0;
-  synth_pink_noise_mix_ = 0.0;
-  synth_red_noise_mix_ = 0.0;
-  synth_blue_noise_mix_ = 0.0;
-  synth_violet_noise_mix_ = 0.0;
-  synth_grey_noise_mix_ = 0.0;
-  synth_velvet_noise_mix_ = 0.0;
-  synth_square_wave_pwm_ = 0.5;
+
+  state_.Clear();
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -141,6 +389,9 @@ bool NoiseGenerator::init( void ) {
   pink_refined_b4_ = 0.0;
   pink_refined_b5_ = 0.0;
   pink_refined_b6_ = 0.0;
+  pink_economy_b0_ = 0.0;
+  pink_economy_b1_ = 0.0;
+  pink_economy_b2_ = 0.0;
   red_leaky_integrator_prev_ = 0.0;
   note_map_.clear();
 
@@ -154,18 +405,7 @@ void NoiseGenerator::reset( void ) {
 
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
-  synth_sine_wave_mix_ = 1.0;
-  synth_square_wave_mix_ = 0.0;
-  synth_saw_wave_mix_ = 0.0;
-  synth_triangle_wave_mix_ = 0.0;
-  synth_white_noise_mix_ = 0.0;
-  synth_pink_noise_mix_ = 0.0;
-  synth_red_noise_mix_ = 0.0;
-  synth_blue_noise_mix_ = 0.0;
-  synth_violet_noise_mix_ = 0.0;
-  synth_grey_noise_mix_ = 0.0;
-  synth_velvet_noise_mix_ = 0.0;
-  synth_square_wave_pwm_ = 0.5;
+  state_.Clear();
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -173,6 +413,9 @@ void NoiseGenerator::reset( void ) {
   pink_refined_b4_ = 0.0;
   pink_refined_b5_ = 0.0;
   pink_refined_b6_ = 0.0;
+  pink_economy_b0_ = 0.0;
+  pink_economy_b1_ = 0.0;
+  pink_economy_b2_ = 0.0;
   red_leaky_integrator_prev_ = 0.0;
   note_map_.clear();
 }
@@ -279,78 +522,52 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
                        ev->channel,
                        ev->key,
                        ev->value );
-        if( ev->param_id == 0 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_sine_wave_mix_;
-          ( *val_ptr ) = ev->value;
-        } else if( ev->param_id == 1 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_square_wave_mix_;
-          ( *val_ptr ) = ev->value;
+        if( ev->param_id == 1 ) {
+          state_.set_synth_sine_wave_type( static_cast< SGPNG::SineWaveType >( ev->value ) );
         } else if( ev->param_id == 2 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_saw_wave_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_sine_wave_mix( ev->value );
         } else if( ev->param_id == 3 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_triangle_wave_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_square_wave_type( static_cast< SGPNG::SquareWaveType >( ev->value ) );
         } else if( ev->param_id == 4 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_white_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_square_wave_pwm( ev->value );
         } else if( ev->param_id == 5 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_pink_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_square_wave_mix( ev->value );
         } else if( ev->param_id == 6 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_red_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_saw_wave_type( static_cast< SGPNG::SawWaveType >( ev->value ) );
         } else if( ev->param_id == 7 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_blue_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_saw_wave_mix( ev->value );
         } else if( ev->param_id == 8 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_violet_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_triangle_wave_type( static_cast< SGPNG::TriangleWaveType >( ev->value ) );
         } else if( ev->param_id == 9 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_grey_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_triangle_wave_mix( ev->value );
         } else if( ev->param_id == 10 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_velvet_noise_mix_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_white_noise_type( static_cast< SGPNG::WhiteNoiseType >( ev->value ) );
         } else if( ev->param_id == 11 ) {
-          double* val_ptr = static_cast< double* >( ev->cookie );
-          [[unlikely]]
-          if( !val_ptr )
-            val_ptr = &synth_square_wave_pwm_;
-          ( *val_ptr ) = ev->value;
+          state_.set_synth_white_noise_mix( ev->value );
+        } else if( ev->param_id == 12 ) {
+          state_.set_synth_pink_noise_type( static_cast< SGPNG::PinkNoiseType >( ev->value ) );
+        } else if( ev->param_id == 13 ) {
+          state_.set_synth_pink_noise_mix( ev->value );
+        } else if( ev->param_id == 14 ) {
+          state_.set_synth_red_noise_type( static_cast< SGPNG::RedNoiseType >( ev->value ) );
+        } else if( ev->param_id == 15 ) {
+          state_.set_synth_red_noise_mix( ev->value );
+        } else if( ev->param_id == 16 ) {
+          state_.set_synth_blue_noise_type( static_cast< SGPNG::BlueNoiseType >( ev->value ) );
+        } else if( ev->param_id == 17 ) {
+          state_.set_synth_blue_noise_mix( ev->value );
+        } else if( ev->param_id == 18 ) {
+          state_.set_synth_violet_noise_type( static_cast< SGPNG::VioletNoiseType >( ev->value ) );
+        } else if( ev->param_id == 19 ) {
+          state_.set_synth_violet_noise_mix( ev->value );
+        } else if( ev->param_id == 20 ) {
+          state_.set_synth_grey_noise_type( static_cast< SGPNG::GreyNoiseType >( ev->value ) );
+        } else if( ev->param_id == 21 ) {
+          state_.set_synth_grey_noise_mix( ev->value );
+        } else if( ev->param_id == 22 ) {
+          state_.set_synth_velvet_noise_type( static_cast< SGPNG::VelvetNoiseType >( ev->value ) );
+        } else if( ev->param_id == 23 ) {
+          state_.set_synth_velvet_noise_mix( ev->value );
         }
         break;
       }
@@ -583,8 +800,9 @@ bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_po
 
 uint32_t NoiseGenerator::params_count( void ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
-  // we have 12 params
-  return 12;
+  // adjust according to noise_generator.proto
+  // while we could make it dynamic, without explicit gui i'd rather not
+  return 23;
 }
 
 bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
@@ -600,124 +818,234 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
     return false;
   switch( param_index ) {
     case 0:
-      out_param_info->id = 0;
+      out_param_info->id = 1;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Sine Wave" );
+      out_param_info->min_value = static_cast< double >( SGPNG::SineWaveType::NoiseGenerator_SineWaveType_StdSin );
+      out_param_info->max_value = static_cast< double >( SGPNG::SineWaveType::NoiseGenerator_SineWaveType_CSin );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 1:
+      out_param_info->id = 2;
       out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_sine_wave_mix_;
+      out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Sine Wave" );
       out_param_info->min_value = 0.0;
       out_param_info->max_value = 1.0;
-      out_param_info->default_value = 1.0;
-      break;
-    case 1:
-      out_param_info->id = 1;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_square_wave_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
+      out_param_info->default_value = out_param_info->min_value;
       break;
     case 2:
-      out_param_info->id = 2;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_saw_wave_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Saw Wave" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
+      out_param_info->id = 3;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
+      out_param_info->min_value = static_cast< double >( SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth );
+      out_param_info->max_value = static_cast< double >( SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth );
+      out_param_info->default_value = out_param_info->min_value;
       break;
     case 3:
-      out_param_info->id = 3;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_triangle_wave_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Triangle Wave" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 4:
       out_param_info->id = 4;
       out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_white_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "White Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 5:
-      out_param_info->id = 5;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_pink_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 6:
-      out_param_info->id = 6;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_red_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Red Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 7:
-      out_param_info->id = 7;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_blue_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Blue Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 8:
-      out_param_info->id = 8;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_violet_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Violet Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 9:
-      out_param_info->id = 9;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_grey_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Grey Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 10:
-      out_param_info->id = 10;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_velvet_noise_mix_;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Velvet Noise" );
-      out_param_info->min_value = 0.0;
-      out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.0;
-      break;
-    case 11:
-      out_param_info->id = 11;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
-      out_param_info->cookie = &synth_square_wave_pwm_;
+      out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "PWM" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
       out_param_info->min_value = 0.0;
       out_param_info->max_value = 1.0;
-      out_param_info->default_value = 0.5;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 4:
+      out_param_info->id = 5;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 5:
+      out_param_info->id = 6;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Saw Wave" );
+      out_param_info->min_value = static_cast< double >( SGPNG::SawWaveType::NoiseGenerator_SawWaveType_Phase );
+      out_param_info->max_value = static_cast< double >( SGPNG::SawWaveType::NoiseGenerator_SawWaveType_InversePhase );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 6:
+      out_param_info->id = 7;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Saw Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 7:
+      out_param_info->id = 8;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Triangle Wave" );
+      out_param_info->min_value = static_cast< double >( SGPNG::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp );
+      out_param_info->max_value = static_cast< double >( SGPNG::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 8:
+      out_param_info->id = 9;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Triangle Wave" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 9:
+      out_param_info->id = 10;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "White Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom );
+      out_param_info->max_value = static_cast< double >( SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 10:
+      out_param_info->id = 11;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "White Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 11:
+      out_param_info->id = 12;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined );
+      out_param_info->max_value = static_cast< double >( SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 12:
+      out_param_info->id = 13;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 13:
+      out_param_info->id = 14;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Red Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration );
+      out_param_info->max_value = static_cast< double >( SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 14:
+      out_param_info->id = 15;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Red Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 15:
+      out_param_info->id = 16;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Blue Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster );
+      out_param_info->max_value = static_cast< double >( SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 16:
+      out_param_info->id = 17;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Blue Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 17:
+      out_param_info->id = 18;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Violet Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference );
+      out_param_info->max_value = static_cast< double >( SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 18:
+      out_param_info->id = 19;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Violet Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 19:
+      out_param_info->id = 20;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Grey Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter );
+      out_param_info->max_value = static_cast< double >( SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 20:
+      out_param_info->id = 21;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Grey Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 21:
+      out_param_info->id = 22;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS | CLAP_PARAM_IS_ENUM;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Velvet Noise" );
+      out_param_info->min_value = static_cast< double >( SGPNG::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse );
+      out_param_info->max_value = static_cast< double >( SGPNG::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 22:
+      out_param_info->id = 23;
+      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Mix" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Velvet Noise" );
+      out_param_info->min_value = 0.0;
+      out_param_info->max_value = 1.0;
+      out_param_info->default_value = out_param_info->min_value;
       break;
   }
   return true;
@@ -732,41 +1060,74 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
                  static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
-  if( param_id == 0 ) {
-    ( *out_value ) = synth_sine_wave_mix_;
-    return true;
-  } else if( param_id == 1 ) {
-    ( *out_value ) = synth_square_wave_mix_;
+  if( param_id == 1 ) {
+    ( *out_value ) = state_.synth_sine_wave_type();
     return true;
   } else if( param_id == 2 ) {
-    ( *out_value ) = synth_saw_wave_mix_;
+    ( *out_value ) = state_.synth_sine_wave_mix();
     return true;
   } else if( param_id == 3 ) {
-    ( *out_value ) = synth_triangle_wave_mix_;
+    ( *out_value ) = state_.synth_square_wave_type();
     return true;
   } else if( param_id == 4 ) {
-    ( *out_value ) = synth_white_noise_mix_;
+    ( *out_value ) = state_.synth_square_wave_pwm();
     return true;
   } else if( param_id == 5 ) {
-    ( *out_value ) = synth_pink_noise_mix_;
+    ( *out_value ) = state_.synth_square_wave_mix();
     return true;
   } else if( param_id == 6 ) {
-    ( *out_value ) = synth_red_noise_mix_;
+    ( *out_value ) = state_.synth_saw_wave_type();
     return true;
   } else if( param_id == 7 ) {
-    ( *out_value ) = synth_blue_noise_mix_;
+    ( *out_value ) = state_.synth_saw_wave_mix();
     return true;
   } else if( param_id == 8 ) {
-    ( *out_value ) = synth_violet_noise_mix_;
+    ( *out_value ) = state_.synth_triangle_wave_type();
     return true;
   } else if( param_id == 9 ) {
-    ( *out_value ) = synth_grey_noise_mix_;
+    ( *out_value ) = state_.synth_triangle_wave_mix();
     return true;
   } else if( param_id == 10 ) {
-    ( *out_value ) = synth_velvet_noise_mix_;
+    ( *out_value ) = state_.synth_white_noise_type();
     return true;
   } else if( param_id == 11 ) {
-    ( *out_value ) = synth_square_wave_pwm_;
+    ( *out_value ) = state_.synth_white_noise_mix();
+    return true;
+  } else if( param_id == 12 ) {
+    ( *out_value ) = state_.synth_pink_noise_type();
+    return true;
+  } else if( param_id == 13 ) {
+    ( *out_value ) = state_.synth_pink_noise_mix();
+    return true;
+  } else if( param_id == 14 ) {
+    ( *out_value ) = state_.synth_red_noise_type();
+    return true;
+  } else if( param_id == 15 ) {
+    ( *out_value ) = state_.synth_red_noise_mix();
+    return true;
+  } else if( param_id == 16 ) {
+    ( *out_value ) = state_.synth_blue_noise_type();
+    return true;
+  } else if( param_id == 17 ) {
+    ( *out_value ) = state_.synth_blue_noise_mix();
+    return true;
+  } else if( param_id == 18 ) {
+    ( *out_value ) = state_.synth_violet_noise_type();
+    return true;
+  } else if( param_id == 19 ) {
+    ( *out_value ) = state_.synth_violet_noise_mix();
+    return true;
+  } else if( param_id == 20 ) {
+    ( *out_value ) = state_.synth_grey_noise_type();
+    return true;
+  } else if( param_id == 21 ) {
+    ( *out_value ) = state_.synth_grey_noise_mix();
+    return true;
+  } else if( param_id == 22 ) {
+    ( *out_value ) = state_.synth_velvet_noise_type();
+    return true;
+  } else if( param_id == 23 ) {
+    ( *out_value ) = state_.synth_velvet_noise_mix();
     return true;
   }
   return false;
@@ -783,36 +1144,123 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
                  out_buffer_capacity );
   if( !out_buffer || ( out_buffer_capacity == 0 ) )
     return false;
-  std::function< bool( double, char*, uint32_t ) > to_percent_string = []( double value, char* out_buffer, uint32_t out_buffer_capacity ) {
-    return 0 <= std::snprintf( out_buffer, out_buffer_capacity, "%f %%", value * 100.0 );
-  };
-  bool ret = false;
-  if( param_id == 0 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
-  } else if( param_id == 1 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+  if( param_id == 1 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::SineWaveType_Name( static_cast< SGPNG::SineWaveType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 2 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_sine_wave_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 3 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::SquareWaveType_Name( static_cast< SGPNG::SquareWaveType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 4 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_square_wave_pwm() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 5 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_square_wave_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 6 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::SawWaveType_Name( static_cast< SGPNG::SawWaveType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 7 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_saw_wave_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 8 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::TriangleWaveType_Name( static_cast< SGPNG::TriangleWaveType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 9 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_triangle_wave_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 10 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::WhiteNoiseType_Name( static_cast< SGPNG::WhiteNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   } else if( param_id == 11 ) {
-    ret = ret || to_percent_string( value, out_buffer, out_buffer_capacity );
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_white_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 12 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::PinkNoiseType_Name( static_cast< SGPNG::PinkNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 13 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_pink_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 14 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::RedNoiseType_Name( static_cast< SGPNG::RedNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 15 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_red_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 16 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::BlueNoiseType_Name( static_cast< SGPNG::BlueNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 17 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_blue_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 18 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::VioletNoiseType_Name( static_cast< SGPNG::VioletNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 19 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_violet_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 20 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::GreyNoiseType_Name( static_cast< SGPNG::GreyNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 21 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_grey_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 22 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = SGPNG::VelvetNoiseType_Name( static_cast< SGPNG::VelvetNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 23 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_velvet_noise_mix() );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
   }
-  return ret;
+  return false;
 }
 
 bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
@@ -825,65 +1273,109 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
                  static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
-  std::function< bool( std::string const&, double* ) > from_float_string = []( std::string const& param_value_text, double* out_value ) {
+  std::function< bool( std::string const&, double* ) > text_to_double = []( std::string const& param_value_text, double* out_value ) {
     try {
       ( *out_value ) = std::stod( param_value_text );
-      if( ( *out_value ) > 1.0 )
+      if( ( *out_value ) > 1.0 ) {
         ( *out_value ) = ( *out_value ) / 100.0;
+      }
       return true;
     } catch( std::exception const& ) {
       return false;
     }
   };
-  std::function< bool( std::string const&, double* ) > from_percent_string = []( std::string const& param_value_text, double* out_value ) {
-    if( param_value_text.find( "%" ) == std::string::npos )
-      return false;
-    try {
-      ( *out_value ) = std::stod( param_value_text ) / 100.0;
-      return true;
-    } catch( std::exception const& ) {
-      return false;
-    }
-  };
-  bool ret = false;
-  if( param_id == 0 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
-  } else if( param_id == 1 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+  if( param_id == 1 ) {
+    SGPNG::SineWaveType out;
+    bool ret = SGPNG::SineWaveType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
   } else if( param_id == 2 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    return text_to_double( param_value_text, out_value );
   } else if( param_id == 3 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    SGPNG::SquareWaveType out;
+    bool ret = SGPNG::SquareWaveType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
   } else if( param_id == 4 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    return text_to_double( param_value_text, out_value );
   } else if( param_id == 5 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    return text_to_double( param_value_text, out_value );
   } else if( param_id == 6 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    SGPNG::SawWaveType out;
+    bool ret = SGPNG::SawWaveType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
   } else if( param_id == 7 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    return text_to_double( param_value_text, out_value );
   } else if( param_id == 8 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    SGPNG::TriangleWaveType out;
+    bool ret = SGPNG::TriangleWaveType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
   } else if( param_id == 9 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    return text_to_double( param_value_text, out_value );
   } else if( param_id == 10 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    SGPNG::WhiteNoiseType out;
+    bool ret = SGPNG::WhiteNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
   } else if( param_id == 11 ) {
-    ret = ret || from_percent_string( param_value_text, out_value );
-    ret = ret || from_float_string( param_value_text, out_value );
+    return text_to_double( param_value_text, out_value );
+  } else if( param_id == 12 ) {
+    SGPNG::PinkNoiseType out;
+    bool ret = SGPNG::PinkNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
+  } else if( param_id == 13 ) {
+    return text_to_double( param_value_text, out_value );
+  } else if( param_id == 14 ) {
+    SGPNG::RedNoiseType out;
+    bool ret = SGPNG::RedNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
+  } else if( param_id == 15 ) {
+    return text_to_double( param_value_text, out_value );
+  } else if( param_id == 16 ) {
+    SGPNG::BlueNoiseType out;
+    bool ret = SGPNG::BlueNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
+  } else if( param_id == 17 ) {
+    return text_to_double( param_value_text, out_value );
+  } else if( param_id == 18 ) {
+    SGPNG::VioletNoiseType out;
+    bool ret = SGPNG::VioletNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
+  } else if( param_id == 19 ) {
+    return text_to_double( param_value_text, out_value );
+  } else if( param_id == 20 ) {
+    SGPNG::GreyNoiseType out;
+    bool ret = SGPNG::GreyNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
+  } else if( param_id == 21 ) {
+    return text_to_double( param_value_text, out_value );
+  } else if( param_id == 22 ) {
+    SGPNG::VelvetNoiseType out;
+    bool ret = SGPNG::VelvetNoiseType_Parse( param_value_text, &out );
+    if( ret )
+      ( *out_value ) = static_cast< double >( out );
+    return ret;
+  } else if( param_id == 23 ) {
+    return text_to_double( param_value_text, out_value );
   }
-  return ret;
+  return false;
 }
 
 void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
@@ -904,26 +1396,20 @@ void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_ev
 bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
-  ret = ( ( -1 ) != stream->write( stream, &synth_sine_wave_mix_, sizeof( synth_sine_wave_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_square_wave_mix_, sizeof( synth_square_wave_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_saw_wave_mix_, sizeof( synth_saw_wave_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_triangle_wave_mix_, sizeof( synth_triangle_wave_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_white_noise_mix_, sizeof( synth_white_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_pink_noise_mix_, sizeof( synth_pink_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_red_noise_mix_, sizeof( synth_red_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_blue_noise_mix_, sizeof( synth_blue_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_violet_noise_mix_, sizeof( synth_violet_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_grey_noise_mix_, sizeof( synth_grey_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_velvet_noise_mix_, sizeof( synth_velvet_noise_mix_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &synth_square_wave_pwm_, sizeof( synth_square_wave_pwm_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b3_, sizeof( pink_refined_b3_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b4_, sizeof( pink_refined_b4_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) ) ) && ret;
-  ret = ( ( -1 ) != stream->write( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) ) ) && ret;
+  std::string buffer{};
+  if( !state_.SerializeToString( &buffer ) ) {
+    ret = false;
+  } else {
+    int64_t written = 0;
+    while( written < static_cast< int64_t >( buffer.size() ) ) {
+      int64_t tmp = stream->write( stream, buffer.data() + written, buffer.size() - written );
+      if( tmp < 0 ) {
+        return false;
+      }
+      written += tmp;
+    }
+    ret = written == static_cast< int64_t >( buffer.size() );
+  }
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }
@@ -931,26 +1417,17 @@ bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
 bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
-  ret = ( 0 < stream->read( stream, &synth_sine_wave_mix_, sizeof( synth_sine_wave_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_square_wave_mix_, sizeof( synth_square_wave_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_saw_wave_mix_, sizeof( synth_saw_wave_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_triangle_wave_mix_, sizeof( synth_triangle_wave_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_white_noise_mix_, sizeof( synth_white_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_pink_noise_mix_, sizeof( synth_pink_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_red_noise_mix_, sizeof( synth_red_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_blue_noise_mix_, sizeof( synth_blue_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_violet_noise_mix_, sizeof( synth_violet_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_grey_noise_mix_, sizeof( synth_grey_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_velvet_noise_mix_, sizeof( synth_velvet_noise_mix_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &synth_square_wave_pwm_, sizeof( synth_square_wave_pwm_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b0_, sizeof( pink_refined_b0_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b1_, sizeof( pink_refined_b1_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b2_, sizeof( pink_refined_b2_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b3_, sizeof( pink_refined_b3_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b4_, sizeof( pink_refined_b4_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b5_, sizeof( pink_refined_b5_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &pink_refined_b6_, sizeof( pink_refined_b6_ ) ) ) && ret;
-  ret = ( 0 < stream->read( stream, &red_leaky_integrator_prev_, sizeof( red_leaky_integrator_prev_ ) ) ) && ret;
+  std::string buffer{};
+  std::array< char, 4096 > temp;
+  while( true ) {
+    int64_t n = stream->read( stream, temp.data(), temp.size() );
+    if( n <= 0 ) {
+      break;
+    }
+    buffer.append( temp.data(), static_cast< size_t >( n ) );
+  }
+  ret = ret && ( buffer.size() > 0 );
+  ret = ret && state_.ParseFromString( buffer );
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }

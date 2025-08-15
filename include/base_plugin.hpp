@@ -260,6 +260,7 @@ class BasePlugin {
   void const* get_extension( std::string const& id ) const;
 
   protected:
+  // internal values (no need to save these)
   std::shared_ptr< spdlog::logger > logger_ = nullptr;
   std::atomic_bool active_ = true;
   std::atomic_bool process_ = false;
