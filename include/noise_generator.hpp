@@ -12,6 +12,7 @@ extern "C" {
 class NoiseGenerator : BasePlugin {
   using _base_ = BasePlugin;
   using _base_::_base_;
+  using _pb_ = SfgGenerator::Proto::NoiseGenerator;
 
   // see `clap_event_note_t`, this is a map of key to note
   struct NoteData {
@@ -77,7 +78,7 @@ class NoiseGenerator : BasePlugin {
   // members to save and load
   protected:
   // params
-  SfgGenerator::Proto::NoiseGenerator state_;
+  _pb_ state_;
 
   // internal values (no need to save these)
   double pink_refined_b0_ = 0.0;

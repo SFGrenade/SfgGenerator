@@ -6,8 +6,6 @@
 #include "clap/process.h"
 #include "noise_generator.pb.h"
 
-using SGPNG = SfgGenerator::Proto::NoiseGenerator;
-
 NoiseGenerator::NoiseGenerator() : _base_() {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
@@ -226,9 +224,9 @@ double velvet_noise_SporadicImpulse( std::uniform_real_distribution< double >& d
 
 double NoiseGenerator::get_sample_sine_wave( double phase ) {
   switch( state_.synth_sine_wave_type() ) {
-    case SGPNG::SineWaveType::NoiseGenerator_SineWaveType_StdSin:
+    case _pb_::SineWaveType::NoiseGenerator_SineWaveType_StdSin:
       return SFG_PRIVATE::sine_wave_StdSin( phase, state_.synth_sine_wave_mix() );
-    case SGPNG::SineWaveType::NoiseGenerator_SineWaveType_CSin:
+    case _pb_::SineWaveType::NoiseGenerator_SineWaveType_CSin:
       return SFG_PRIVATE::sine_wave_CSin( phase, state_.synth_sine_wave_mix() );
     default:
       return 0.0;
@@ -237,9 +235,9 @@ double NoiseGenerator::get_sample_sine_wave( double phase ) {
 
 double NoiseGenerator::get_sample_square_wave( double phase ) {
   switch( state_.synth_square_wave_type() ) {
-    case SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth:
+    case _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth:
       return SFG_PRIVATE::square_wave_PhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
-    case SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth:
+    case _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth:
       return SFG_PRIVATE::square_wave_InversePhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
     default:
       return 0.0;
@@ -248,9 +246,9 @@ double NoiseGenerator::get_sample_square_wave( double phase ) {
 
 double NoiseGenerator::get_sample_saw_wave( double phase ) {
   switch( state_.synth_saw_wave_type() ) {
-    case SGPNG::SawWaveType::NoiseGenerator_SawWaveType_Phase:
+    case _pb_::SawWaveType::NoiseGenerator_SawWaveType_Phase:
       return SFG_PRIVATE::saw_wave_Phase( phase, state_.synth_saw_wave_mix() );
-    case SGPNG::SawWaveType::NoiseGenerator_SawWaveType_InversePhase:
+    case _pb_::SawWaveType::NoiseGenerator_SawWaveType_InversePhase:
       return SFG_PRIVATE::saw_wave_InversePhase( phase, state_.synth_saw_wave_mix() );
     default:
       return 0.0;
@@ -259,7 +257,7 @@ double NoiseGenerator::get_sample_saw_wave( double phase ) {
 
 double NoiseGenerator::get_sample_triangle_wave( double phase ) {
   switch( state_.synth_triangle_wave_type() ) {
-    case SGPNG::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp:
+    case _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp:
       return SFG_PRIVATE::triangle_wave_ChunkLerp( phase, state_.synth_triangle_wave_mix() );
     default:
       return 0.0;
@@ -268,9 +266,9 @@ double NoiseGenerator::get_sample_triangle_wave( double phase ) {
 
 double NoiseGenerator::get_sample_white_noise( double phase ) {
   switch( state_.synth_white_noise_type() ) {
-    case SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom:
+    case _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom:
       return SFG_PRIVATE::white_noise_StdRandom( dist_, eng_, state_.synth_white_noise_mix() );
-    case SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand:
+    case _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand:
       return SFG_PRIVATE::white_noise_RandMaxRand( state_.synth_white_noise_mix() );
     default:
       return 0.0;
@@ -279,7 +277,7 @@ double NoiseGenerator::get_sample_white_noise( double phase ) {
 
 double NoiseGenerator::get_sample_pink_noise( double phase ) {
   switch( state_.synth_pink_noise_type() ) {
-    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined:
+    case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined:
       return SFG_PRIVATE::pink_noise_PaulKellettRefined( dist_,
                                                          eng_,
                                                          pink_refined_b0_,
@@ -290,11 +288,11 @@ double NoiseGenerator::get_sample_pink_noise( double phase ) {
                                                          pink_refined_b5_,
                                                          pink_refined_b6_,
                                                          state_.synth_pink_noise_mix() );
-    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettEconomy:
+    case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettEconomy:
       return SFG_PRIVATE::pink_noise_PaulKellettEconomy( dist_, eng_, pink_economy_b0_, pink_economy_b1_, pink_economy_b2_, state_.synth_pink_noise_mix() );
-    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_VossMcCartney:
+    case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_VossMcCartney:
       return SFG_PRIVATE::pink_noise_VossMcCartney( dist_, eng_, state_.synth_pink_noise_mix() );
-    case SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation:
+    case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation:
       return SFG_PRIVATE::pink_noise_IirFilterApproximation( dist_, eng_, state_.synth_pink_noise_mix() );
     default:
       return 0.0;
@@ -303,15 +301,15 @@ double NoiseGenerator::get_sample_pink_noise( double phase ) {
 
 double NoiseGenerator::get_sample_red_noise( double phase ) {
   switch( state_.synth_red_noise_type() ) {
-    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration:
+    case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration:
       return SFG_PRIVATE::red_noise_BasicIntegration( dist_, eng_, state_.synth_red_noise_mix() );
-    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_LeakyIntegration:
+    case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_LeakyIntegration:
       return SFG_PRIVATE::red_noise_LeakyIntegration( dist_, eng_, state_.synth_red_noise_mix() );
-    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_IntegerWalk:
+    case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_IntegerWalk:
       return SFG_PRIVATE::red_noise_IntegerWalk( dist_, eng_, state_.synth_red_noise_mix() );
-    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_OnePoleIirFilter:
+    case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_OnePoleIirFilter:
       return SFG_PRIVATE::red_noise_OnePoleIirFilter( dist_, eng_, state_.synth_red_noise_mix() );
-    case SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp:
+    case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp:
       return SFG_PRIVATE::red_noise_CumulativeWithClamp( dist_, eng_, state_.synth_red_noise_mix() );
     default:
       return 0.0;
@@ -320,15 +318,15 @@ double NoiseGenerator::get_sample_red_noise( double phase ) {
 
 double NoiseGenerator::get_sample_blue_noise( double phase ) {
   switch( state_.synth_blue_noise_type() ) {
-    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster:
+    case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster:
       return SFG_PRIVATE::blue_noise_VoidAndCluster( dist_, eng_, state_.synth_blue_noise_mix() );
-    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_PoissonDiskSampling:
+    case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PoissonDiskSampling:
       return SFG_PRIVATE::blue_noise_PoissonDiskSampling( dist_, eng_, state_.synth_blue_noise_mix() );
-    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_SimpleSpectralShaping:
+    case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_SimpleSpectralShaping:
       return SFG_PRIVATE::blue_noise_SimpleSpectralShaping( dist_, eng_, state_.synth_blue_noise_mix() );
-    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_R2JitteredSampling:
+    case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_R2JitteredSampling:
       return SFG_PRIVATE::blue_noise_R2JitteredSampling( dist_, eng_, state_.synth_blue_noise_mix() );
-    case SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise:
+    case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise:
       return SFG_PRIVATE::blue_noise_PermutedGradientNoise( dist_, eng_, state_.synth_blue_noise_mix() );
     default:
       return 0.0;
@@ -337,9 +335,9 @@ double NoiseGenerator::get_sample_blue_noise( double phase ) {
 
 double NoiseGenerator::get_sample_violet_noise( double phase ) {
   switch( state_.synth_violet_noise_type() ) {
-    case SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference:
+    case _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference:
       return SFG_PRIVATE::violet_noise_FirstOrderDifference( dist_, eng_, state_.synth_violet_noise_mix() );
-    case SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter:
+    case _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter:
       return SFG_PRIVATE::violet_noise_FirstOrderIirFilter( dist_, eng_, state_.synth_violet_noise_mix() );
     default:
       return 0.0;
@@ -348,13 +346,13 @@ double NoiseGenerator::get_sample_violet_noise( double phase ) {
 
 double NoiseGenerator::get_sample_grey_noise( double phase ) {
   switch( state_.synth_grey_noise_type() ) {
-    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter:
+    case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter:
       return SFG_PRIVATE::grey_noise_PsychoacousticFilter( dist_, eng_, state_.synth_grey_noise_mix() );
-    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_AweightingInversion:
+    case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_AweightingInversion:
       return SFG_PRIVATE::grey_noise_AweightingInversion( dist_, eng_, state_.synth_grey_noise_mix() );
-    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_MultiBandpass:
+    case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_MultiBandpass:
       return SFG_PRIVATE::grey_noise_MultiBandpass( dist_, eng_, state_.synth_grey_noise_mix() );
-    case SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation:
+    case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation:
       return SFG_PRIVATE::grey_noise_EqualLoudnessApproximation( dist_, eng_, state_.synth_grey_noise_mix() );
     default:
       return 0.0;
@@ -363,7 +361,7 @@ double NoiseGenerator::get_sample_grey_noise( double phase ) {
 
 double NoiseGenerator::get_sample_velvet_noise( double phase ) {
   switch( state_.synth_velvet_noise_type() ) {
-    case SGPNG::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse:
+    case _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse:
       return SFG_PRIVATE::velvet_noise_SporadicImpulse( dist_, eng_, state_.synth_velvet_noise_mix() );
     default:
       return 0.0;
@@ -523,49 +521,49 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
                        ev->key,
                        ev->value );
         if( ev->param_id == 1 ) {
-          state_.set_synth_sine_wave_type( static_cast< SGPNG::SineWaveType >( ev->value ) );
+          state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( ev->value ) );
         } else if( ev->param_id == 2 ) {
           state_.set_synth_sine_wave_mix( ev->value );
         } else if( ev->param_id == 3 ) {
-          state_.set_synth_square_wave_type( static_cast< SGPNG::SquareWaveType >( ev->value ) );
+          state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( ev->value ) );
         } else if( ev->param_id == 4 ) {
           state_.set_synth_square_wave_pwm( ev->value );
         } else if( ev->param_id == 5 ) {
           state_.set_synth_square_wave_mix( ev->value );
         } else if( ev->param_id == 6 ) {
-          state_.set_synth_saw_wave_type( static_cast< SGPNG::SawWaveType >( ev->value ) );
+          state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( ev->value ) );
         } else if( ev->param_id == 7 ) {
           state_.set_synth_saw_wave_mix( ev->value );
         } else if( ev->param_id == 8 ) {
-          state_.set_synth_triangle_wave_type( static_cast< SGPNG::TriangleWaveType >( ev->value ) );
+          state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( ev->value ) );
         } else if( ev->param_id == 9 ) {
           state_.set_synth_triangle_wave_mix( ev->value );
         } else if( ev->param_id == 10 ) {
-          state_.set_synth_white_noise_type( static_cast< SGPNG::WhiteNoiseType >( ev->value ) );
+          state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( ev->value ) );
         } else if( ev->param_id == 11 ) {
           state_.set_synth_white_noise_mix( ev->value );
         } else if( ev->param_id == 12 ) {
-          state_.set_synth_pink_noise_type( static_cast< SGPNG::PinkNoiseType >( ev->value ) );
+          state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
         } else if( ev->param_id == 13 ) {
           state_.set_synth_pink_noise_mix( ev->value );
         } else if( ev->param_id == 14 ) {
-          state_.set_synth_red_noise_type( static_cast< SGPNG::RedNoiseType >( ev->value ) );
+          state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( ev->value ) );
         } else if( ev->param_id == 15 ) {
           state_.set_synth_red_noise_mix( ev->value );
         } else if( ev->param_id == 16 ) {
-          state_.set_synth_blue_noise_type( static_cast< SGPNG::BlueNoiseType >( ev->value ) );
+          state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( ev->value ) );
         } else if( ev->param_id == 17 ) {
           state_.set_synth_blue_noise_mix( ev->value );
         } else if( ev->param_id == 18 ) {
-          state_.set_synth_violet_noise_type( static_cast< SGPNG::VioletNoiseType >( ev->value ) );
+          state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( ev->value ) );
         } else if( ev->param_id == 19 ) {
           state_.set_synth_violet_noise_mix( ev->value );
         } else if( ev->param_id == 20 ) {
-          state_.set_synth_grey_noise_type( static_cast< SGPNG::GreyNoiseType >( ev->value ) );
+          state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( ev->value ) );
         } else if( ev->param_id == 21 ) {
           state_.set_synth_grey_noise_mix( ev->value );
         } else if( ev->param_id == 22 ) {
-          state_.set_synth_velvet_noise_type( static_cast< SGPNG::VelvetNoiseType >( ev->value ) );
+          state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( ev->value ) );
         } else if( ev->param_id == 23 ) {
           state_.set_synth_velvet_noise_mix( ev->value );
         }
@@ -823,8 +821,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Sine Wave" );
-      out_param_info->min_value = static_cast< double >( SGPNG::SineWaveType::NoiseGenerator_SineWaveType_StdSin );
-      out_param_info->max_value = static_cast< double >( SGPNG::SineWaveType::NoiseGenerator_SineWaveType_CSin );
+      out_param_info->min_value = static_cast< double >( _pb_::SineWaveType::NoiseGenerator_SineWaveType_StdSin );
+      out_param_info->max_value = static_cast< double >( _pb_::SineWaveType::NoiseGenerator_SineWaveType_CSin );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 1:
@@ -843,8 +841,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Square Wave" );
-      out_param_info->min_value = static_cast< double >( SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth );
-      out_param_info->max_value = static_cast< double >( SGPNG::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth );
+      out_param_info->min_value = static_cast< double >( _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth );
+      out_param_info->max_value = static_cast< double >( _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 3:
@@ -873,8 +871,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Saw Wave" );
-      out_param_info->min_value = static_cast< double >( SGPNG::SawWaveType::NoiseGenerator_SawWaveType_Phase );
-      out_param_info->max_value = static_cast< double >( SGPNG::SawWaveType::NoiseGenerator_SawWaveType_InversePhase );
+      out_param_info->min_value = static_cast< double >( _pb_::SawWaveType::NoiseGenerator_SawWaveType_Phase );
+      out_param_info->max_value = static_cast< double >( _pb_::SawWaveType::NoiseGenerator_SawWaveType_InversePhase );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 6:
@@ -893,8 +891,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Triangle Wave" );
-      out_param_info->min_value = static_cast< double >( SGPNG::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp );
-      out_param_info->max_value = static_cast< double >( SGPNG::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp );
+      out_param_info->min_value = static_cast< double >( _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp );
+      out_param_info->max_value = static_cast< double >( _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 8:
@@ -913,8 +911,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "White Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom );
-      out_param_info->max_value = static_cast< double >( SGPNG::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand );
+      out_param_info->min_value = static_cast< double >( _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom );
+      out_param_info->max_value = static_cast< double >( _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 10:
@@ -933,8 +931,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined );
-      out_param_info->max_value = static_cast< double >( SGPNG::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation );
+      out_param_info->min_value = static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined );
+      out_param_info->max_value = static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 12:
@@ -953,8 +951,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Red Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration );
-      out_param_info->max_value = static_cast< double >( SGPNG::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp );
+      out_param_info->min_value = static_cast< double >( _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration );
+      out_param_info->max_value = static_cast< double >( _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 14:
@@ -973,8 +971,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Blue Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster );
-      out_param_info->max_value = static_cast< double >( SGPNG::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise );
+      out_param_info->min_value = static_cast< double >( _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster );
+      out_param_info->max_value = static_cast< double >( _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 16:
@@ -993,8 +991,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Violet Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference );
-      out_param_info->max_value = static_cast< double >( SGPNG::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter );
+      out_param_info->min_value = static_cast< double >( _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference );
+      out_param_info->max_value = static_cast< double >( _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 18:
@@ -1013,8 +1011,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Grey Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter );
-      out_param_info->max_value = static_cast< double >( SGPNG::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation );
+      out_param_info->min_value = static_cast< double >( _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter );
+      out_param_info->max_value = static_cast< double >( _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 20:
@@ -1033,8 +1031,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->cookie = nullptr;
       std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Type" );
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Velvet Noise" );
-      out_param_info->min_value = static_cast< double >( SGPNG::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse );
-      out_param_info->max_value = static_cast< double >( SGPNG::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse );
+      out_param_info->min_value = static_cast< double >( _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse );
+      out_param_info->max_value = static_cast< double >( _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse );
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 22:
@@ -1146,7 +1144,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return false;
   if( param_id == 1 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::SineWaveType_Name( static_cast< SGPNG::SineWaveType >( value ) );
+    std::string tmp_str = _pb_::SineWaveType_Name( static_cast< _pb_::SineWaveType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 2 ) {
@@ -1156,7 +1154,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 3 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::SquareWaveType_Name( static_cast< SGPNG::SquareWaveType >( value ) );
+    std::string tmp_str = _pb_::SquareWaveType_Name( static_cast< _pb_::SquareWaveType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 4 ) {
@@ -1171,7 +1169,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 6 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::SawWaveType_Name( static_cast< SGPNG::SawWaveType >( value ) );
+    std::string tmp_str = _pb_::SawWaveType_Name( static_cast< _pb_::SawWaveType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 7 ) {
@@ -1181,7 +1179,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 8 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::TriangleWaveType_Name( static_cast< SGPNG::TriangleWaveType >( value ) );
+    std::string tmp_str = _pb_::TriangleWaveType_Name( static_cast< _pb_::TriangleWaveType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 9 ) {
@@ -1191,7 +1189,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 10 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::WhiteNoiseType_Name( static_cast< SGPNG::WhiteNoiseType >( value ) );
+    std::string tmp_str = _pb_::WhiteNoiseType_Name( static_cast< _pb_::WhiteNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 11 ) {
@@ -1201,7 +1199,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 12 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::PinkNoiseType_Name( static_cast< SGPNG::PinkNoiseType >( value ) );
+    std::string tmp_str = _pb_::PinkNoiseType_Name( static_cast< _pb_::PinkNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 13 ) {
@@ -1211,7 +1209,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 14 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::RedNoiseType_Name( static_cast< SGPNG::RedNoiseType >( value ) );
+    std::string tmp_str = _pb_::RedNoiseType_Name( static_cast< _pb_::RedNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 15 ) {
@@ -1221,7 +1219,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 16 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::BlueNoiseType_Name( static_cast< SGPNG::BlueNoiseType >( value ) );
+    std::string tmp_str = _pb_::BlueNoiseType_Name( static_cast< _pb_::BlueNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 17 ) {
@@ -1231,7 +1229,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 18 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::VioletNoiseType_Name( static_cast< SGPNG::VioletNoiseType >( value ) );
+    std::string tmp_str = _pb_::VioletNoiseType_Name( static_cast< _pb_::VioletNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 19 ) {
@@ -1241,7 +1239,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 20 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::GreyNoiseType_Name( static_cast< SGPNG::GreyNoiseType >( value ) );
+    std::string tmp_str = _pb_::GreyNoiseType_Name( static_cast< _pb_::GreyNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 21 ) {
@@ -1251,7 +1249,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 22 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = SGPNG::VelvetNoiseType_Name( static_cast< SGPNG::VelvetNoiseType >( value ) );
+    std::string tmp_str = _pb_::VelvetNoiseType_Name( static_cast< _pb_::VelvetNoiseType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 23 ) {
@@ -1285,16 +1283,16 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
     }
   };
   if( param_id == 1 ) {
-    SGPNG::SineWaveType out;
-    bool ret = SGPNG::SineWaveType_Parse( param_value_text, &out );
+    _pb_::SineWaveType out;
+    bool ret = _pb_::SineWaveType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 2 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 3 ) {
-    SGPNG::SquareWaveType out;
-    bool ret = SGPNG::SquareWaveType_Parse( param_value_text, &out );
+    _pb_::SquareWaveType out;
+    bool ret = _pb_::SquareWaveType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
@@ -1303,72 +1301,72 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
   } else if( param_id == 5 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 6 ) {
-    SGPNG::SawWaveType out;
-    bool ret = SGPNG::SawWaveType_Parse( param_value_text, &out );
+    _pb_::SawWaveType out;
+    bool ret = _pb_::SawWaveType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 7 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 8 ) {
-    SGPNG::TriangleWaveType out;
-    bool ret = SGPNG::TriangleWaveType_Parse( param_value_text, &out );
+    _pb_::TriangleWaveType out;
+    bool ret = _pb_::TriangleWaveType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 9 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 10 ) {
-    SGPNG::WhiteNoiseType out;
-    bool ret = SGPNG::WhiteNoiseType_Parse( param_value_text, &out );
+    _pb_::WhiteNoiseType out;
+    bool ret = _pb_::WhiteNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 11 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 12 ) {
-    SGPNG::PinkNoiseType out;
-    bool ret = SGPNG::PinkNoiseType_Parse( param_value_text, &out );
+    _pb_::PinkNoiseType out;
+    bool ret = _pb_::PinkNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 13 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 14 ) {
-    SGPNG::RedNoiseType out;
-    bool ret = SGPNG::RedNoiseType_Parse( param_value_text, &out );
+    _pb_::RedNoiseType out;
+    bool ret = _pb_::RedNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 15 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 16 ) {
-    SGPNG::BlueNoiseType out;
-    bool ret = SGPNG::BlueNoiseType_Parse( param_value_text, &out );
+    _pb_::BlueNoiseType out;
+    bool ret = _pb_::BlueNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 17 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 18 ) {
-    SGPNG::VioletNoiseType out;
-    bool ret = SGPNG::VioletNoiseType_Parse( param_value_text, &out );
+    _pb_::VioletNoiseType out;
+    bool ret = _pb_::VioletNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 19 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 20 ) {
-    SGPNG::GreyNoiseType out;
-    bool ret = SGPNG::GreyNoiseType_Parse( param_value_text, &out );
+    _pb_::GreyNoiseType out;
+    bool ret = _pb_::GreyNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
   } else if( param_id == 21 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 22 ) {
-    SGPNG::VelvetNoiseType out;
-    bool ret = SGPNG::VelvetNoiseType_Parse( param_value_text, &out );
+    _pb_::VelvetNoiseType out;
+    bool ret = _pb_::VelvetNoiseType_Parse( param_value_text, &out );
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
