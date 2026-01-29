@@ -1,6 +1,7 @@
 #pragma once
 
 #include "_clap.hpp"
+#include "audio_lerp_effect.hpp"
 #include "noise_generator.hpp"
 
 static struct {
@@ -10,6 +11,10 @@ static struct {
     {
         .desc = NoiseGenerator::descriptor_get(),
         .create = NoiseGenerator::s_create,
+    },
+    {
+        .desc = AudioLerpEffect::descriptor_get(),
+        .create = AudioLerpEffect::s_create,
     },
 };
 static uint32_t plugin_factory_get_plugin_count( const struct clap_plugin_factory* factory );

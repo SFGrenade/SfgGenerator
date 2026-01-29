@@ -820,7 +820,7 @@ uint32_t NoiseGenerator::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
   // adjust according to noise_generator.proto
   // while we could make it dynamic, without explicit gui i'd rather not
-  return 23;
+  return 24;
 }
 
 bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
@@ -954,6 +954,16 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
       out_param_info->min_value = static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined );
       out_param_info->max_value = static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation );
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 23:
+      out_param_info->id = 24;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "VossMcCartney Number" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Pink Noise" );
+      out_param_info->min_value = 4;   // todo: fixme: no clue about these tbh
+      out_param_info->max_value = 64;  // todo: fixme: no clue about these tbh
       out_param_info->default_value = out_param_info->min_value;
       break;
     case 12:
@@ -1175,7 +1185,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 2 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_sine_wave_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 3 ) {
@@ -1185,12 +1195,12 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 4 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_square_wave_pwm() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 5 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_square_wave_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 6 ) {
@@ -1200,7 +1210,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 7 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_saw_wave_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 8 ) {
@@ -1210,7 +1220,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 9 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_triangle_wave_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 10 ) {
@@ -1220,7 +1230,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 11 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_white_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 12 ) {
@@ -1230,12 +1240,12 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 24 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_pink_noise_vossmccartney_number() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 13 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_pink_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 14 ) {
@@ -1245,7 +1255,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 15 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_red_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 16 ) {
@@ -1255,7 +1265,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 17 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_blue_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 18 ) {
@@ -1265,7 +1275,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 19 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_violet_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 20 ) {
@@ -1275,7 +1285,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 21 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_grey_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 22 ) {
@@ -1285,7 +1295,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     return true;
   } else if( param_id == 23 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
-    std::string tmp_str = std::to_string( state_.synth_velvet_noise_mix() );
+    std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   }
@@ -1362,6 +1372,9 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
     if( ret )
       ( *out_value ) = static_cast< double >( out );
     return ret;
+  } else if( param_id == 24 ) {
+    // todo: fixme: maybe some text to int??
+    return text_to_double( param_value_text, out_value );
   } else if( param_id == 13 ) {
     return text_to_double( param_value_text, out_value );
   } else if( param_id == 14 ) {
