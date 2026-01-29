@@ -71,6 +71,7 @@ message NoiseGenerator {
   WhiteNoiseType synth_white_noise_type = 10;
   double synth_white_noise_mix = 11;
   PinkNoiseType synth_pink_noise_type = 12;
+  uint64 synth_pink_noise_VossMcCartney_number = 24;
   double synth_pink_noise_mix = 13;
   RedNoiseType synth_red_noise_type = 14;
   double synth_red_noise_mix = 15;

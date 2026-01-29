@@ -93,6 +93,9 @@ class NoiseGenerator : BasePlugin {
   double pink_economy_b1_ = 0.0;
   double pink_economy_b2_ = 0.0;
 
+  uint64_t pink_VossMcCartney_sample_ = 0;
+  std::vector< double > pink_VossMcCartney_streams_;
+
   double red_leaky_integrator_prev_ = 0.0;
 
   // temporary values
@@ -107,3 +110,23 @@ class NoiseGenerator : BasePlugin {
 #if __cplusplus
 }
 #endif
+
+template< class Int1, class Int2 >
+uintmax_t upow(Int1 a, Int2 b) {
+    b = b - 1;
+    if (b <= -2)
+        throw std::range_error( "negatives not yet handled" );
+    if (b >= 0)
+        return a << b;
+    return a >> std::abs<Int2>(b);
+}
+
+template< class Int1, class Int2 >
+intmax_t ipow(Int1 a, Int2 b) {
+    b = b - 1;
+    if (b <= -2)
+        throw std::range_error( "negatives not yet handled" );
+    if (b >= 0)
+        return a << b;
+    return a >> std::abs(b);
+}

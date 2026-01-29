@@ -3,8 +3,7 @@
 #include <exception>
 #include <numbers>
 
-#include "clap/process.h"
-#include "noise_generator.pb.h"
+namespace SfPb = SfgGenerator::Proto;
 
 NoiseGenerator::NoiseGenerator() : _base_() {
   SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
@@ -106,11 +105,22 @@ double pink_noise_PaulKellettEconomy( std::uniform_real_distribution< double >& 
   double pink = b0 + b1 + b2 + white * 0.1848;
   return std::clamp( pink * 0.05, -1.0, 1.0 ) * mix;  // empirically estimated
 }
-double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist,
+                                 std::mt19937_64& eng,
+                                 uint64_t& sampleIndex,
+                                 std::vector< double >& streams,
+                                 double mix ) {
   if( mix <= 0.0 )
     return 0.0;
-  // TODO: FIXME: ADD IMPLEMENTATION
-  return 0.0;
+  double sum = 0.0;
+  for( uint64_t i = 0; i < streams.size(); i++ ) {
+    if( ( sampleIndex % upow( 2, i ) ) == 0 ) {
+      streams[i] = dist( eng );
+    }
+    sum += streams[i];
+  }
+  sampleIndex++;
+  return sum / static_cast< double >( streams.size() );
 }
 double pink_noise_IirFilterApproximation( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
   if( mix <= 0.0 )
@@ -291,7 +301,7 @@ double NoiseGenerator::get_sample_pink_noise( double phase ) {
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettEconomy:
       return SFG_PRIVATE::pink_noise_PaulKellettEconomy( dist_, eng_, pink_economy_b0_, pink_economy_b1_, pink_economy_b2_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_VossMcCartney:
-      return SFG_PRIVATE::pink_noise_VossMcCartney( dist_, eng_, state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE::pink_noise_VossMcCartney( dist_, eng_, pink_VossMcCartney_sample_, pink_VossMcCartney_streams_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation:
       return SFG_PRIVATE::pink_noise_IirFilterApproximation( dist_, eng_, state_.synth_pink_noise_mix() );
     default:
@@ -544,6 +554,9 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
           state_.set_synth_white_noise_mix( ev->value );
         } else if( ev->param_id == 12 ) {
           state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
+        } else if( ev->param_id == 24 ) {
+          state_.set_synth_pink_noise_vossmccartney_number( ev->value );
+          std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
         } else if( ev->param_id == 13 ) {
           state_.set_synth_pink_noise_mix( ev->value );
         } else if( ev->param_id == 14 ) {
@@ -1094,6 +1107,9 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
   } else if( param_id == 12 ) {
     ( *out_value ) = state_.synth_pink_noise_type();
     return true;
+  } else if( param_id == 24 ) {
+    ( *out_value ) = state_.synth_pink_noise_vossmccartney_number();
+    return true;
   } else if( param_id == 13 ) {
     ( *out_value ) = state_.synth_pink_noise_mix();
     return true;
@@ -1200,6 +1216,11 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
   } else if( param_id == 12 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = _pb_::PinkNoiseType_Name( static_cast< _pb_::PinkNoiseType >( value ) );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  } else if( param_id == 24 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( state_.synth_pink_noise_vossmccartney_number() );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   } else if( param_id == 13 ) {
