@@ -51,12 +51,12 @@ end
 add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" }, system = false } )
 
 add_requires( "vcpkg::clap-cleveraudio", { alias = "clap" } )
+add_requires( "fmt" )
 --add_requires( "protoc" )
 add_requires( "protobuf-cpp 31.1" )
 --add_requires( "vcpkg::protobuf", { alias = "protobuf-cpp" } )
-add_requires( "spdlog" )
 
-add_requireconfs( "spdlog", { configs = { header_only = true, std_format = false, fmt_external = false, fmt_external_ho = true, noexcept = false } } )
+add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
 
 target( "SfgGenerator" )
   set_kind( "shared" )
@@ -66,9 +66,9 @@ target( "SfgGenerator" )
   set_group( "LIBS" )
 
   add_packages( "clap", { public = true } )
+  add_packages( "fmt", { public = true } )
   --add_packages( "protoc", { public = true } )
   add_packages( "protobuf-cpp", { public = true } )
-  add_packages( "spdlog", { public = true } )
 
   add_rules( "protobuf.cpp" )
   add_files( "proto/**.proto", { proto_public = false, proto_rootdir = path.join( "proto" ) } )

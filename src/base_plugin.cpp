@@ -5,12 +5,11 @@
 #include <numbers>
 
 #include "_folders.hpp"
-#include "clap_sink.hpp"
 
 #pragma region Base Methods
 
 BasePlugin::BasePlugin() {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   clap_ambisonic_ = {
       .is_config_supported = BasePlugin::s_ambisonic_is_config_supported,
       .get_config = BasePlugin::s_ambisonic_get_config,
@@ -123,40 +122,16 @@ BasePlugin::BasePlugin() {
 }
 
 BasePlugin::~BasePlugin() {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
 std::string BasePlugin::get_name( void ) const {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void const* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void const* >( this ) );
   return "BasePlugin";
 }
 
 void BasePlugin::init_logger( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  std::string const c_logger_pattern = "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%n] [%l] %v";
-
-  std::filesystem::path plugin_data_path = get_data_path( "SfgGenerator", "SFGrenade" );
-  if( !std::filesystem::exists( plugin_data_path ) ) {
-    std::filesystem::create_directories( plugin_data_path );
-  }
-  std::filesystem::path plugin_log_path = plugin_data_path / "logs";
-  if( !std::filesystem::exists( plugin_log_path ) ) {
-    std::filesystem::create_directories( plugin_log_path );
-  }
-  std::filesystem::path log_file_name_fs = plugin_log_path / fmt::format( "log_{:s}_{:p}.log", get_name(), static_cast< void* >( this ) );
-  std::string const c_log_file_name = log_file_name_fs.string();
-  std::shared_ptr< ClapSink > clap_sink = std::make_shared< ClapSink >( host_, host_log_ );
-  clap_sink->set_level( spdlog::level::level_enum::trace );
-  std::shared_ptr< spdlog::sinks::basic_file_sink_mt > file_sink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( c_log_file_name, true );
-  file_sink->set_level( spdlog::level::level_enum::trace );
-
-  spdlog::sinks_init_list truncatedSinkList = { clap_sink, file_sink };
-  logger_ = std::make_shared< spdlog::logger >( get_name(), truncatedSinkList.begin(), truncatedSinkList.end() );
-  logger_->set_level( spdlog::level::level_enum::trace );
-  logger_->flush_on( spdlog::level::level_enum::trace );
-  logger_->set_pattern( c_logger_pattern );
-  // can't have this because it's like not shared and shit
-  // spdlog::register_logger( logger_ );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
 #pragma endregion
@@ -164,7 +139,7 @@ void BasePlugin::init_logger( void ) {
 #pragma region Overridable Init/Exit
 
 bool BasePlugin::init( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   host_ambisonic_ = static_cast< clap_host_ambisonic_t const* >( host_->get_extension( host_, CLAP_EXT_AMBISONIC ) );
   host_audio_ports_config_ = static_cast< clap_host_audio_ports_config_t const* >( host_->get_extension( host_, CLAP_EXT_AUDIO_PORTS_CONFIG ) );
   host_audio_ports_ = static_cast< clap_host_audio_ports_t const* >( host_->get_extension( host_, CLAP_EXT_AUDIO_PORTS ) );
@@ -190,68 +165,121 @@ bool BasePlugin::init( void ) {
 
   init_logger();
 
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] g_plugin_path={:?}", __FUNCTION__, static_cast< void* >( this ), g_plugin_path );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_ambisonic={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_ambisonic_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] g_plugin_path={:?}", __FUNCTION__, static_cast< void* >( this ), g_plugin_path );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_ambisonic={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_ambisonic_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_audio_ports_config={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_audio_ports_config_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_audio_ports={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_audio_ports_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_audio_ports={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_audio_ports_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_context_menu={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_context_menu_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_event_registry={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_event_registry_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_gui={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_gui_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_latency={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_latency_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_log={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_log_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_note_name={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_note_name_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_note_ports={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_note_ports_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_params={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_params_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host_gui={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_gui_ ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host_latency={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_latency_ ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host_log={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_log_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_note_name={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_note_name_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_note_ports={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_note_ports_ ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host_params={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_params_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_posix_fd_support={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_posix_fd_support_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_preset_load={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_preset_load_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_preset_load={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_preset_load_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_remote_controls={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_remote_controls_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_state={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_state_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_surround={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_surround_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_tail={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_tail_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host_state={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_state_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_surround={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_surround_ ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host_tail={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_tail_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_thread_check={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_thread_check_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_thread_pool={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_thread_pool_ ) );
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_thread_pool={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_thread_pool_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] host_timer_support={:p}",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( host_timer_support_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_track_info={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_track_info_ ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] host_voice_info={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_voice_info_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_track_info={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_track_info_ ) );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] host_voice_info={:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void const* >( host_voice_info_ ) );
   return true;
 }
 
 void BasePlugin::destroy( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   delete this;
 }
 
 bool BasePlugin::activate( double sample_rate, uint32_t min_frames_count, uint32_t max_frames_count ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] enter( sample_rate={:f}, min_frames_count={:d}, max_frames_count={:d} )",
                  __FUNCTION__,
                  sample_rate,
@@ -263,27 +291,27 @@ bool BasePlugin::activate( double sample_rate, uint32_t min_frames_count, uint32
 }
 
 void BasePlugin::deactivate( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   active_ = false;
 }
 
 bool BasePlugin::start_processing( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   process_ = true;
   return true;
 }
 
 void BasePlugin::stop_processing( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   process_ = false;
 }
 
 void BasePlugin::on_main_thread( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
 void BasePlugin::reset( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 
   active_ = true;
   process_ = false;
@@ -295,172 +323,172 @@ void BasePlugin::reset( void ) {
 #pragma region CLAP exts instance methods
 
 bool BasePlugin::ambisonic_is_config_supported( clap_ambisonic_config_t const* config ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::ambisonic_get_config( bool is_input, uint32_t port_index, clap_ambisonic_config_t* out_config ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::audio_ports_activation_can_activate_while_processing() {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 uint32_t BasePlugin::audio_ports_config_count( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::audio_ports_config_get( uint32_t index, clap_audio_ports_config_t* out_config ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::audio_ports_config_select( clap_id config_id ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 clap_id BasePlugin::audio_ports_config_info_current_config( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::audio_ports_config_info_get( clap_id config_id, uint32_t port_index, bool is_input, clap_audio_port_info_t* out_info ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 uint32_t BasePlugin::audio_ports_count( bool is_input ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::configurable_audio_ports_can_apply_configuration( clap_audio_port_configuration_request const* requests, uint32_t request_count ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::configurable_audio_ports_apply_configuration( clap_audio_port_configuration_request const* requests, uint32_t request_count ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::context_menu_populate( clap_context_menu_target_t const* target, clap_context_menu_builder_t const* builder ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::context_menu_perform( clap_context_menu_target_t const* target, clap_id action_id ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_is_api_supported( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_create( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 void BasePlugin::gui_destroy( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 bool BasePlugin::gui_set_scale( double scale ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_can_resize( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_set_size( uint32_t width, uint32_t height ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_set_parent( clap_window_t const* window ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_set_transient( clap_window_t const* window ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 void BasePlugin::gui_suggest_title( std::string const& title ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 bool BasePlugin::gui_show( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::gui_hide( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 uint32_t BasePlugin::latency_get( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 uint32_t BasePlugin::note_name_count( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::note_name_get( uint32_t index, clap_note_name_t* out_note_name ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 uint32_t BasePlugin::note_ports_count( bool is_input ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::note_ports_get( uint32_t index, bool is_input, clap_note_port_info_t* out_info ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
@@ -469,127 +497,127 @@ void BasePlugin::param_indication_set_mapping( clap_id param_id,
                                                clap_color_t const* color,
                                                std::string const& label,
                                                std::string const& description ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 void BasePlugin::param_indication_set_automation( clap_id param_id, uint32_t automation_state, clap_color_t const* color ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 uint32_t BasePlugin::params_count( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::params_get_value( clap_id param_id, double* out_value ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 void BasePlugin::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 void BasePlugin::posix_fd_support_on_fd( int fd, clap_posix_fd_flags_t flags ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 bool BasePlugin::preset_load_from_location( uint32_t location_kind, std::string const& location, std::string const& load_key ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 uint32_t BasePlugin::remote_controls_count( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 bool BasePlugin::remote_controls_get( uint32_t page_index, clap_remote_controls_page_t* out_page ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::render_has_hard_realtime_requirement( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::render_set( clap_plugin_render_mode mode ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::state_context_save( clap_ostream_t const* stream, uint32_t context_type ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::state_context_load( clap_istream_t const* stream, uint32_t context_type ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::state_save( clap_ostream_t const* stream ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::state_load( clap_istream_t const* stream ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 bool BasePlugin::surround_is_channel_mask_supported( uint64_t channel_mask ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
 uint32_t BasePlugin::surround_get_channel_map( bool is_input, uint32_t port_index, uint8_t* out_channel_map, uint32_t channel_map_capacity ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 uint32_t BasePlugin::tail_get( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
 void BasePlugin::thread_pool_exec( uint32_t task_index ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 void BasePlugin::timer_support_on_timer( clap_id timer_id ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 void BasePlugin::track_info_changed( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
 bool BasePlugin::voice_info_get( clap_voice_info_t* out_info ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
@@ -1209,7 +1237,7 @@ bool BasePlugin::s_voice_info_get( clap_plugin_t const* plugin, clap_voice_info_
 #pragma region get_extensions
 
 void const* BasePlugin::get_extension( std::string const& id ) const {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( id={:?} )", __FUNCTION__, static_cast< void const* >( this ), id );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( id={:?} )", __FUNCTION__, static_cast< void const* >( this ), id );
   if( supports_ambisonic() && ( id == std::string( CLAP_EXT_AMBISONIC ) ) )
     return &clap_ambisonic_;
   if( supports_audio_ports_activation() && ( id == std::string( CLAP_EXT_AUDIO_PORTS_ACTIVATION ) ) )

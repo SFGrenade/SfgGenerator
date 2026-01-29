@@ -5,31 +5,37 @@
 #include <vector>
 
 #include "_clap.hpp"
-#include "_spdlog.hpp"
+#include "_fmt.hpp"
 
-#define SFG_LOG_TRACE( logger, fmt_string, ... ) \
-  if( logger )                                   \
-    logger->trace( fmt_string, ##__VA_ARGS__ );
+#define SFG_LOG_TRACE( host, logger, fmt_string, ... )                                         \
+  if( logger ) {                                                                               \
+    ( logger )->log( host, CLAP_LOG_DEBUG, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
+  }
 
-#define SFG_LOG_DEBUG( logger, fmt_string, ... ) \
-  if( logger )                                   \
-    logger->debug( fmt_string, ##__VA_ARGS__ );
+#define SFG_LOG_DEBUG( host, logger, fmt_string, ... )                                         \
+  if( logger ) {                                                                               \
+    ( logger )->log( host, CLAP_LOG_DEBUG, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
+  }
 
-#define SFG_LOG_INFO( logger, fmt_string, ... ) \
-  if( logger )                                  \
-    logger->info( fmt_string, ##__VA_ARGS__ );
+#define SFG_LOG_INFO( host, logger, fmt_string, ... )                                         \
+  if( logger ) {                                                                              \
+    ( logger )->log( host, CLAP_LOG_INFO, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
+  }
 
-#define SFG_LOG_WARN( logger, fmt_string, ... ) \
-  if( logger )                                  \
-    logger->warn( fmt_string, ##__VA_ARGS__ );
+#define SFG_LOG_WARN( host, logger, fmt_string, ... )                                            \
+  if( logger ) {                                                                                 \
+    ( logger )->log( host, CLAP_LOG_WARNING, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
+  }
 
-#define SFG_LOG_ERROR( logger, fmt_string, ... ) \
-  if( logger )                                   \
-    logger->error( fmt_string, ##__VA_ARGS__ );
+#define SFG_LOG_ERROR( host, logger, fmt_string, ... )                                         \
+  if( logger ) {                                                                               \
+    ( logger )->log( host, CLAP_LOG_ERROR, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
+  }
 
-#define SFG_LOG_CRITICAL( logger, fmt_string, ... ) \
-  if( logger )                                      \
-    logger->critical( fmt_string, ##__VA_ARGS__ );
+#define SFG_LOG_CRITICAL( host, logger, fmt_string, ... )                                      \
+  if( logger ) {                                                                               \
+    ( logger )->log( host, CLAP_LOG_FATAL, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
+  }
 
 // #undef SFG_LOG_TRACE
 // #undef SFG_LOG_DEBUG
@@ -261,7 +267,6 @@ class BasePlugin {
 
   protected:
   // internal values (no need to save these)
-  std::shared_ptr< spdlog::logger > logger_ = nullptr;
   std::atomic_bool active_ = true;
   std::atomic_bool process_ = false;
   double sample_rate_ = 44100.0;

@@ -6,15 +6,15 @@
 namespace SfPb = SfgGenerator::Proto;
 
 NoiseGenerator::NoiseGenerator() : _base_() {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
 NoiseGenerator::~NoiseGenerator() {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
 std::string NoiseGenerator::get_name( void ) const {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void const* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void const* >( this ) );
   return "NoiseGenerator";
 }
 
@@ -383,7 +383,7 @@ double NoiseGenerator::get_sample_velvet_noise( double phase ) {
 #pragma region shit to override
 
 bool NoiseGenerator::init( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   bool ret = _base_::init();
 
   eng_ = std::mt19937_64( std::random_device{}() );
@@ -408,7 +408,7 @@ bool NoiseGenerator::init( void ) {
 }
 
 void NoiseGenerator::reset( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   _base_::reset();
 
   eng_ = std::mt19937_64( std::random_device{}() );
@@ -429,17 +429,17 @@ void NoiseGenerator::reset( void ) {
 }
 
 void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( hdr={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( hdr ) );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] hdr->size    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->size );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] hdr->time    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->time );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] hdr->space_id={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->space_id );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] hdr->type    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->type );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] hdr->flags   ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->flags );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( hdr={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( hdr ) );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->size    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->size );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->time    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->time );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->space_id={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->space_id );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->type    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->type );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->flags   ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->flags );
   if( hdr->space_id == CLAP_CORE_EVENT_SPACE_ID ) {
     switch( hdr->type ) {
       case CLAP_EVENT_NOTE_ON: {
         clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -464,7 +464,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_NOTE_OFF: {
         clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -484,7 +484,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_NOTE_CHOKE: {
         clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -504,7 +504,8 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_NOTE_EXPRESSION: {
         clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
+        SFG_LOG_TRACE( host_,
+                       host_log_,
                        "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
                        __FUNCTION__,
                        static_cast< void* >( this ),
@@ -519,7 +520,8 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_PARAM_VALUE: {
         clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
-        SFG_LOG_TRACE( logger_,
+        SFG_LOG_TRACE( host_,
+                       host_log_,
                        "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
                        __FUNCTION__,
                        static_cast< void* >( this ),
@@ -584,7 +586,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_PARAM_MOD: {
         clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -600,19 +602,21 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_PARAM_GESTURE_BEGIN: {
         clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
+        // ev->param_id );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_PARAM_GESTURE_END: {
         clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
+        // ev->param_id );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_TRANSPORT: {
         clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
         //                "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
         //                "tsig_num={:d}, tsig_denom={:d}",
@@ -636,7 +640,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_MIDI: {
         clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -647,7 +651,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_MIDI_SYSEX: {
         clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -659,7 +663,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
       }
       case CLAP_EVENT_MIDI2: {
         clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
-        // SFG_LOG_TRACE( logger_,
+        // SFG_LOG_TRACE( host_, host_log_,
         //                "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
         //                __FUNCTION__,
         //                static_cast< void* >( this ),
@@ -673,16 +677,17 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
 }
 
 clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( process={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( process ) );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( process={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( process )
+  // );
   const uint32_t nframes = process->frames_count;
   const uint32_t nev = process->in_events->size( process->in_events );
   uint32_t ev_index = 0;
   uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
 
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] nframes      ={:d}", __FUNCTION__, static_cast< void* >( this ), nframes );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] nev          ={:d}", __FUNCTION__, static_cast< void* >( this ), nev );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] ev_index     ={:d}", __FUNCTION__, static_cast< void* >( this ), ev_index );
-  // SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] next_ev_frame={:d}", __FUNCTION__, static_cast< void* >( this ), next_ev_frame );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nframes      ={:d}", __FUNCTION__, static_cast< void* >( this ), nframes );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nev          ={:d}", __FUNCTION__, static_cast< void* >( this ), nev );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] ev_index     ={:d}", __FUNCTION__, static_cast< void* >( this ), ev_index );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] next_ev_frame={:d}", __FUNCTION__, static_cast< void* >( this ), next_ev_frame );
 
   for( uint32_t i = 0; i < nframes; ) {
     /* handle every events that happrens at the frame "i" */
@@ -748,7 +753,7 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
 #pragma region CLAP extensions
 
 uint32_t NoiseGenerator::audio_ports_count( bool is_input ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( is_input={} )", __FUNCTION__, static_cast< void* >( this ), is_input );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( is_input={} )", __FUNCTION__, static_cast< void* >( this ), is_input );
   if( is_input ) {
     return 0;
   }
@@ -756,7 +761,8 @@ uint32_t NoiseGenerator::audio_ports_count( bool is_input ) {
 }
 
 bool NoiseGenerator::audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
@@ -780,7 +786,7 @@ bool NoiseGenerator::audio_ports_get( uint32_t index, bool is_input, clap_audio_
 }
 
 uint32_t NoiseGenerator::note_ports_count( bool is_input ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( is_input={} )", __FUNCTION__, static_cast< void* >( this ), is_input );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( is_input={} )", __FUNCTION__, static_cast< void* >( this ), is_input );
   if( is_input ) {
     return 1;
   }
@@ -788,7 +794,8 @@ uint32_t NoiseGenerator::note_ports_count( bool is_input ) {
 }
 
 bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_port_info_t* out_info ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
@@ -810,14 +817,15 @@ bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_po
 }
 
 uint32_t NoiseGenerator::params_count( void ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
   // adjust according to noise_generator.proto
   // while we could make it dynamic, without explicit gui i'd rather not
   return 23;
 }
 
 bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( param_index={:d}, out_param_info={:p} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
@@ -1063,7 +1071,8 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
 }
 
 bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( param_id={:d}, out_value={:p} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
@@ -1148,7 +1157,8 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
 }
 
 bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( param_id={:d}, value={:f}, out_buffer={:p}, out_info={:d} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
@@ -1283,7 +1293,8 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
 }
 
 bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( param_id={:d}, param_value_text={:?}, out_value={:p} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
@@ -1398,13 +1409,14 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
 }
 
 void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
-  SFG_LOG_TRACE( logger_,
+  SFG_LOG_TRACE( host_,
+                 host_log_,
                  "[{:s}] [{:p}] enter( in={:p}, out={:p} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void const* >( in ),
                  static_cast< void const* >( out ) );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] in_size={:d}", __FUNCTION__, static_cast< void* >( this ), in->size( in ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] in_size={:d}", __FUNCTION__, static_cast< void* >( this ), in->size( in ) );
 
   for( uint32_t i = 0; i < in->size( in ); i++ ) {
     process_event( in->get( in, i ) );
@@ -1413,7 +1425,7 @@ void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_ev
 }
 
 bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
   std::string buffer{};
   if( !state_.SerializeToString( &buffer ) ) {
@@ -1429,12 +1441,12 @@ bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
     }
     ret = written == static_cast< int64_t >( buffer.size() );
   }
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }
 
 bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
   std::string buffer{};
   std::array< char, 4096 > temp;
@@ -1447,7 +1459,7 @@ bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
   }
   ret = ret && ( buffer.size() > 0 );
   ret = ret && state_.ParseFromString( buffer );
-  SFG_LOG_TRACE( logger_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }
 
