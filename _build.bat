@@ -6,8 +6,6 @@ IF NOT ERRORLEVEL 0 (
   echo Unable to enable extensions
 )
 
-SET "SCRIPT_DIR=%~dp0"
-ECHO batch dir: %SCRIPT_DIR%
 FOR /F "delims=" %%A IN ('cd') DO SET "ORIGINAL_DIR=%%A"
 ECHO orig dir: %ORIGINAL_DIR%
 
@@ -26,22 +24,22 @@ EXIT /B %ERRORLEVEL%
 
 cd "%SCRIPT_DIR%"
 
-REM RMDIR /S /Q .xmake
-REM RMDIR /S /Q build
+RMDIR /S /Q "%ORIGINAL_DIR%\%logFolder%"
+RMDIR /S /Q "%ORIGINAL_DIR%\_dest"
+RMDIR /S /Q "%ORIGINAL_DIR%\.xmake"
+RMDIR /S /Q "%ORIGINAL_DIR%\build"
 
-RMDIR /S /Q %logFolder%
-
-MKDIR %logFolder%
+MKDIR "%ORIGINAL_DIR%\%logFolder%"
 
 CALL :doCommand "00_made_build_logs" "echo we did it" && cd>NUL || Goto :END
 
 CALL :doCommand "01_xmake_set_theme" "xmake global --theme=plain" && cd>NUL || Goto :END
 
-CALL :doCommand "02_xmake_configure_debug" "xmake config --import=.vscode\xmake.windows.static.debug.MD.conf -vD -y" && cd>NUL || Goto :END
+CALL :doCommand "02_xmake_configure_debug" "xmake config -vD --plat=windows --arch=x64 --kind=static --mode=debug --runtimes=MD --yes --policies=package.precompiled:n" && cd>NUL || Goto :END
 
 CALL :doCommand "03_xmake_build_debug" "xmake build -a -vD" && cd>NUL || Goto :END
 
-CALL :doCommand "04_xmake_configure_release" "xmake config --import=.vscode\xmake.windows.static.release.MD.conf -vD -y" && cd>NUL || Goto :END
+CALL :doCommand "04_xmake_configure_release" "xmake config -vD --plat=windows --arch=x64 --kind=static --mode=release --runtimes=MD --yes --policies=package.precompiled:n" && cd>NUL || Goto :END
 
 CALL :doCommand "05_xmake_build_release" "xmake build -a -vD" && cd>NUL || Goto :END
 
