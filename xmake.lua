@@ -46,9 +46,9 @@ if is_plat( "windows" ) then
   end
 end
 
---add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { system = false } )
+add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { system = false } )
 --add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { configs = { shared = get_config( "kind" ) == "shared" } } )
-add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" }, system = false } )
+add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" } } )
 
 add_requires( "vcpkg::clap-cleveraudio", { alias = "clap" } )
 add_requires( "fmt" )
