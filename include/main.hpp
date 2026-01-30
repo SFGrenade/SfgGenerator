@@ -3,6 +3,7 @@
 #include "_clap.hpp"
 #include "audio_lerp_effect.hpp"
 #include "noise_generator.hpp"
+#include "param_multiplex.hpp"
 
 static struct {
   clap_plugin_descriptor_t const* desc;
@@ -15,6 +16,10 @@ static struct {
     {
         .desc = AudioLerpEffect::descriptor_get(),
         .create = AudioLerpEffect::s_create,
+    },
+    {
+        .desc = ParamMultiplex::descriptor_get(),
+        .create = ParamMultiplex::s_create,
     },
 };
 static uint32_t plugin_factory_get_plugin_count( const struct clap_plugin_factory* factory );

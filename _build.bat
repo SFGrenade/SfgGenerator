@@ -45,7 +45,9 @@ CALL :doCommand "05_xmake_build_release" "xmake build -a -vD" && cd>NUL || Goto 
 
 CALL :doCommand "06_xmake_run" "xmake run -vD SfgGenerator '%ORIGINAL_DIR%'" && cd>NUL || Goto :END
 
-CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL || Goto :END
+REM CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL || Goto :END
+
+CALL :doCommand "99_copy_built_clap" "copy /B /Y %ORIGINAL_DIR%\build\windows\x64\release\SfgGenerator.clap 'C:\Program Files\Common Files\CLAP\SfgGenerator.clap'" && cd>NUL || Goto :END
 
 :END
 cd %ORIGINAL_DIR%

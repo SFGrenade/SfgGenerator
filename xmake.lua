@@ -51,8 +51,9 @@ add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { system = false } )
 add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" } } )
 
 add_requires( "fmt" )
-add_requires( "protoc", "protobuf-cpp" )
---add_requires( "protobuf-cpp 31.1" )
+--add_requires( "protoc", "protobuf-cpp" )
+--add_requires( "protoc" )
+add_requires( "protobuf-cpp 30.2" )
 --add_requires( "vcpkg::protobuf", { alias = "protobuf-cpp" } )
 add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 
@@ -66,8 +67,8 @@ target( "SfgGenerator" )
   set_group( "LIBS" )
 
   add_packages( "fmt", { public = true } )
-  add_packages( "protoc", "protobuf-cpp", { public = true } )
-  --add_packages( "protobuf-cpp", { public = true } )
+  --add_packages( "protoc", "protobuf-cpp", { public = true } )
+  add_packages( "protobuf-cpp", { public = true } )
   add_packages( "vcpkg-clap", { public = true } )
 
   add_rules( "protobuf.cpp" )

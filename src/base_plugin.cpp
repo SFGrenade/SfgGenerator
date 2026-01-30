@@ -4,8 +4,6 @@
 #include <iostream>
 #include <numbers>
 
-#include "_folders.hpp"
-
 #pragma region Base Methods
 
 BasePlugin::BasePlugin() {

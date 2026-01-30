@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SfgGenerator.Proto;
+
+// this is the state of the effect
+message ParamMultiplex {
+  // params
+  double output_param = 1;
+  uint64 amount_params = 2;
+  uint64 selected_param = 3;
+  repeated double params = 4;
+}

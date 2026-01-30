@@ -428,7 +428,7 @@ void NoiseGenerator::reset( void ) {
   note_map_.clear();
 }
 
-void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
+void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( hdr={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( hdr ) );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->size    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->size );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->time    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->time );
@@ -558,7 +558,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr ) {
           state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
         } else if( ev->param_id == 24 ) {
           state_.set_synth_pink_noise_vossmccartney_number( ev->value );
-          std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
+          //std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
         } else if( ev->param_id == 13 ) {
           state_.set_synth_pink_noise_mix( ev->value );
         } else if( ev->param_id == 14 ) {
@@ -697,7 +697,7 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
         next_ev_frame = hdr->time;
         break;
       }
-      process_event( hdr );
+      process_event( hdr, process->out_events );
       ++ev_index;
       if( ev_index == nev ) {
         // we reached the end of the event list
@@ -1432,7 +1432,7 @@ void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_ev
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] in_size={:d}", __FUNCTION__, static_cast< void* >( this ), in->size( in ) );
 
   for( uint32_t i = 0; i < in->size( in ); i++ ) {
-    process_event( in->get( in, i ) );
+    process_event( in->get( in, i ), out );
   }
   return;
 }

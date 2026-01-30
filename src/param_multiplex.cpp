@@ -1,43 +1,54 @@
-#include "audio_lerp_effect.hpp"
+#include "param_multiplex.hpp"
 
 #include <exception>
 #include <numbers>
 
+#include "clap/events.h"
+
+
 namespace SfPb = SfgGenerator::Proto;
 
-AudioLerpEffect::AudioLerpEffect() : _base_() {
+ParamMultiplex::ParamMultiplex() : _base_() {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
-AudioLerpEffect::~AudioLerpEffect() {
+ParamMultiplex::~ParamMultiplex() {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
-std::string AudioLerpEffect::get_name( void ) const {
+std::string ParamMultiplex::get_name( void ) const {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void const* >( this ) );
-  return "AudioLerpEffect";
+  return "ParamMultiplex";
 }
 
 #pragma region shit to override
 
-bool AudioLerpEffect::init( void ) {
+bool ParamMultiplex::init( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   bool ret = _base_::init();
 
   state_.Clear();
+  state_.set_output_param( 0.0 );
+  state_.set_amount_params( 16 );
+  state_.set_selected_param( 1 );
+  state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
 
   ret = ret && true;
   return ret;
 }
 
-void AudioLerpEffect::reset( void ) {
+void ParamMultiplex::reset( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   _base_::reset();
 
   state_.Clear();
+  state_.set_output_param( 0.0 );
+  state_.set_amount_params( 16 );
+  state_.set_selected_param( 1 );
+  state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
 }
 
-void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
+void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( hdr={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( hdr ) );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->size    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->size );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->time    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->time );
@@ -86,7 +97,47 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
                        ev->key,
                        ev->value );
         if( ev->param_id == 1 ) {
-          state_.set_a_b( ev->value );
+          // this is output
+          state_.set_output_param( ev->value );
+        } /*else if( ev->param_id == 2 ) {
+          // we don't support resizing the amount of params
+          state_.set_amount_params( ev->value );
+          state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
+          host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
+        }*/
+        else if( ev->param_id == 3 ) {
+          state_.set_selected_param( ev->value );
+          {
+            // send event to check for output param
+            clap_event_param_value_t out_ev{};
+            out_ev.header.size = sizeof( out_ev );
+            out_ev.header.time = hdr->time;
+            out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+            out_ev.header.flags = 0;
+            out_ev.param_id = 0;
+            this->params_get_value( 0, &out_ev.value );
+            bool success = out_events->try_push( out_events, &out_ev.header );
+            SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+          }
+        } else if( ( ev->param_id - 4 ) < state_.amount_params() ) {
+          state_.set_params( ev->param_id - 4, ev->value );
+          if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
+            // if selected param was changed, have it rescan for the output param
+            {
+              // send event to check for output param
+              clap_event_param_value_t out_ev{};
+              out_ev.header.size = sizeof( out_ev );
+              out_ev.header.time = hdr->time;
+              out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+              out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+              out_ev.header.flags = 0;
+              out_ev.param_id = 0;
+              this->params_get_value( 0, &out_ev.value );
+              bool success = out_events->try_push( out_events, &out_ev.header );
+              SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+            }
+          }
         }
         break;
       }
@@ -182,7 +233,7 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
   }
 }
 
-clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
+clap_process_status ParamMultiplex::process( clap_process_t const* process ) {
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( process={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( process )
   // );
   const uint32_t nframes = process->frames_count;
@@ -211,88 +262,24 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
         break;
       }
     }
-
-    /* process every samples until the next event */
-    for( ; i < next_ev_frame; ++i ) {
-      for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
-        double out = 0.0;
-        if( active_ && process_ ) {
-          if( process->audio_inputs[0].data32 )
-            out += ( 1.0 - state_.a_b() ) * process->audio_inputs[0].data32[c][i];
-          else if( process->audio_inputs[0].data64 )
-            out += ( 1.0 - state_.a_b() ) * process->audio_inputs[0].data64[c][i];
-
-          if( process->audio_inputs[1].data32 )
-            out += state_.a_b() * process->audio_inputs[1].data32[c][i];
-          else if( process->audio_inputs[1].data64 )
-            out += state_.a_b() * process->audio_inputs[1].data64[c][i];
-        }
-        // store output
-        if( process->audio_outputs[0].data32 )
-          process->audio_outputs[0].data32[c][i] = static_cast< float >( out );
-        else if( process->audio_outputs[0].data64 )
-          process->audio_outputs[0].data64[c][i] = out;
-      }
-    }
+    i = next_ev_frame;
   }
 
-  return ( active_ && process_ ) ? CLAP_PROCESS_CONTINUE : CLAP_PROCESS_SLEEP;
+  return CLAP_PROCESS_CONTINUE;
 }
 
 #pragma endregion
 
 #pragma region CLAP extensions
 
-uint32_t AudioLerpEffect::audio_ports_count( bool is_input ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( is_input={} )", __FUNCTION__, static_cast< void* >( this ), is_input );
-  if( is_input ) {
-    return 2;
-  }
-  return 1;
-}
-
-bool AudioLerpEffect::audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 index,
-                 is_input,
-                 static_cast< void* >( out_info ) )
-  if( index >= audio_ports_count( is_input ) )
-    return false;
-  if( !out_info )
-    return false;
-  if( is_input ) {
-    if( ( index == 0 ) || ( index == 1 ) ) {
-      out_info->id = index;
-      std::snprintf( out_info->name, sizeof( out_info->name ), "%s %d", "input", index );
-      out_info->channel_count = 2;
-      out_info->flags = ( ( index == 0 ) ? CLAP_AUDIO_PORT_IS_MAIN : 0 ) | CLAP_AUDIO_PORT_SUPPORTS_64BITS | CLAP_AUDIO_PORT_REQUIRES_COMMON_SAMPLE_SIZE;
-      out_info->port_type = CLAP_PORT_STEREO;
-      out_info->in_place_pair = CLAP_INVALID_ID;
-      return true;
-    }
-    return false;
-  }
-  out_info->id = 2;
-  std::snprintf( out_info->name, sizeof( out_info->name ), "%s", "main" );
-  out_info->channel_count = 1;
-  out_info->flags = CLAP_AUDIO_PORT_IS_MAIN | CLAP_AUDIO_PORT_SUPPORTS_64BITS | CLAP_AUDIO_PORT_REQUIRES_COMMON_SAMPLE_SIZE;
-  out_info->port_type = CLAP_PORT_STEREO;
-  out_info->in_place_pair = CLAP_INVALID_ID;
-  return true;
-}
-
-uint32_t AudioLerpEffect::params_count( void ) {
+uint32_t ParamMultiplex::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
-  // adjust according to audio_lerp_effect.proto
+  // adjust according to param_multiplex.proto
   // while we could make it dynamic, without explicit gui i'd rather not
-  return 1;
+  return 2 + state_.amount_params();
 }
 
-bool AudioLerpEffect::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
+bool ParamMultiplex::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
   SFG_LOG_TRACE( host_,
                  host_log_,
                  "[{:s}] [{:p}] enter( param_index={:d}, out_param_info={:p} )",
@@ -306,20 +293,55 @@ bool AudioLerpEffect::params_get_info( uint32_t param_index, clap_param_info_t* 
     return false;
   switch( param_index ) {
     case 0:
+      // param output
       out_param_info->id = 1;
-      out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE | CLAP_PARAM_REQUIRES_PROCESS;
+      out_param_info->flags = CLAP_PARAM_IS_READONLY | CLAP_PARAM_IS_AUTOMATABLE;
       out_param_info->cookie = nullptr;
-      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "A .. B" );
-      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Main" );
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "out" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "out" );
       out_param_info->min_value = 0.0;
       out_param_info->max_value = 1.0;
       out_param_info->default_value = out_param_info->min_value;
       break;
+    // case 1:
+    //   // param amount
+    //   out_param_info->id = 2;
+    //   out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE;
+    //   out_param_info->cookie = nullptr;
+    //   std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Param Amount" );
+    //   std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Main" );
+    //   out_param_info->min_value = 1;
+    //   out_param_info->max_value = 128;
+    //   out_param_info->default_value = out_param_info->min_value;
+    //   break;
+    case 1:
+      // param select
+      out_param_info->id = 3;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Param Select" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Main" );
+      out_param_info->min_value = 1;
+      out_param_info->max_value = state_.amount_params();
+      out_param_info->default_value = out_param_info->min_value;
+      break;
   }
+  uint32_t adjusted_param_index = param_index - 2;
+  if( adjusted_param_index >= state_.amount_params() ) {
+    return false;
+  }
+  out_param_info->id = 4 + adjusted_param_index;
+  out_param_info->flags = CLAP_PARAM_IS_AUTOMATABLE;
+  out_param_info->cookie = nullptr;
+  std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%d", adjusted_param_index + 1 );
+  std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Params" );
+  out_param_info->min_value = 0.0;
+  out_param_info->max_value = 1.0;
+  out_param_info->default_value = 0.0;
   return true;
 }
 
-bool AudioLerpEffect::params_get_value( clap_id param_id, double* out_value ) {
+bool ParamMultiplex::params_get_value( clap_id param_id, double* out_value ) {
   SFG_LOG_TRACE( host_,
                  host_log_,
                  "[{:s}] [{:p}] enter( param_id={:d}, out_value={:p} )",
@@ -330,13 +352,23 @@ bool AudioLerpEffect::params_get_value( clap_id param_id, double* out_value ) {
   if( !out_value )
     return false;
   if( param_id == 1 ) {
-    ( *out_value ) = state_.a_b();
+    ( *out_value ) = state_.params( state_.selected_param() - 1 );
+    return true;
+  } /*else if( param_id == 2 ) {
+    ( *out_value ) = state_.amount_params();
+    return true;
+  }*/
+  else if( param_id == 3 ) {
+    ( *out_value ) = state_.selected_param();
+    return true;
+  } else if( ( param_id - 4 ) < state_.amount_params() ) {
+    ( *out_value ) = state_.params( param_id - 4 );
     return true;
   }
   return false;
 }
 
-bool AudioLerpEffect::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
+bool ParamMultiplex::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
   SFG_LOG_TRACE( host_,
                  host_log_,
                  "[{:s}] [{:p}] enter( param_id={:d}, value={:f}, out_buffer={:p}, out_info={:d} )",
@@ -354,10 +386,28 @@ bool AudioLerpEffect::params_value_to_text( clap_id param_id, double value, char
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   }
+  /*if( param_id == 2 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( value );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  }*/
+  if( param_id == 3 ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( value );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  }
+  if( ( param_id - 4 ) < state_.amount_params() ) {
+    std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
+    std::string tmp_str = std::to_string( value );
+    tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
+    return true;
+  }
   return false;
 }
 
-bool AudioLerpEffect::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
+bool ParamMultiplex::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
   SFG_LOG_TRACE( host_,
                  host_log_,
                  "[{:s}] [{:p}] enter( param_id={:d}, param_value_text={:?}, out_value={:p} )",
@@ -379,13 +429,30 @@ bool AudioLerpEffect::params_text_to_value( clap_id param_id, std::string const&
       return false;
     }
   };
+  std::function< bool( std::string const&, double* ) > text_to_double_no_scale = []( std::string const& param_value_text, double* out_value ) {
+    try {
+      ( *out_value ) = std::stod( param_value_text );
+      return true;
+    } catch( std::exception const& ) {
+      return false;
+    }
+  };
   if( param_id == 1 ) {
+    return text_to_double( param_value_text, out_value );
+  }
+  /*if( param_id == 2 ) {
+    return text_to_double_no_scale( param_value_text, out_value );
+  }*/
+  if( param_id == 3 ) {
+    return text_to_double_no_scale( param_value_text, out_value );
+  }
+  if( ( param_id - 4 ) < state_.amount_params() ) {
     return text_to_double( param_value_text, out_value );
   }
   return false;
 }
 
-void AudioLerpEffect::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
+void ParamMultiplex::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
   SFG_LOG_TRACE( host_,
                  host_log_,
                  "[{:s}] [{:p}] enter( in={:p}, out={:p} )",
@@ -401,7 +468,36 @@ void AudioLerpEffect::params_flush( clap_input_events_t const* in, clap_output_e
   return;
 }
 
-bool AudioLerpEffect::state_save( clap_ostream_t const* stream ) {
+uint32_t ParamMultiplex::remote_controls_count( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] remote_controls_count()", __FUNCTION__, static_cast< void* >( this ) );
+  return 1;
+}
+
+bool ParamMultiplex::remote_controls_get( uint32_t page_index, clap_remote_controls_page_t* out_page ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( page_index={:d}, out_page={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 page_index,
+                 static_cast< void* >( out_page ) );
+  if( page_index >= remote_controls_count() )
+    return false;
+  if( !out_page )
+    return false;
+  switch( page_index ) {
+    case 0:
+      // param output
+      std::snprintf( out_page->section_name, sizeof( out_page->section_name ), "%s", "main" );
+      out_page->page_id = 0;
+      std::snprintf( out_page->page_name, sizeof( out_page->page_name ), "%s", "out" );
+      out_page->param_ids[0] = 0;
+      break;
+  }
+  return true;
+}
+
+bool ParamMultiplex::state_save( clap_ostream_t const* stream ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
   std::string buffer{};
@@ -422,7 +518,7 @@ bool AudioLerpEffect::state_save( clap_ostream_t const* stream ) {
   return ret;
 }
 
-bool AudioLerpEffect::state_load( clap_istream_t const* stream ) {
+bool ParamMultiplex::state_load( clap_istream_t const* stream ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
   bool ret = true;
   std::string buffer{};
@@ -444,15 +540,15 @@ bool AudioLerpEffect::state_load( clap_istream_t const* stream ) {
 
 #pragma region CLAP extensions, wether or not to pointer things to clap
 
-bool AudioLerpEffect::supports_audio_ports() const {
+bool ParamMultiplex::supports_params() const {
   return true;
 }
 
-bool AudioLerpEffect::supports_params() const {
+bool ParamMultiplex::supports_remote_controls() const {
   return true;
 }
 
-bool AudioLerpEffect::supports_state() const {
+bool ParamMultiplex::supports_state() const {
   return true;
 }
 
@@ -460,9 +556,9 @@ bool AudioLerpEffect::supports_state() const {
 
 #pragma region shit for the factory
 
-clap_plugin_t* AudioLerpEffect::s_create( clap_host_t const* host ) {
+clap_plugin_t* ParamMultiplex::s_create( clap_host_t const* host ) {
   clap_plugin_t* plugin = new clap_plugin_t();
-  AudioLerpEffect* noise_gen = new AudioLerpEffect();
+  ParamMultiplex* noise_gen = new ParamMultiplex();
   noise_gen->host_ = host;
   plugin->desc = descriptor_get();
   plugin->plugin_data = noise_gen;
@@ -479,20 +575,19 @@ clap_plugin_t* AudioLerpEffect::s_create( clap_host_t const* host ) {
   return plugin;
 };
 
-clap_plugin_descriptor_t* AudioLerpEffect::descriptor_get( void ) {
+clap_plugin_descriptor_t* ParamMultiplex::descriptor_get( void ) {
   static clap_plugin_descriptor_t clap_descriptor_;
   static std::vector< char const* > clap_descriptor_features_;
 
-  static std::string const c_plugin_id_ = "com.SFGrenade.AudioLerpEffect";
-  static std::string const c_plugin_name_ = "SFG-AudioLerpEffect";
+  static std::string const c_plugin_id_ = "com.SFGrenade.ParamMultiplex";
+  static std::string const c_plugin_name_ = "SFG-ParamMultiplex";
   static std::string const c_plugin_vendor_ = "SFGrenade";
   static std::string const c_plugin_url_ = "https://sfgrena.de";
   static std::string const c_plugin_manual_url_ = "https://sfgrena.de";
   static std::string const c_plugin_support_url_ = "https://sfgrena.de";
   static std::string const c_plugin_version_ = "0.0.1";
-  static std::string const c_plugin_description_ = "Awesome AudioLerpEffect. By SFGrenade.";
-  static std::vector< std::string > const c_plugin_features_
-      = { CLAP_PLUGIN_FEATURE_AUDIO_EFFECT, CLAP_PLUGIN_FEATURE_UTILITY, CLAP_PLUGIN_FEATURE_MIXING, CLAP_PLUGIN_FEATURE_STEREO };
+  static std::string const c_plugin_description_ = "Awesome ParamMultiplex. By SFGrenade.";
+  static std::vector< std::string > const c_plugin_features_ = { CLAP_PLUGIN_FEATURE_ANALYZER, CLAP_PLUGIN_FEATURE_UTILITY, CLAP_PLUGIN_FEATURE_MIXING };
 
   clap_descriptor_.clap_version = CLAP_VERSION_INIT;
   clap_descriptor_.id = c_plugin_id_.c_str();

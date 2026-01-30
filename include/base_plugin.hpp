@@ -37,19 +37,19 @@
     ( logger )->log( host, CLAP_LOG_FATAL, fmt::format( fmt_string, ##__VA_ARGS__ ).c_str() ); \
   }
 
-// #undef SFG_LOG_TRACE
-// #undef SFG_LOG_DEBUG
-// #undef SFG_LOG_INFO
-// #undef SFG_LOG_WARN
-// #undef SFG_LOG_ERROR
-// #undef SFG_LOG_CRITICAL
+#undef SFG_LOG_TRACE
+#undef SFG_LOG_DEBUG
+#undef SFG_LOG_INFO
+#undef SFG_LOG_WARN
+#undef SFG_LOG_ERROR
+#undef SFG_LOG_CRITICAL
 
-// #define SFG_LOG_TRACE( logger, fmt_string, ... )
-// #define SFG_LOG_DEBUG( logger, fmt_string, ... )
-// #define SFG_LOG_INFO( logger, fmt_string, ... )
-// #define SFG_LOG_WARN( logger, fmt_string, ... )
-// #define SFG_LOG_ERROR( logger, fmt_string, ... )
-// #define SFG_LOG_CRITICAL( logger, fmt_string, ... )
+#define SFG_LOG_TRACE( host, logger, fmt_string, ... ) std::cout << "[TRACE] " << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+#define SFG_LOG_DEBUG( host, logger, fmt_string, ... ) std::cout << "[DEBUG] " << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+#define SFG_LOG_INFO( host, logger, fmt_string, ... ) std::cout << "[INFO] " << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+#define SFG_LOG_WARN( host, logger, fmt_string, ... ) std::cout << "[WARN] " << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+#define SFG_LOG_ERROR( host, logger, fmt_string, ... ) std::cout << "[ERROR] " << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
+#define SFG_LOG_CRITICAL( host, logger, fmt_string, ... ) std::cout << "[CRITICAL] " << fmt::format( fmt_string, ##__VA_ARGS__ ) << std::endl;
 
 #if __cplusplus
 extern "C" {
@@ -74,7 +74,7 @@ class BasePlugin {
   virtual void stop_processing( void );
   virtual void on_main_thread( void );
   virtual void reset( void );
-  virtual void process_event( clap_event_header_t const* hdr ) = 0;
+  virtual void process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) = 0;
   virtual clap_process_status process( clap_process_t const* process ) = 0;
 
   // CLAP extensions, these will have basic implementations
