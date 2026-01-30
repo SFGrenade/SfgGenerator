@@ -55,179 +55,65 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->space_id={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->space_id );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->type    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->type );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->flags   ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->flags );
-  if( hdr->space_id == CLAP_CORE_EVENT_SPACE_ID ) {
-    switch( hdr->type ) {
-      case CLAP_EVENT_NOTE_ON: {
-        break;
-      }
-      case CLAP_EVENT_NOTE_OFF: {
-        break;
-      }
-      case CLAP_EVENT_NOTE_CHOKE: {
-        break;
-      }
-      case CLAP_EVENT_NOTE_EXPRESSION: {
-        clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
-        SFG_LOG_TRACE( host_,
-                       host_log_,
-                       "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->expression_id,
-                       ev->note_id,
-                       ev->port_index,
-                       ev->channel,
-                       ev->key,
-                       ev->value );
-        // TODO: handle note expression
-        break;
-      }
-      case CLAP_EVENT_PARAM_VALUE: {
-        clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
-        SFG_LOG_TRACE( host_,
-                       host_log_,
-                       "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->param_id,
-                       ev->cookie,
-                       ev->note_id,
-                       ev->port_index,
-                       ev->channel,
-                       ev->key,
-                       ev->value );
-        if( ev->param_id == 1 ) {
-          // this is output
-          state_.set_output_param( ev->value );
-        } /*else if( ev->param_id == 2 ) {
-          // we don't support resizing the amount of params
-          state_.set_amount_params( ev->value );
-          state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
-          host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
-        }*/
-        else if( ev->param_id == 3 ) {
-          state_.set_selected_param( ev->value );
-          {
-            // send event to check for output param
-            clap_event_param_value_t out_ev{};
-            out_ev.header.size = sizeof( out_ev );
-            out_ev.header.time = hdr->time;
-            out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-            out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
-            out_ev.header.flags = 0;
-            out_ev.param_id = 0;
-            this->params_get_value( 0, &out_ev.value );
-            bool success = out_events->try_push( out_events, &out_ev.header );
-            SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
-          }
-        } else if( ( ev->param_id - 4 ) < state_.amount_params() ) {
-          state_.set_params( ev->param_id - 4, ev->value );
-          if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
-            // if selected param was changed, have it rescan for the output param
-            {
-              // send event to check for output param
-              clap_event_param_value_t out_ev{};
-              out_ev.header.size = sizeof( out_ev );
-              out_ev.header.time = hdr->time;
-              out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-              out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
-              out_ev.header.flags = 0;
-              out_ev.param_id = 0;
-              this->params_get_value( 0, &out_ev.value );
-              bool success = out_events->try_push( out_events, &out_ev.header );
-              SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
-            }
-          }
-        }
-        break;
-      }
-      case CLAP_EVENT_PARAM_MOD: {
-        clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->param_id,
-        //                ev->cookie,
-        //                ev->note_id,
-        //                ev->port_index,
-        //                ev->channel,
-        //                ev->key,
-        //                ev->amount );
-        // TODO: handle parameter modulation
-        break;
-      }
-      case CLAP_EVENT_PARAM_GESTURE_BEGIN: {
-        clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
-        // ev->param_id );
-        // TODO: handle parameter modulation
-        break;
-      }
-      case CLAP_EVENT_PARAM_GESTURE_END: {
-        clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
-        // ev->param_id );
-        // TODO: handle parameter modulation
-        break;
-      }
-      case CLAP_EVENT_TRANSPORT: {
-        clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
-        //                "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
-        //                "tsig_num={:d}, tsig_denom={:d}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->flags,
-        //                ev->song_pos_beats,
-        //                ev->song_pos_seconds,
-        //                ev->tempo,
-        //                ev->tempo_inc,
-        //                ev->loop_start_beats,
-        //                ev->loop_end_beats,
-        //                ev->loop_start_seconds,
-        //                ev->loop_end_seconds,
-        //                ev->bar_start,
-        //                ev->bar_number,
-        //                ev->tsig_num,
-        //                ev->tsig_denom );
-        // TODO: handle transport event
-        break;
-      }
-      case CLAP_EVENT_MIDI: {
-        clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                std::vector< uint8_t >( ev->data, ev->data + 3 ) );
-        // TODO: handle MIDI event
-        break;
-      }
-      case CLAP_EVENT_MIDI_SYSEX: {
-        clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                static_cast< void const* >( ev->buffer ),
-        //                ev->size );
-        // TODO: handle MIDI Sysex event
-        break;
-      }
-      case CLAP_EVENT_MIDI2: {
-        clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                std::vector< uint8_t >( ev->data, ev->data + 4 ) );
-        // TODO: handle MIDI2 event
-        break;
+  if( hdr->space_id != CLAP_CORE_EVENT_SPACE_ID ) {
+    return;
+  }
+  if( hdr->type != CLAP_EVENT_PARAM_VALUE ) {
+    return;
+  }
+  clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 ev->param_id,
+                 ev->cookie,
+                 ev->note_id,
+                 ev->port_index,
+                 ev->channel,
+                 ev->key,
+                 ev->value );
+  if( ev->param_id == 1 ) {
+    // this is output
+    state_.set_output_param( ev->value );
+  } /*else if( ev->param_id == 2 ) {
+    // we don't support resizing the amount of params
+    state_.set_amount_params( ev->value );
+    state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
+    host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
+  }*/
+  else if( ev->param_id == 3 ) {
+    state_.set_selected_param( ev->value );
+    {
+      // send event to check for output param
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = hdr->time;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 0;
+      this->params_get_value( 0, &out_ev.value );
+      bool success = out_events->try_push( out_events, &out_ev.header );
+      SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+    }
+  } else if( ( ev->param_id - 4 ) < state_.amount_params() ) {
+    state_.set_params( ev->param_id - 4, ev->value );
+    if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
+      // if selected param was changed, have it rescan for the output param
+      {
+        // send event to check for output param
+        clap_event_param_value_t out_ev{};
+        out_ev.header.size = sizeof( out_ev );
+        out_ev.header.time = hdr->time;
+        out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+        out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+        out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+        out_ev.param_id = 0;
+        this->params_get_value( 0, &out_ev.value );
+        bool success = out_events->try_push( out_events, &out_ev.header );
+        SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
       }
     }
   }
@@ -255,6 +141,7 @@ clap_process_status ParamMultiplex::process( clap_process_t const* process ) {
         break;
       }
       process_event( hdr, process->out_events );
+      process->out_events->try_push( process->out_events, hdr );
       ++ev_index;
       if( ev_index == nev ) {
         // we reached the end of the event list
@@ -464,6 +351,7 @@ void ParamMultiplex::params_flush( clap_input_events_t const* in, clap_output_ev
 
   for( uint32_t i = 0; i < in->size( in ); i++ ) {
     process_event( in->get( in, i ), out );
+    out->try_push( out, in->get( in, i ) );
   }
   return;
 }

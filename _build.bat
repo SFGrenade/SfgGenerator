@@ -26,8 +26,8 @@ cd "%SCRIPT_DIR%"
 
 RMDIR /S /Q "%ORIGINAL_DIR%\%logFolder%"
 RMDIR /S /Q "%ORIGINAL_DIR%\_dest"
-RMDIR /S /Q "%ORIGINAL_DIR%\.xmake"
-RMDIR /S /Q "%ORIGINAL_DIR%\build"
+REM RMDIR /S /Q "%ORIGINAL_DIR%\.xmake"
+REM RMDIR /S /Q "%ORIGINAL_DIR%\build"
 
 MKDIR "%ORIGINAL_DIR%\%logFolder%"
 
@@ -47,7 +47,7 @@ CALL :doCommand "06_xmake_run" "xmake run -vD SfgGenerator '%ORIGINAL_DIR%'" && 
 
 REM CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL || Goto :END
 
-CALL :doCommand "99_copy_built_clap" "copy /B /Y %ORIGINAL_DIR%\build\windows\x64\release\SfgGenerator.clap 'C:\Program Files\Common Files\CLAP\SfgGenerator.clap'" && cd>NUL || Goto :END
+CALL :doCommand "99_copy_built_clap" "copy /Y %ORIGINAL_DIR%\build\windows\x64\release\SfgGenerator.clap C:\VstPlugins\hard_clapx64\SfgGenerator.clap" && cd>NUL || Goto :END
 
 :END
 cd %ORIGINAL_DIR%
