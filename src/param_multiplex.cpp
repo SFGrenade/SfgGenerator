@@ -77,12 +77,13 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
   if( ev->param_id == 1 ) {
     // this is output
     state_.set_output_param( ev->value );
-  } /*else if( ev->param_id == 2 ) {
+  } else if( ev->param_id == 2 ) {
     // we don't support resizing the amount of params
     state_.set_amount_params( ev->value );
     state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
+    // apparently one needs to do a `host->restart` for this
     host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
-  }*/
+  }
   else if( ev->param_id == 3 ) {
     state_.set_selected_param( ev->value );
     {
@@ -93,8 +94,8 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
       out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
       out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
       out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-      out_ev.param_id = 0;
-      this->params_get_value( 0, &out_ev.value );
+      out_ev.param_id = 1;
+      this->params_get_value( 1, &out_ev.value );
       bool success = out_events->try_push( out_events, &out_ev.header );
       SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
     }
@@ -110,8 +111,8 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
         out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
         out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
         out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-        out_ev.param_id = 0;
-        this->params_get_value( 0, &out_ev.value );
+        out_ev.param_id = 1;
+        this->params_get_value( 1, &out_ev.value );
         bool success = out_events->try_push( out_events, &out_ev.header );
         SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
       }
@@ -163,7 +164,7 @@ uint32_t ParamMultiplex::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
   // adjust according to param_multiplex.proto
   // while we could make it dynamic, without explicit gui i'd rather not
-  return 2 + state_.amount_params();
+  return 3 + state_.amount_params();
 }
 
 bool ParamMultiplex::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
@@ -190,18 +191,18 @@ bool ParamMultiplex::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->max_value = 1.0;
       out_param_info->default_value = out_param_info->min_value;
       break;
-    // case 1:
-    //   // param amount
-    //   out_param_info->id = 2;
-    //   out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE;
-    //   out_param_info->cookie = nullptr;
-    //   std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Param Amount" );
-    //   std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Main" );
-    //   out_param_info->min_value = 1;
-    //   out_param_info->max_value = 128;
-    //   out_param_info->default_value = out_param_info->min_value;
-    //   break;
     case 1:
+      // param amount
+      out_param_info->id = 2;
+      out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE;
+      out_param_info->cookie = nullptr;
+      std::snprintf( out_param_info->name, sizeof( out_param_info->name ), "%s", "Param Amount" );
+      std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Main" );
+      out_param_info->min_value = 1;
+      out_param_info->max_value = 128;
+      out_param_info->default_value = out_param_info->min_value;
+      break;
+    case 2:
       // param select
       out_param_info->id = 3;
       out_param_info->flags = CLAP_PARAM_IS_STEPPED | CLAP_PARAM_IS_AUTOMATABLE;
@@ -213,7 +214,7 @@ bool ParamMultiplex::params_get_info( uint32_t param_index, clap_param_info_t* o
       out_param_info->default_value = out_param_info->min_value;
       break;
   }
-  uint32_t adjusted_param_index = param_index - 2;
+  uint32_t adjusted_param_index = param_index - 3;
   if( adjusted_param_index >= state_.amount_params() ) {
     return false;
   }
@@ -241,10 +242,10 @@ bool ParamMultiplex::params_get_value( clap_id param_id, double* out_value ) {
   if( param_id == 1 ) {
     ( *out_value ) = state_.params( state_.selected_param() - 1 );
     return true;
-  } /*else if( param_id == 2 ) {
+  } else if( param_id == 2 ) {
     ( *out_value ) = state_.amount_params();
     return true;
-  }*/
+  }
   else if( param_id == 3 ) {
     ( *out_value ) = state_.selected_param();
     return true;
@@ -273,12 +274,12 @@ bool ParamMultiplex::params_value_to_text( clap_id param_id, double value, char*
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   }
-  /*if( param_id == 2 ) {
+  if( param_id == 2 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
-  }*/
+  }
   if( param_id == 3 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
@@ -327,9 +328,9 @@ bool ParamMultiplex::params_text_to_value( clap_id param_id, std::string const& 
   if( param_id == 1 ) {
     return text_to_double( param_value_text, out_value );
   }
-  /*if( param_id == 2 ) {
+  if( param_id == 2 ) {
     return text_to_double_no_scale( param_value_text, out_value );
-  }*/
+  }
   if( param_id == 3 ) {
     return text_to_double_no_scale( param_value_text, out_value );
   }
