@@ -30,6 +30,7 @@ REM RMDIR /S /Q "%ORIGINAL_DIR%\.xmake"
 REM RMDIR /S /Q "%ORIGINAL_DIR%\build"
 
 MKDIR "%ORIGINAL_DIR%\%logFolder%"
+REM MKDIR "%ORIGINAL_DIR%\_dest"
 
 CALL :doCommand "00_made_build_logs" "echo we did it" && cd>NUL || Goto :END
 
@@ -43,7 +44,9 @@ CALL :doCommand "04_xmake_configure_release" "xmake config -vD --plat=windows --
 
 CALL :doCommand "05_xmake_build_release" "xmake build -a -vD" && cd>NUL || Goto :END
 
-CALL :doCommand "06_xmake_run" "xmake run -vD SfgGenerator '%ORIGINAL_DIR%'" && cd>NUL || Goto :END
+REM CALL :doCommand "06_xmake_run" "xmake run -vD SfgGenerator '%ORIGINAL_DIR%'" && cd>NUL || Goto :END
+
+REM CALL :doCommand "07_xmake_install" "xmake install -vDo %ORIGINAL_DIR%\_dest --group=LIBS" && cd>NUL || Goto :END
 
 REM CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL || Goto :END
 

@@ -52,9 +52,6 @@ add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" }
 
 add_requires( "fmt" )
 add_requires( "protoc", "protobuf-cpp" )
---add_requires( "protoc" )
---add_requires( "protobuf-cpp 30.2" )
---add_requires( "vcpkg::protobuf", { alias = "protobuf-cpp" } )
 add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
@@ -69,7 +66,6 @@ target( "SfgGenerator" )
 
   add_packages( "fmt", { public = true } )
   add_packages( "protoc", "protobuf-cpp", { public = true } )
-  --add_packages( "protobuf-cpp", { public = true } )
   add_packages( "vcpkg-clap", { public = true } )
 
   add_rules( "protobuf.cpp" )
@@ -92,28 +88,6 @@ target( "SfgGenerator" )
   elseif is_plat( "windows" ) then
     set_filename( "SfgGenerator.clap" )
   end
-
-  on_install( function ( target )
-    os.cp( target:targetfile(), path.join( "$(installdir)", "lib/clap" ) )
-  end )
-
-  --on_run( function ( target )
-  --  print( "basename:", target:basename() )
-  --  print( "filename:", target:filename() )
-  --  print( "soname:", target:soname() )
-  --  print( "targetfile:", target:targetfile() )
-  --  print( "name:", target:name() )
-  --  --print( target )
-  --  local args = {
-  --    "--verbosity", "quiet",
-  --    "validate",
-  --    "--hide-output", "--only-failed",
-  --    --"--in-process",  -- to test
-  --    --"--test-filter", "state-reproducibility-basic",  -- to test
-  --    path.join( target:scriptdir(), target:targetfile() )
-  --  }
-  --  os.vrunv( "C:\\_Programs\\clap-validator\\clap-validator", args )
-  --end )
 
   on_test( function ( target, opt )
     local args = {
