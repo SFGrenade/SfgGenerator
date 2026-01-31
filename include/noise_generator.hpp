@@ -1,9 +1,17 @@
 #pragma once
 
-#include <random>
-
+// Project includes
 #include "base_plugin.hpp"
 #include "noise_generator.pb.h"
+
+// C++ std includes
+#include <cstdint>
+#include <cstdlib>
+#include <map>
+#include <random>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #if __cplusplus
 extern "C" {

@@ -1,8 +1,11 @@
+// Header assigned to this source
 #include "_folders.hpp"
 
+// C++ std includes
 #include <cstdlib>
 #include <string>
 
+// System includes
 #if defined( _WIN32 ) || defined( _WIN64 )
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN 1

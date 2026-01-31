@@ -1,9 +1,13 @@
 #pragma once
 
+// Project includes
 #include "_clap.hpp"
 #include "audio_lerp_effect.hpp"
 #include "noise_generator.hpp"
 #include "param_multiplex.hpp"
+
+// C++ std includes
+#include <cstdint>
 
 static struct {
   clap_plugin_descriptor_t const* desc;

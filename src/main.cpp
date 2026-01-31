@@ -1,6 +1,8 @@
+// Header assigned to this source
 #include "main.hpp"
 
-#include <cassert>
+// C++ std includes
+#include <mutex>
 
 #define DEBUG_LOG_ARGS_PLUGIN( fmt_string, ... ) \
   plug->host_log->log( plug->host,               \

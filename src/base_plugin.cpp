@@ -1,8 +1,5 @@
+// Header assigned to this source
 #include "base_plugin.hpp"
-
-#include <filesystem>
-#include <iostream>
-#include <numbers>
 
 #pragma region Base Methods
 

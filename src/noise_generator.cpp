@@ -1,6 +1,13 @@
+// Header assigned to this source
 #include "noise_generator.hpp"
 
+// C++ std includes
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdio>
 #include <exception>
+#include <functional>
 #include <numbers>
 
 namespace SfPb = SfgGenerator::Proto;

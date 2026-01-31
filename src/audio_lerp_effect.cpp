@@ -1,7 +1,14 @@
+// Header assigned to this source
 #include "audio_lerp_effect.hpp"
 
+// C++ std includes
+#include <algorithm>
+#include <array>
+#include <cstdio>
 #include <exception>
-#include <numbers>
+#include <functional>
+#include <string>
+#include <vector>
 
 namespace SfPb = SfgGenerator::Proto;
 

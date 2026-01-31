@@ -1,18 +1,17 @@
 #pragma once
 
-#include <memory>
-#include <string>
-
+// Other lib includes
 #ifndef FMT_USE_LOCALE
 #define FMT_USE_LOCALE 1
 #endif
-
-// Including FMT headers
 #include <fmt/base.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <fmt/std.h>
+
+// C++ std includes
+#include <memory>
 
 template < typename T >
 struct fmt::formatter< std::shared_ptr< T > > {
