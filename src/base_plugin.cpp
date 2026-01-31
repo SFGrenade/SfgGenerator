@@ -11,6 +11,7 @@ BasePlugin::BasePlugin() {
   };
   clap_audio_ports_activation_ = {
       .can_activate_while_processing = BasePlugin::s_audio_ports_activation_can_activate_while_processing,
+      .set_active = BasePlugin::s_audio_ports_activation_set_active,
   };
   clap_audio_ports_config_ = {
       .count = BasePlugin::s_audio_ports_config_count,
@@ -328,6 +329,11 @@ bool BasePlugin::ambisonic_get_config( bool is_input, uint32_t port_index, clap_
 }
 
 bool BasePlugin::audio_ports_activation_can_activate_while_processing() {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  return false;
+}
+
+bool BasePlugin::audio_ports_activation_set_active( bool is_input, uint32_t port_index, bool is_active, uint32_t sample_size ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -813,6 +819,13 @@ bool BasePlugin::s_audio_ports_activation_can_activate_while_processing( clap_pl
   if( !plug )
     return false;
   return plug->audio_ports_activation_can_activate_while_processing();
+}
+
+bool BasePlugin::s_audio_ports_activation_set_active( clap_plugin_t const* plugin, bool is_input, uint32_t port_index, bool is_active, uint32_t sample_size ) {
+  BasePlugin* plug = static_cast< BasePlugin* >( plugin->plugin_data );
+  if( !plug )
+    return false;
+  return plug->audio_ports_activation_set_active( is_input, port_index, is_active, sample_size );
 }
 
 uint32_t BasePlugin::s_audio_ports_config_count( clap_plugin_t const* plugin ) {

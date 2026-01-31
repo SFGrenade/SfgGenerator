@@ -119,22 +119,22 @@ class NoiseGenerator : BasePlugin {
 }
 #endif
 
-template< class Int1, class Int2 >
-uintmax_t upow(Int1 a, Int2 b) {
-    b = b - 1;
-    if (b <= -2)
-        throw std::range_error( "negatives not yet handled" );
-    if (b >= 0)
-        return a << b;
-    return a >> std::abs<Int2>(b);
+template < class Int1, class Int2 >
+uintmax_t sfg_upow( Int1 a, Int2 b ) {
+  b = b - 1;
+  if( b <= -2 )
+    throw std::range_error( "negatives not yet handled" );
+  if( b >= 0 )
+    return a << b;
+  return a >> std::abs< Int2 >( b );
 }
 
-template< class Int1, class Int2 >
-intmax_t ipow(Int1 a, Int2 b) {
-    b = b - 1;
-    if (b <= -2)
-        throw std::range_error( "negatives not yet handled" );
-    if (b >= 0)
-        return a << b;
-    return a >> std::abs(b);
+template < class Int1, class Int2 >
+intmax_t sfg_ipow( Int1 a, Int2 b ) {
+  b = b - 1;
+  if( b <= -2 )
+    throw std::range_error( "negatives not yet handled" );
+  if( b >= 0 )
+    return a << b;
+  return a >> std::abs< Int2 >( b );
 }

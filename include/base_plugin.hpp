@@ -85,6 +85,7 @@ class BasePlugin {
   virtual bool ambisonic_is_config_supported( clap_ambisonic_config_t const* config );
   virtual bool ambisonic_get_config( bool is_input, uint32_t port_index, clap_ambisonic_config_t* out_config );
   virtual bool audio_ports_activation_can_activate_while_processing( void );
+  virtual bool audio_ports_activation_set_active( bool is_input, uint32_t port_index, bool is_active, uint32_t sample_size );
   virtual uint32_t audio_ports_config_count( void );
   virtual bool audio_ports_config_get( uint32_t index, clap_audio_ports_config_t* out_config );
   virtual bool audio_ports_config_select( clap_id config_id );
@@ -191,6 +192,7 @@ class BasePlugin {
   static bool s_ambisonic_is_config_supported( clap_plugin_t const* plugin, clap_ambisonic_config_t const* config );
   static bool s_ambisonic_get_config( clap_plugin_t const* plugin, bool is_input, uint32_t port_index, clap_ambisonic_config_t* out_config );
   static bool s_audio_ports_activation_can_activate_while_processing( clap_plugin_t const* plugin );
+  static bool s_audio_ports_activation_set_active( clap_plugin_t const* plugin, bool is_input, uint32_t port_index, bool is_active, uint32_t sample_size );
   static uint32_t s_audio_ports_config_count( clap_plugin_t const* plugin );
   static bool s_audio_ports_config_get( clap_plugin_t const* plugin, uint32_t index, clap_audio_ports_config_t* out_config );
   static bool s_audio_ports_config_select( clap_plugin_t const* plugin, clap_id config_id );

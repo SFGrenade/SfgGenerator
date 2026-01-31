@@ -121,7 +121,7 @@ double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist,
     return 0.0;
   double sum = 0.0;
   for( uint64_t i = 0; i < streams.size(); i++ ) {
-    if( ( sampleIndex % upow( 2, i ) ) == 0 ) {
+    if( ( sampleIndex % sfg_upow( 2ull, i ) ) == 0 ) {
       streams[i] = dist( eng );
     }
     sum += streams[i];
