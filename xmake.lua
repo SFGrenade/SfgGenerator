@@ -51,13 +51,14 @@ add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { system = false } )
 add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" } } )
 
 add_requires( "fmt" )
---add_requires( "protoc", "protobuf-cpp" )
+add_requires( "protoc", "protobuf-cpp" )
 --add_requires( "protoc" )
-add_requires( "protobuf-cpp 30.2" )
+--add_requires( "protobuf-cpp 30.2" )
 --add_requires( "vcpkg::protobuf", { alias = "protobuf-cpp" } )
 add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
+add_requireconfs("**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
 
 target( "SfgGenerator" )
   set_kind( "shared" )
@@ -67,8 +68,8 @@ target( "SfgGenerator" )
   set_group( "LIBS" )
 
   add_packages( "fmt", { public = true } )
-  --add_packages( "protoc", "protobuf-cpp", { public = true } )
-  add_packages( "protobuf-cpp", { public = true } )
+  add_packages( "protoc", "protobuf-cpp", { public = true } )
+  --add_packages( "protobuf-cpp", { public = true } )
   add_packages( "vcpkg-clap", { public = true } )
 
   add_rules( "protobuf.cpp" )
