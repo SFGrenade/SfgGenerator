@@ -9,6 +9,9 @@
 #include <functional>
 #include <vector>
 
+#include "clap/events.h"
+
+
 namespace SfPb = SfgGenerator::Proto;
 
 ParamMultiplex::ParamMultiplex() : _base_() {
@@ -36,8 +39,26 @@ bool ParamMultiplex::init( void ) {
   state_.set_selected_param( 1 );
   state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
 
+  doClearAndRescan_ = false;
+
   ret = ret && true;
   return ret;
+}
+
+void ParamMultiplex::deactivate( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  _base_::deactivate();
+
+  if( doClearAndRescan_ ) {
+    clap_param_info_t param_amount_range;
+    params_get_info( 1, &param_amount_range );
+    for( clap_id param_id_offset = clap_id( param_amount_range.min_value ); param_id_offset <= clap_id( param_amount_range.max_value ); param_id_offset++ ) {
+      host_params_->clear( host_, 3 + param_id_offset, CLAP_PARAM_CLEAR_ALL );
+    }
+    host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
+  }
+
+  doClearAndRescan_ = false;
 }
 
 void ParamMultiplex::reset( void ) {
@@ -49,6 +70,8 @@ void ParamMultiplex::reset( void ) {
   state_.set_amount_params( 16 );
   state_.set_selected_param( 1 );
   state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
+
+  doClearAndRescan_ = false;
 }
 
 void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
@@ -84,10 +107,9 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
     // we don't support resizing the amount of params
     state_.set_amount_params( ev->value );
     state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
-    // apparently one needs to do a `host->restart` for this
-    host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
-  }
-  else if( ev->param_id == 3 ) {
+    doClearAndRescan_ = true;
+    host_->request_restart( host_ );
+  } else if( ev->param_id == 3 ) {
     state_.set_selected_param( ev->value );
     {
       // send event to check for output param
@@ -98,7 +120,8 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
       out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
       out_ev.header.flags = CLAP_EVENT_IS_LIVE;
       out_ev.param_id = 1;
-      this->params_get_value( 1, &out_ev.value );
+      out_ev.value = state_.params( state_.selected_param() - 1 );
+      state_.set_output_param( out_ev.value );
       bool success = out_events->try_push( out_events, &out_ev.header );
       SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
     }
@@ -106,19 +129,19 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
     state_.set_params( ev->param_id - 4, ev->value );
     if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
       // if selected param was changed, have it rescan for the output param
-      {
-        // send event to check for output param
-        clap_event_param_value_t out_ev{};
-        out_ev.header.size = sizeof( out_ev );
-        out_ev.header.time = hdr->time;
-        out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-        out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
-        out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-        out_ev.param_id = 1;
-        this->params_get_value( 1, &out_ev.value );
-        bool success = out_events->try_push( out_events, &out_ev.header );
-        SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
-      }
+
+      // send event to check for output param
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = hdr->time;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 1;
+      out_ev.value = state_.params( state_.selected_param() - 1 );
+      state_.set_output_param( out_ev.value );
+      bool success = out_events->try_push( out_events, &out_ev.header );
+      SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
     }
   }
 }
@@ -145,7 +168,13 @@ clap_process_status ParamMultiplex::process( clap_process_t const* process ) {
         break;
       }
       process_event( hdr, process->out_events );
-      process->out_events->try_push( process->out_events, hdr );
+      {
+        clap_event_header_t* responseEv = reinterpret_cast< clap_event_header_t* >( malloc( hdr->size ) );
+        std::memcpy( responseEv, hdr, hdr->size );
+        // responseEv->time = 0;
+        process->out_events->try_push( process->out_events, responseEv );
+        free( responseEv );
+      }
       ++ev_index;
       if( ev_index == nev ) {
         // we reached the end of the event list
@@ -228,7 +257,7 @@ bool ParamMultiplex::params_get_info( uint32_t param_index, clap_param_info_t* o
   std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Params" );
   out_param_info->min_value = 0.0;
   out_param_info->max_value = 1.0;
-  out_param_info->default_value = 0.0;
+  out_param_info->default_value = out_param_info->min_value;
   return true;
 }
 
@@ -243,13 +272,12 @@ bool ParamMultiplex::params_get_value( clap_id param_id, double* out_value ) {
   if( !out_value )
     return false;
   if( param_id == 1 ) {
-    ( *out_value ) = state_.params( state_.selected_param() - 1 );
+    ( *out_value ) = state_.output_param();
     return true;
   } else if( param_id == 2 ) {
     ( *out_value ) = state_.amount_params();
     return true;
-  }
-  else if( param_id == 3 ) {
+  } else if( param_id == 3 ) {
     ( *out_value ) = state_.selected_param();
     return true;
   } else if( ( param_id - 4 ) < state_.amount_params() ) {
@@ -354,14 +382,21 @@ void ParamMultiplex::params_flush( clap_input_events_t const* in, clap_output_ev
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] in_size={:d}", __FUNCTION__, static_cast< void* >( this ), in->size( in ) );
 
   for( uint32_t i = 0; i < in->size( in ); i++ ) {
-    process_event( in->get( in, i ), out );
-    out->try_push( out, in->get( in, i ) );
+    clap_event_header_t const* hdr = in->get( in, i );
+    process_event( hdr, out );
+    {
+      clap_event_header_t* responseEv = reinterpret_cast< clap_event_header_t* >( malloc( hdr->size ) );
+      std::memcpy( responseEv, hdr, hdr->size );
+      // responseEv->time = 0;
+      out->try_push( out, responseEv );
+      free( responseEv );
+    }
   }
   return;
 }
 
 uint32_t ParamMultiplex::remote_controls_count( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] remote_controls_count()", __FUNCTION__, static_cast< void* >( this ) );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 1;
 }
 
@@ -381,9 +416,9 @@ bool ParamMultiplex::remote_controls_get( uint32_t page_index, clap_remote_contr
     case 0:
       // param output
       std::snprintf( out_page->section_name, sizeof( out_page->section_name ), "%s", "main" );
-      out_page->page_id = 0;
+      out_page->page_id = 1;
       std::snprintf( out_page->page_name, sizeof( out_page->page_name ), "%s", "out" );
-      out_page->param_ids[0] = 0;
+      out_page->param_ids[0] = 1;
       break;
   }
   return true;

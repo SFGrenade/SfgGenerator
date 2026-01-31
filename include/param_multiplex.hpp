@@ -27,6 +27,7 @@ class ParamMultiplex : BasePlugin {
   // shit to override
   public:
   bool init( void ) override;
+  void deactivate( void ) override;
   void reset( void ) override;
   void process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) override;
   clap_process_status process( clap_process_t const* process ) override;
@@ -54,6 +55,7 @@ class ParamMultiplex : BasePlugin {
   protected:
   // params
   _pb_ state_;
+  bool doClearAndRescan_;
 
   // shit for the factory
   public:
