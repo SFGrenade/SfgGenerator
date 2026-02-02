@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "audio_lerp_effect.hpp"
+#include "plugin/audio_lerp_effect.hpp"
 
 // C++ std includes
 #include <algorithm>
@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <exception>
 #include <functional>
-#include <string>
 #include <vector>
 
 namespace SfPb = SfgGenerator::Proto;
@@ -31,10 +30,23 @@ bool AudioLerpEffect::init( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   bool ret = _base_::init();
 
+  logger_ = logger_->clone( "AudioLerpEffect" );
+  uiAleHolder_.set_logger( logger_->clone( "UiAleHolder" ) );
+
   state_.Clear();
 
   ret = ret && true;
   return ret;
+}
+
+void AudioLerpEffect::on_main_thread( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  _base_::on_main_thread();
+
+  // synchronization of values needed:
+  // 1. gui does `clap_host_->request_callback( clap_host_ );`
+  // 2. this method does `clap_host_params_->rescan( clap_host_, CLAP_PARAM_RESCAN_VALUES );`
+  host_params_->rescan( host_, CLAP_PARAM_RESCAN_VALUES );
 }
 
 void AudioLerpEffect::reset( void ) {
@@ -292,6 +304,120 @@ bool AudioLerpEffect::audio_ports_get( uint32_t index, bool is_input, clap_audio
   return true;
 }
 
+bool AudioLerpEffect::gui_is_api_supported( std::string const& api, bool is_floating ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  bool ret = _base_::gui_is_api_supported( api, is_floating );
+  return ret || true;
+}
+
+bool AudioLerpEffect::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_api={:?}, out_is_floating={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 out_api,
+                 static_cast< void* >( out_is_floating ) );
+  bool ret = _base_::gui_get_preferred_api( out_api, out_is_floating );
+  return ret && false;
+}
+
+bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  bool ret = _base_::gui_create( api, is_floating );
+  return ret || uiAleHolder_.clap_create( api, is_floating );
+}
+
+void AudioLerpEffect::gui_destroy( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  uiAleHolder_.clap_destroy();
+  _base_::gui_destroy();
+}
+
+bool AudioLerpEffect::gui_set_scale( double scale ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
+  bool ret = _base_::gui_set_scale( scale );
+  return ret || uiAleHolder_.clap_set_scale( scale );
+}
+
+bool AudioLerpEffect::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( out_width ),
+                 static_cast< void* >( out_height ) );
+  bool ret = _base_::gui_get_size( out_width, out_height );
+  return ret || uiAleHolder_.clap_get_size( out_width, out_height );
+}
+
+bool AudioLerpEffect::gui_can_resize( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_can_resize();
+  return ret || uiAleHolder_.clap_can_resize();
+}
+
+bool AudioLerpEffect::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_hints={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 __FUNCTION__,
+                 static_cast< void* >( out_hints ) );
+  bool ret = _base_::gui_get_resize_hints( out_hints );
+  return ret || uiAleHolder_.clap_get_resize_hints( out_hints );
+}
+
+bool AudioLerpEffect::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_width={:d}, out_height={:d} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 *out_width,
+                 *out_height );
+  bool ret = _base_::gui_adjust_size( out_width, out_height );
+  return ret || uiAleHolder_.clap_adjust_size( out_width, out_height );
+}
+
+bool AudioLerpEffect::gui_set_size( uint32_t width, uint32_t height ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
+  bool ret = _base_::gui_set_size( width, height );
+  return ret || uiAleHolder_.clap_set_size( width, height );
+}
+
+bool AudioLerpEffect::gui_set_parent( clap_window_t const* window ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  bool ret = _base_::gui_set_parent( window );
+  return ret || uiAleHolder_.clap_set_parent( window );
+}
+
+bool AudioLerpEffect::gui_set_transient( clap_window_t const* window ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  bool ret = _base_::gui_set_transient( window );
+  return ret || uiAleHolder_.clap_set_transient( window );
+}
+
+void AudioLerpEffect::gui_suggest_title( std::string const& title ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
+  _base_::gui_suggest_title( title );
+  uiAleHolder_.clap_suggest_title( title );
+}
+
+bool AudioLerpEffect::gui_show( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_show();
+  return ret || uiAleHolder_.clap_show();
+}
+
+bool AudioLerpEffect::gui_hide( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_hide();
+  return ret || uiAleHolder_.clap_hide();
+}
+
 uint32_t AudioLerpEffect::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
   // adjust according to audio_lerp_effect.proto
@@ -452,6 +578,10 @@ bool AudioLerpEffect::state_load( clap_istream_t const* stream ) {
 #pragma region CLAP extensions, wether or not to pointer things to clap
 
 bool AudioLerpEffect::supports_audio_ports() const {
+  return true;
+}
+
+bool AudioLerpEffect::supports_gui() const {
   return true;
 }
 

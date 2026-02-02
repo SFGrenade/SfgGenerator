@@ -1,15 +1,18 @@
 #pragma once
 
 // Project includes
-#include "base_plugin.hpp"
-#include "noise_generator.pb.h"
+#include "plugin/base_plugin.hpp"
+#include "plugin/noise_generator.pb.h"
+
+// Project includes
+#include <common/_clap.hpp>
+#include <common/_fmt.hpp>
+#include <ui/noise_generator.hpp>
 
 // C++ std includes
 #include <cstdint>
-#include <cstdlib>
 #include <map>
 #include <random>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -53,6 +56,7 @@ class NoiseGenerator : BasePlugin {
   // shit to override
   public:
   bool init( void ) override;
+  void on_main_thread( void ) override;
   void reset( void ) override;
   void process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) override;
   clap_process_status process( clap_process_t const* process ) override;
@@ -61,6 +65,21 @@ class NoiseGenerator : BasePlugin {
   public:
   uint32_t audio_ports_count( bool is_input ) override;
   bool audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) override;
+  bool gui_is_api_supported( std::string const& api, bool is_floating ) override;
+  bool gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) override;
+  bool gui_create( std::string const& api, bool is_floating ) override;
+  void gui_destroy( void ) override;
+  bool gui_set_scale( double scale ) override;
+  bool gui_get_size( uint32_t* out_width, uint32_t* out_height ) override;
+  bool gui_can_resize( void ) override;
+  bool gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) override;
+  bool gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) override;
+  bool gui_set_size( uint32_t width, uint32_t height ) override;
+  bool gui_set_parent( clap_window_t const* window ) override;
+  bool gui_set_transient( clap_window_t const* window ) override;
+  void gui_suggest_title( std::string const& title ) override;
+  bool gui_show( void ) override;
+  bool gui_hide( void ) override;
   uint32_t note_ports_count( bool is_input ) override;
   bool note_ports_get( uint32_t index, bool is_input, clap_note_port_info_t* out_info ) override;
   uint32_t params_count( void ) override;
@@ -75,6 +94,7 @@ class NoiseGenerator : BasePlugin {
   // CLAP extensions, wether or not to pointer things to clap
   protected:
   bool supports_audio_ports() const override;
+  bool supports_gui() const override;
   bool supports_note_ports() const override;
   bool supports_params() const override;
   bool supports_state() const override;
@@ -82,6 +102,7 @@ class NoiseGenerator : BasePlugin {
   protected:
   std::mt19937_64 eng_;
   std::uniform_real_distribution< double > dist_;
+  UiNgHolder uiNgHolder_;
 
   // members to save and load
   protected:
@@ -118,6 +139,3 @@ class NoiseGenerator : BasePlugin {
 #if __cplusplus
 }
 #endif
-
-uint64_t sfg_upow( uint64_t a, uint64_t b );
-int64_t sfg_ipow( int64_t a, int64_t b );

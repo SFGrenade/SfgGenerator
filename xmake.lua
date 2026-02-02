@@ -50,12 +50,47 @@ add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { system = false } )
 --add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { configs = { shared = get_config( "kind" ) == "shared" } } )
 add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" } } )
 
+add_requires( "spdlog" )
 add_requires( "fmt" )
 add_requires( "protoc", "protobuf-cpp" )
 add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 
+add_requireconfs( "spdlog", { configs = { header_only = true, fmt_external_ho = true } } )
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
 add_requireconfs("**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
+
+target( "SfgGeneratorCommon" )
+  set_kind( "static" )
+  set_encodings( "utf-8" )
+
+  set_default( true )
+  set_group( "LIBS" )
+
+  add_packages( "spdlog", { public = true } )
+  add_packages( "fmt", { public = true } )
+  add_packages( "vcpkg-clap", { public = true } )
+
+  add_includedirs( "include", { public = true } )
+  add_headerfiles( "include/(common/*.hpp)" )
+  add_files( "src/common/*.cpp" )
+target_end()
+
+target( "SfgGeneratorUi" )
+  add_rules("qt.static")
+  set_encodings( "utf-8" )
+
+  set_default( true )
+  set_group( "LIBS" )
+
+  add_deps( "SfgGeneratorCommon", { public = true } )
+
+  add_includedirs( "include", { public = true } )
+  add_headerfiles( "include/(ui/*.hpp)" )
+  add_files( "include/ui/*.hpp" )
+  add_files( "src/ui/*.cpp" )
+
+  add_frameworks( "QtCore", "QtGui", "QtWidgets" )
+target_end()
 
 target( "SfgGenerator" )
   set_kind( "shared" )
@@ -64,16 +99,17 @@ target( "SfgGenerator" )
   set_default( true )
   set_group( "LIBS" )
 
-  add_packages( "fmt", { public = true } )
+  add_deps( "SfgGeneratorCommon", { public = true } )
+  add_deps( "SfgGeneratorUi", { public = true } )
+
   add_packages( "protoc", "protobuf-cpp", { public = true } )
-  add_packages( "vcpkg-clap", { public = true } )
 
   add_rules( "protobuf.cpp" )
   add_files( "proto/**.proto", { proto_public = false, proto_rootdir = path.join( "proto" ) } )
 
   add_includedirs( "include", { public = true } )
-  add_headerfiles( "include/(*.hpp)" )
-  add_files( "src/*.cpp" )
+  add_headerfiles( "include/(plugin/*.hpp)" )
+  add_files( "src/plugin/*.cpp" )
 
   if is_plat( "linux" ) then
     add_ldflags( "-Wl,--version-script=" .. path.join( os.scriptdir(), "linux-SfgGenerator.version" ), "-Wl,-z,defs", { force = true } )

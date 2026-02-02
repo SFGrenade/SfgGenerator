@@ -1,10 +1,12 @@
 #pragma once
 
 // Project includes
-#include "_clap.hpp"
-#include "audio_lerp_effect.hpp"
-#include "noise_generator.hpp"
-#include "param_multiplex.hpp"
+#include "plugin/audio_lerp_effect.hpp"
+#include "plugin/noise_generator.hpp"
+#include "plugin/param_multiplex.hpp"
+
+// Project includes
+#include <common/_clap.hpp>
 
 // C++ std includes
 #include <cstdint>

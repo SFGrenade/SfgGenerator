@@ -1,16 +1,14 @@
 // Header assigned to this source
-#include "param_multiplex.hpp"
+#include "plugin/param_multiplex.hpp"
 
 // C++ std includes
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <cstring>
 #include <exception>
 #include <functional>
 #include <vector>
-
-#include "clap/events.h"
-
 
 namespace SfPb = SfgGenerator::Proto;
 
@@ -32,6 +30,9 @@ std::string ParamMultiplex::get_name( void ) const {
 bool ParamMultiplex::init( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   bool ret = _base_::init();
+
+  logger_ = logger_->clone( "ParamMultiplex" );
+  uiPmHolder_.set_logger( logger_->clone( "UiPmHolder" ) );
 
   state_.Clear();
   state_.set_output_param( 0.0 );
@@ -59,6 +60,16 @@ void ParamMultiplex::deactivate( void ) {
   }
 
   doClearAndRescan_ = false;
+}
+
+void ParamMultiplex::on_main_thread( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  _base_::on_main_thread();
+
+  // synchronization of values needed:
+  // 1. gui does `clap_host_->request_callback( clap_host_ );`
+  // 2. this method does `clap_host_params_->rescan( clap_host_, CLAP_PARAM_RESCAN_VALUES );`
+  host_params_->rescan( host_, CLAP_PARAM_RESCAN_VALUES );
 }
 
 void ParamMultiplex::reset( void ) {
@@ -191,6 +202,120 @@ clap_process_status ParamMultiplex::process( clap_process_t const* process ) {
 #pragma endregion
 
 #pragma region CLAP extensions
+
+bool ParamMultiplex::gui_is_api_supported( std::string const& api, bool is_floating ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  bool ret = _base_::gui_is_api_supported( api, is_floating );
+  return ret || true;
+}
+
+bool ParamMultiplex::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_api={:?}, out_is_floating={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 out_api,
+                 static_cast< void* >( out_is_floating ) );
+  bool ret = _base_::gui_get_preferred_api( out_api, out_is_floating );
+  return ret && false;
+}
+
+bool ParamMultiplex::gui_create( std::string const& api, bool is_floating ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  bool ret = _base_::gui_create( api, is_floating );
+  return ret || uiPmHolder_.clap_create( api, is_floating );
+}
+
+void ParamMultiplex::gui_destroy( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  uiPmHolder_.clap_destroy();
+  _base_::gui_destroy();
+}
+
+bool ParamMultiplex::gui_set_scale( double scale ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
+  bool ret = _base_::gui_set_scale( scale );
+  return ret || uiPmHolder_.clap_set_scale( scale );
+}
+
+bool ParamMultiplex::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( out_width ),
+                 static_cast< void* >( out_height ) );
+  bool ret = _base_::gui_get_size( out_width, out_height );
+  return ret || uiPmHolder_.clap_get_size( out_width, out_height );
+}
+
+bool ParamMultiplex::gui_can_resize( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_can_resize();
+  return ret || uiPmHolder_.clap_can_resize();
+}
+
+bool ParamMultiplex::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_hints={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 __FUNCTION__,
+                 static_cast< void* >( out_hints ) );
+  bool ret = _base_::gui_get_resize_hints( out_hints );
+  return ret || uiPmHolder_.clap_get_resize_hints( out_hints );
+}
+
+bool ParamMultiplex::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_width={:d}, out_height={:d} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 *out_width,
+                 *out_height );
+  bool ret = _base_::gui_adjust_size( out_width, out_height );
+  return ret || uiPmHolder_.clap_adjust_size( out_width, out_height );
+}
+
+bool ParamMultiplex::gui_set_size( uint32_t width, uint32_t height ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
+  bool ret = _base_::gui_set_size( width, height );
+  return ret || uiPmHolder_.clap_set_size( width, height );
+}
+
+bool ParamMultiplex::gui_set_parent( clap_window_t const* window ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  bool ret = _base_::gui_set_parent( window );
+  return ret || uiPmHolder_.clap_set_parent( window );
+}
+
+bool ParamMultiplex::gui_set_transient( clap_window_t const* window ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  bool ret = _base_::gui_set_transient( window );
+  return ret || uiPmHolder_.clap_set_transient( window );
+}
+
+void ParamMultiplex::gui_suggest_title( std::string const& title ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
+  _base_::gui_suggest_title( title );
+  uiPmHolder_.clap_suggest_title( title );
+}
+
+bool ParamMultiplex::gui_show( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_show();
+  return ret || uiPmHolder_.clap_show();
+}
+
+bool ParamMultiplex::gui_hide( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_hide();
+  return ret || uiPmHolder_.clap_hide();
+}
 
 uint32_t ParamMultiplex::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
@@ -466,6 +591,10 @@ bool ParamMultiplex::state_load( clap_istream_t const* stream ) {
 #pragma endregion
 
 #pragma region CLAP extensions, wether or not to pointer things to clap
+
+bool ParamMultiplex::supports_gui() const {
+  return true;
+}
 
 bool ParamMultiplex::supports_params() const {
   return true;

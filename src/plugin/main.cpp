@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "main.hpp"
+#include "plugin/main.hpp"
 
 // C++ std includes
 #include <mutex>
@@ -37,38 +37,38 @@ clap_plugin_t const* plugin_factory_create_plugin( const struct clap_plugin_fact
 
 bool entry_init( char const* plugin_path ) {
   // perform the plugin initialization
-  g_plugin_path = plugin_path;
+  ClapGlobals::PLUGIN_PATH = plugin_path;
   return true;
 }
 
 void entry_deinit( void ) {
   // perform the plugin de-initialization
-  g_plugin_path.clear();
+  ClapGlobals::PLUGIN_PATH.clear();
 }
 
 // thread safe init counter
 bool entry_init_guard( char const* plugin_path ) {
-  std::lock_guard< std::mutex > _( g_entry_lock );
-  int const cnt = ++g_entry_init_counter;
+  std::lock_guard< std::mutex > _( ClapGlobals::ENTRY_LOCK );
+  int const cnt = ++ClapGlobals::ENTRY_INIT_COUNTER;
   if( cnt > 1 )
     return true;
   if( entry_init( plugin_path ) )
     return true;
-  g_entry_init_counter = 0;
+  ClapGlobals::ENTRY_INIT_COUNTER = 0;
   return false;
 }
 
 // thread safe deinit counter
 void entry_deinit_guard( void ) {
-  std::lock_guard< std::mutex > _( g_entry_lock );
-  int const cnt = --g_entry_init_counter;
+  std::lock_guard< std::mutex > _( ClapGlobals::ENTRY_LOCK );
+  int const cnt = --ClapGlobals::ENTRY_INIT_COUNTER;
   if( cnt == 0 )
     entry_deinit();
 }
 
 void const* entry_get_factory( char const* factory_id ) {
-  assert( g_entry_init_counter > 0 );
-  if( g_entry_init_counter <= 0 )
+  assert( ClapGlobals::ENTRY_INIT_COUNTER > 0 );
+  if( ClapGlobals::ENTRY_INIT_COUNTER <= 0 )
     return nullptr;
 
   if( !strcmp( factory_id, CLAP_PLUGIN_FACTORY_ID ) )

@@ -9,6 +9,9 @@
 #include <mutex>
 #include <string>
 
-static std::mutex g_entry_lock;
-static std::atomic_int32_t g_entry_init_counter = 0;
-static std::string g_plugin_path;
+class ClapGlobals {
+  public:
+  static std::mutex ENTRY_LOCK;
+  static std::atomic_int32_t ENTRY_INIT_COUNTER;
+  static std::string PLUGIN_PATH;
+};

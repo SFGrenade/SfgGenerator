@@ -1,5 +1,8 @@
 // Header assigned to this source
-#include "noise_generator.hpp"
+#include "plugin/noise_generator.hpp"
+
+// Project includes
+#include <common/math.hpp>
 
 // C++ std includes
 #include <algorithm>
@@ -393,6 +396,9 @@ bool NoiseGenerator::init( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   bool ret = _base_::init();
 
+  logger_ = logger_->clone( "NoiseGenerator" );
+  uiNgHolder_.set_logger( logger_->clone( "UiNgHolder" ) );
+
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
 
@@ -412,6 +418,16 @@ bool NoiseGenerator::init( void ) {
 
   ret = ret && true;
   return ret;
+}
+
+void NoiseGenerator::on_main_thread( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  _base_::on_main_thread();
+
+  // synchronization of values needed:
+  // 1. gui does `clap_host_->request_callback( clap_host_ );`
+  // 2. this method does `clap_host_params_->rescan( clap_host_, CLAP_PARAM_RESCAN_VALUES );`
+  host_params_->rescan( host_, CLAP_PARAM_RESCAN_VALUES );
 }
 
 void NoiseGenerator::reset( void ) {
@@ -565,7 +581,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
           state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
         } else if( ev->param_id == 24 ) {
           state_.set_synth_pink_noise_vossmccartney_number( ev->value );
-          //std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
+          // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
         } else if( ev->param_id == 13 ) {
           state_.set_synth_pink_noise_mix( ev->value );
         } else if( ev->param_id == 14 ) {
@@ -790,6 +806,146 @@ bool NoiseGenerator::audio_ports_get( uint32_t index, bool is_input, clap_audio_
   out_info->port_type = CLAP_PORT_MONO;
   out_info->in_place_pair = CLAP_INVALID_ID;
   return true;
+}
+
+bool NoiseGenerator::gui_is_api_supported( std::string const& api, bool is_floating ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  bool ret = _base_::gui_is_api_supported( api, is_floating );
+  ret = ret || true;
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_api={:?}, out_is_floating={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 out_api,
+                 static_cast< void* >( out_is_floating ) );
+  bool ret = _base_::gui_get_preferred_api( out_api, out_is_floating );
+  ret = ret && false;
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  bool ret = _base_::gui_create( api, is_floating );
+  ret = ret || uiNgHolder_.clap_create( api, is_floating );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+void NoiseGenerator::gui_destroy( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  uiNgHolder_.clap_destroy();
+  _base_::gui_destroy();
+}
+
+bool NoiseGenerator::gui_set_scale( double scale ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
+  bool ret = _base_::gui_set_scale( scale );
+  ret = ret || uiNgHolder_.clap_set_scale( scale );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( out_width ),
+                 static_cast< void* >( out_height ) );
+  bool ret = _base_::gui_get_size( out_width, out_height );
+  ret = ret || uiNgHolder_.clap_get_size( out_width, out_height );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_can_resize( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_can_resize();
+  ret = ret || uiNgHolder_.clap_can_resize();
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_hints={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 __FUNCTION__,
+                 static_cast< void* >( out_hints ) );
+  bool ret = _base_::gui_get_resize_hints( out_hints );
+  ret = ret || uiNgHolder_.clap_get_resize_hints( out_hints );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( out_width={:d}, out_height={:d} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 *out_width,
+                 *out_height );
+  bool ret = _base_::gui_adjust_size( out_width, out_height );
+  ret = ret || uiNgHolder_.clap_adjust_size( out_width, out_height );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_set_size( uint32_t width, uint32_t height ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
+  bool ret = _base_::gui_set_size( width, height );
+  ret = ret || uiNgHolder_.clap_set_size( width, height );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_set_parent( clap_window_t const* window ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  bool ret = _base_::gui_set_parent( window );
+  ret = ret || uiNgHolder_.clap_set_parent( window );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_set_transient( clap_window_t const* window ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  bool ret = _base_::gui_set_transient( window );
+  ret = ret || uiNgHolder_.clap_set_transient( window );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+void NoiseGenerator::gui_suggest_title( std::string const& title ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
+  _base_::gui_suggest_title( title );
+  uiNgHolder_.clap_suggest_title( title );
+}
+
+bool NoiseGenerator::gui_show( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_show();
+  ret = ret || uiNgHolder_.clap_show();
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
+}
+
+bool NoiseGenerator::gui_hide( void ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  bool ret = _base_::gui_hide();
+  ret = ret || uiNgHolder_.clap_hide();
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
+  return ret;
 }
 
 uint32_t NoiseGenerator::note_ports_count( bool is_input ) {
@@ -1491,6 +1647,10 @@ bool NoiseGenerator::supports_audio_ports() const {
   return true;
 }
 
+bool NoiseGenerator::supports_gui() const {
+  return true;
+}
+
 bool NoiseGenerator::supports_note_ports() const {
   return true;
 }
@@ -1560,21 +1720,3 @@ clap_plugin_descriptor_t* NoiseGenerator::descriptor_get( void ) {
 }
 
 #pragma endregion
-
-uint64_t sfg_upow( uint64_t a, uint64_t b ) {
-  b = b - 1;
-  if( b <= -2 )
-    throw std::range_error( "negatives not yet handled" );
-  if( b >= 0 )
-    return a << b;
-  return a >> std::abs< uint64_t >( b );
-}
-
-int64_t sfg_ipow( int64_t a, int64_t b ) {
-  b = b - 1;
-  if( b <= -2 )
-    throw std::range_error( "negatives not yet handled" );
-  if( b >= 0 )
-    return a << b;
-  return a >> std::abs< int64_t >( b );
-}
