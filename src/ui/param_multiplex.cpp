@@ -58,8 +58,6 @@ bool UiPmHolder::clap_create( std::string const& api, bool is_floating ) {
   impl_->qtTimer->start();
   impl_->qtApp->processEvents();
 
-  impl_->qtWindow->show();
-  impl_->qtWindow->hide();
   if( ( !is_floating ) && impl_->windowParentSet ) {
     clap_set_parent( &impl_->windowParent );
   }
@@ -189,6 +187,10 @@ bool UiPmHolder::clap_set_parent( clap_window_t const* window ) {
 
   impl_->windowParentSet = true;
   if( impl_->qtWindow && impl_->qtNativeParent ) {
+    if (!impl_->qtWindow->windowHandle()) {
+      impl_->qtWindow->show();
+      impl_->qtWindow->hide();
+    }
     impl_->qtWindow->windowHandle()->setParent( impl_->qtNativeParent );
   }
   return true;

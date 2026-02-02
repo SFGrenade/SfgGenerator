@@ -4,6 +4,7 @@
 #include <common/_fmt.hpp>
 
 // Other lib includes
+#include <QLabel>
 #include <QWidget>
 
 class UiNoiseGenerator : public QWidget {
@@ -13,7 +14,7 @@ class UiNoiseGenerator : public QWidget {
 
   public:
   UiNoiseGenerator( std::shared_ptr< spdlog::logger > logger, QWidget *parent = nullptr );
-  ~UiNoiseGenerator();
+  virtual ~UiNoiseGenerator();
 
   private:
   std::shared_ptr< spdlog::logger > logger_;

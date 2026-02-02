@@ -1,9 +1,14 @@
 #pragma once
 
 // Project includes
+#include "ui/sfgSlider.hpp"
+
+// Project includes
 #include <common/_fmt.hpp>
 
 // Other lib includes
+#include <QGridLayout>
+#include <QLabel>
 #include <QWidget>
 
 class UiAudioLerpEffect : public QWidget {
@@ -13,10 +18,19 @@ class UiAudioLerpEffect : public QWidget {
 
   public:
   UiAudioLerpEffect( std::shared_ptr< spdlog::logger > logger, QWidget *parent = nullptr );
-  ~UiAudioLerpEffect();
+  virtual ~UiAudioLerpEffect();
 
   private:
   std::shared_ptr< spdlog::logger > logger_;
+  QGridLayout* layout_ = nullptr;
+  QLabel* mainLabel_ = nullptr;
+  QLabel* leftLabel_ = nullptr;
+  SfgSlider* abSlider_ = nullptr;
+  QLabel* rightLabel_ = nullptr;
+
+  private:
+  int const abSliderMinValue_ = 0;
+  int const abSliderMaxValue_ = 1 << 30;
 
   private slots:
   // qt slots

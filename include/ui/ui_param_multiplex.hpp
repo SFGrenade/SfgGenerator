@@ -4,6 +4,7 @@
 #include <common/_fmt.hpp>
 
 // Other lib includes
+#include <QLabel>
 #include <QWidget>
 
 class UiParamMultiplex : public QWidget {
@@ -13,7 +14,7 @@ class UiParamMultiplex : public QWidget {
 
   public:
   UiParamMultiplex( std::shared_ptr< spdlog::logger > logger, QWidget *parent = nullptr );
-  ~UiParamMultiplex();
+  virtual ~UiParamMultiplex();
 
   private:
   std::shared_ptr< spdlog::logger > logger_;
