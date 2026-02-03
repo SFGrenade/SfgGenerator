@@ -2,21 +2,17 @@
 #include "ui/audio_lerp_effect.hpp"
 
 // Project includes
+#include "ui/sfgEngine.hpp"
 #include "ui/ui_audio_lerp_effect.hpp"
 
 // Other lib includes
 #include <QApplication>
-#include <QTimer>
 #include <QWindow>
-
-// C++ std includes
-#include <chrono>
-#include <thread>
 
 struct UiAleHolder::Impl {
   bool initialized = false;
   QApplication* qtApp = nullptr;
-  QTimer* qtTimer = nullptr;
+  SfgEngine* qtEngine = nullptr;
   UiAudioLerpEffect* qtWindow = nullptr;
   QWindow* qtNativeParent = nullptr;
 
@@ -43,20 +39,10 @@ bool UiAleHolder::clap_create( std::string const& api, bool is_floating ) {
   }
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
-  impl_->qtTimer = new QTimer();
-  impl_->qtTimer->setInterval( std::chrono::milliseconds( 1000 / 60 ) );
-  impl_->qtTimer->setTimerType( Qt::TimerType::PreciseTimer );
-  impl_->qtTimer->setSingleShot( false );
   impl_->qtWindow = new UiAudioLerpEffect( this->logger_->clone( "UiAudioLerpEffect" ), nullptr );
+  impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
 
-  impl_->qtTimer->connect( impl_->qtTimer, &QTimer::timeout, [this]() {
-    if( this->impl_->qtWindow->isHidden() ) {
-      this->impl_->qtTimer->stop();
-    }
-    this->impl_->qtApp->processEvents();
-  } );
-  impl_->qtTimer->start();
-  impl_->qtApp->processEvents();
+  impl_->qtEngine->start();
 
   if( ( !is_floating ) && impl_->windowParentSet ) {
     clap_set_parent( &impl_->windowParent );
@@ -73,9 +59,9 @@ void UiAleHolder::clap_destroy( void ) {
     delete impl_->qtWindow;
     impl_->qtWindow = nullptr;
   }
-  if( impl_->qtTimer ) {
-    delete impl_->qtTimer;
-    impl_->qtTimer = nullptr;
+  if( impl_->qtEngine ) {
+    delete impl_->qtEngine;
+    impl_->qtEngine = nullptr;
   }
   if( impl_->qtApp ) {
     impl_->qtApp->quit();
@@ -216,9 +202,7 @@ bool UiAleHolder::clap_show( void ) {
   logger_->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->show();
-
-    impl_->qtTimer->start();
-    impl_->qtApp->processEvents();
+    impl_->qtEngine->start();
     return true;
   }
   return false;
@@ -228,9 +212,7 @@ bool UiAleHolder::clap_hide( void ) {
   logger_->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->hide();
-
-    impl_->qtTimer->stop();
-    impl_->qtApp->processEvents();
+    impl_->qtEngine->stop();
     return true;
   }
   return false;

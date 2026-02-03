@@ -25,7 +25,7 @@ EXIT /B %ERRORLEVEL%
 cd "%SCRIPT_DIR%"
 
 RMDIR /S /Q "%ORIGINAL_DIR%\%logFolder%"
-RMDIR /S /Q "%ORIGINAL_DIR%\_dest"
+REM RMDIR /S /Q "%ORIGINAL_DIR%\_dest"
 REM RMDIR /S /Q "%ORIGINAL_DIR%\.xmake"
 REM RMDIR /S /Q "%ORIGINAL_DIR%\build"
 
