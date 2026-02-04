@@ -23,6 +23,9 @@ class SfgEngine : public QObject {
   protected Q_SLOTS:
   void timerReceiver();
 
+  Q_SIGNALS:
+  void timerTicked();
+
   private:
   QApplication* app_ = nullptr;
   QWidget* hiddenWatcher_ = nullptr;

@@ -17,8 +17,15 @@ class UiAudioLerpEffect : public QWidget {
   using _base_::_base_;
 
   public:
-  UiAudioLerpEffect( std::shared_ptr< spdlog::logger > logger, QWidget *parent = nullptr );
+  UiAudioLerpEffect( std::shared_ptr< spdlog::logger > logger, QWidget* parent = nullptr );
   virtual ~UiAudioLerpEffect();
+
+  public Q_SLOTS:
+  void setAbValue( double value );
+  void abSliderNewValue( int value );
+
+  Q_SIGNALS:
+  void abAdjusted( double value );
 
   private:
   std::shared_ptr< spdlog::logger > logger_;
@@ -31,8 +38,4 @@ class UiAudioLerpEffect : public QWidget {
   private:
   int const abSliderMinValue_ = 0;
   int const abSliderMaxValue_ = 1 << 30;
-
-  private slots:
-  // qt slots
-  // void buttonClicked();
 };

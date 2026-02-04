@@ -38,10 +38,17 @@ UiAudioLerpEffect::UiAudioLerpEffect( std::shared_ptr< spdlog::logger > logger, 
 
   this->setLayout( layout_ );
 
-  connect( abSlider_, &QAbstractSlider::valueChanged, this, [this]( int value ) {
-    double fraction = double( value - this->abSliderMinValue_ ) / double( this->abSliderMaxValue_ - this->abSliderMinValue_ );
-    this->logger_->debug( "QAbstractSlider::valueChanged( {:f} )", fraction );
-  } );
+  connect( abSlider_, &SfgSlider::valueChanged, this, &UiAudioLerpEffect::abSliderNewValue, Qt::QueuedConnection );
+  connect( abSlider_, &SfgSlider::sliderMoved, this, &UiAudioLerpEffect::abSliderNewValue, Qt::QueuedConnection );
 }
 
 UiAudioLerpEffect::~UiAudioLerpEffect() {}
+
+void UiAudioLerpEffect::setAbValue( double value ) {
+  abSlider_->setValue( int( abSliderMinValue_ + ( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
+}
+
+void UiAudioLerpEffect::abSliderNewValue( int value ) {
+  double fraction = double( value - this->abSliderMinValue_ ) / double( this->abSliderMaxValue_ - this->abSliderMinValue_ );
+  emit this->abAdjusted( fraction );
+}

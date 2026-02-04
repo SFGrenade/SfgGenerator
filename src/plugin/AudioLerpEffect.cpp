@@ -32,6 +32,8 @@ bool AudioLerpEffect::init( void ) {
 
   logger_ = logger_->clone( "AudioLerpEffect" );
   uiAleHolder_.set_logger( logger_->clone( "UiAleHolder" ) );
+  uiAleHolder_.set_host( host_ );
+  uiAleHolder_.set_state( &state_ );
 
   state_.Clear();
 
@@ -209,6 +211,8 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
   uint32_t ev_index = 0;
   uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
 
+  static double last_ab = 0.0;
+
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nframes      ={:d}", __FUNCTION__, static_cast< void* >( this ), nframes );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nev          ={:d}", __FUNCTION__, static_cast< void* >( this ), nev );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] ev_index     ={:d}", __FUNCTION__, static_cast< void* >( this ), ev_index );
@@ -229,6 +233,19 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
         next_ev_frame = nframes;
         break;
       }
+    }
+
+    if( last_ab != state_.a_b() ) {
+      // a_b changed, safety event
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 1;
+      out_ev.value = state_.a_b();
+      bool success = process->out_events->try_push( process->out_events, &out_ev.header );
     }
 
     /* process every samples until the next event */

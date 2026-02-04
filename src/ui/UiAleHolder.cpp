@@ -10,6 +10,10 @@
 #include <QWindow>
 
 struct UiAleHolder::Impl {
+  std::shared_ptr< spdlog::logger > logger;
+  clap_host_t const* host;
+  SfgGenerator::Proto::AudioLerpEffect* state;
+
   bool initialized = false;
   QApplication* qtApp = nullptr;
   SfgEngine* qtEngine = nullptr;
@@ -33,21 +37,33 @@ UiAleHolder::UiAleHolder() : impl_( std::make_unique< UiAleHolder::Impl >() ) {}
 UiAleHolder::~UiAleHolder() {}
 
 bool UiAleHolder::clap_create( std::string const& api, bool is_floating ) {
-  logger_->trace( "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
   if( impl_->initialized ) {
     return false;
   }
   QApplication::setLibraryPaths( {
-    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" ).string() ),
-    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "iconengines" ).string() ),
-    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "imageformats" ).string() ),
-    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "platforms" ).string() ),
-    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "styles" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "iconengines" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "imageformats" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "platforms" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "styles" ).string() ),
   } );
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
-  impl_->qtWindow = new UiAudioLerpEffect( this->logger_->clone( "UiAudioLerpEffect" ), nullptr );
+  impl_->qtWindow = new UiAudioLerpEffect( this->impl_->logger->clone( "UiAudioLerpEffect" ), nullptr );
   impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
+
+  impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
+    static double last_ab = 0.0;
+    if( last_ab != this->impl_->state->a_b() ) {
+      last_ab = this->impl_->state->a_b();
+      this->impl_->qtWindow->setAbValue( last_ab );
+    }
+  } );
+  impl_->qtWindow->connect( impl_->qtWindow, &UiAudioLerpEffect::abAdjusted, [this]( double value ) {
+    this->impl_->state->set_a_b( value );
+    this->impl_->host->request_callback( this->impl_->host );
+  } );
 
   impl_->qtEngine->start();
 
@@ -60,7 +76,7 @@ bool UiAleHolder::clap_create( std::string const& api, bool is_floating ) {
 }
 
 void UiAleHolder::clap_destroy( void ) {
-  logger_->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   impl_->qtNativeParent = nullptr;
   if( impl_->qtWindow ) {
     delete impl_->qtWindow;
@@ -79,7 +95,7 @@ void UiAleHolder::clap_destroy( void ) {
 }
 
 bool UiAleHolder::clap_set_scale( double scale ) {
-  logger_->trace( "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
   // todo: fixme: uh, how?
   // if( impl_->qtWindow ) {
   //   emit impl_->qtWindow->resize(impl_->qtWindow->size() * scale);
@@ -89,11 +105,11 @@ bool UiAleHolder::clap_set_scale( double scale ) {
 }
 
 bool UiAleHolder::clap_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  logger_->trace( "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
-                  __FUNCTION__,
-                  static_cast< void* >( this ),
-                  static_cast< void* >( out_width ),
-                  static_cast< void* >( out_height ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
+                        __FUNCTION__,
+                        static_cast< void* >( this ),
+                        static_cast< void* >( out_width ),
+                        static_cast< void* >( out_height ) );
   if( out_width && out_height && impl_->qtWindow ) {
     *out_width = impl_->qtWindow->width();
     *out_height = impl_->qtWindow->height();
@@ -103,7 +119,7 @@ bool UiAleHolder::clap_get_size( uint32_t* out_width, uint32_t* out_height ) {
 }
 
 bool UiAleHolder::clap_can_resize( void ) {
-  logger_->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     return impl_->qtWindow->minimumSize() != impl_->qtWindow->maximumSize();
   }
@@ -111,7 +127,7 @@ bool UiAleHolder::clap_can_resize( void ) {
 }
 
 bool UiAleHolder::clap_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
-  logger_->trace( "[{:s}] [{:p}] enter( out_hints={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( out_hints ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( out_hints={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( out_hints ) );
   if( out_hints && impl_->qtWindow ) {
     out_hints->can_resize_horizontally = impl_->qtWindow->minimumSize().width() != impl_->qtWindow->maximumSize().width();
     out_hints->can_resize_vertically = impl_->qtWindow->minimumSize().height() != impl_->qtWindow->maximumSize().height();
@@ -126,11 +142,11 @@ bool UiAleHolder::clap_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
 }
 
 bool UiAleHolder::clap_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
-  logger_->trace( "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
-                  __FUNCTION__,
-                  static_cast< void* >( this ),
-                  static_cast< void* >( out_width ),
-                  static_cast< void* >( out_height ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
+                        __FUNCTION__,
+                        static_cast< void* >( this ),
+                        static_cast< void* >( out_width ),
+                        static_cast< void* >( out_height ) );
   if( out_width && out_height && impl_->qtWindow ) {
     impl_->qtWindow->resize( *out_width, *out_height );
     *out_width = impl_->qtWindow->width();
@@ -141,7 +157,7 @@ bool UiAleHolder::clap_adjust_size( uint32_t* out_width, uint32_t* out_height ) 
 }
 
 bool UiAleHolder::clap_set_size( uint32_t width, uint32_t height ) {
-  logger_->trace( "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
   if( impl_->qtWindow ) {
     impl_->qtWindow->resize( width, height );
     return true;
@@ -150,7 +166,7 @@ bool UiAleHolder::clap_set_size( uint32_t width, uint32_t height ) {
 }
 
 bool UiAleHolder::clap_set_parent( clap_window_t const* window ) {
-  logger_->trace( "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
   if( !window ) {
     return false;
   }
@@ -190,7 +206,7 @@ bool UiAleHolder::clap_set_parent( clap_window_t const* window ) {
 }
 
 bool UiAleHolder::clap_set_transient( clap_window_t const* window ) {
-  logger_->trace( "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->raise();
     return true;
@@ -199,14 +215,14 @@ bool UiAleHolder::clap_set_transient( clap_window_t const* window ) {
 }
 
 void UiAleHolder::clap_suggest_title( std::string const& title ) {
-  logger_->trace( "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
+  impl_->logger->trace( "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
   if( impl_->qtWindow ) {
     impl_->qtWindow->setWindowTitle( QString::fromStdString( title ) );
   }
 }
 
 bool UiAleHolder::clap_show( void ) {
-  logger_->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->show();
     impl_->qtEngine->start();
@@ -216,7 +232,7 @@ bool UiAleHolder::clap_show( void ) {
 }
 
 bool UiAleHolder::clap_hide( void ) {
-  logger_->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->hide();
     impl_->qtEngine->stop();
@@ -225,6 +241,14 @@ bool UiAleHolder::clap_hide( void ) {
   return false;
 }
 
+void UiAleHolder::set_host( clap_host_t const* host ) {
+  impl_->host = host;
+}
+
+void UiAleHolder::set_state( SfgGenerator::Proto::AudioLerpEffect* state ) {
+  impl_->state = state;
+}
+
 void UiAleHolder::set_logger( std::shared_ptr< spdlog::logger > logger ) {
-  logger_ = logger;
+  impl_->logger = logger;
 }

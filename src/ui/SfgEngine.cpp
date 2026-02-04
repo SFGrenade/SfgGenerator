@@ -23,6 +23,7 @@ void SfgEngine::stop() {
 }
 
 void SfgEngine::timerReceiver() {
+  emit timerTicked();
   if( hiddenWatcher_->isHidden() ) {
     timer_->stop();
   }
