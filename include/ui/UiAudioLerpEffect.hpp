@@ -1,7 +1,7 @@
 #pragma once
 
 // Project includes
-#include "ui/sfgSlider.hpp"
+#include "ui/SfgSlider.hpp"
 
 // Project includes
 #include <common/_fmt.hpp>

@@ -1,9 +1,9 @@
 // Header assigned to this source
-#include "ui/param_multiplex.hpp"
+#include "ui/UiPmHolder.hpp"
 
 // Project includes
-#include "ui/sfgEngine.hpp"
-#include "ui/ui_param_multiplex.hpp"
+#include "ui/SfgEngine.hpp"
+#include "ui/UiParamMultiplex.hpp"
 
 // Other lib includes
 #include <QApplication>
@@ -37,6 +37,13 @@ bool UiPmHolder::clap_create( std::string const& api, bool is_floating ) {
   if( impl_->initialized ) {
     return false;
   }
+  QApplication::setLibraryPaths( {
+    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" ).string() ),
+    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "iconengines" ).string() ),
+    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "imageformats" ).string() ),
+    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "platforms" ).string() ),
+    QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "styles" ).string() ),
+  } );
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
   impl_->qtWindow = new UiParamMultiplex( this->logger_->clone( "UiParamMultiplex" ), nullptr );

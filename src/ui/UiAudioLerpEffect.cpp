@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "ui/ui_audio_lerp_effect.hpp"
+#include "ui/UiAudioLerpEffect.hpp"
 
 // Other lib includes
 #include <QSpacerItem>

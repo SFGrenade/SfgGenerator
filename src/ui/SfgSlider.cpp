@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "ui/sfgSlider.hpp"
+#include "ui/SfgSlider.hpp"
 
 SfgSlider::SfgSlider( int minVal, int maxVal, Qt::Orientation orientation, QWidget* parent )
     : _base_( orientation, parent ), minValue_( minVal ), maxValue_( maxVal ) {}

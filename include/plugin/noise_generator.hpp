@@ -7,7 +7,7 @@
 // Project includes
 #include <common/_clap.hpp>
 #include <common/_fmt.hpp>
-#include <ui/noise_generator.hpp>
+#include <ui/UiNgHolder.hpp>
 
 // C++ std includes
 #include <cstdint>
@@ -15,10 +15,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
-#if __cplusplus
-extern "C" {
-#endif
 
 class NoiseGenerator : BasePlugin {
   using _base_ = BasePlugin;
@@ -135,7 +131,3 @@ class NoiseGenerator : BasePlugin {
   static clap_plugin_t* s_create( clap_host_t const* host );
   static clap_plugin_descriptor_t* descriptor_get( void );
 };
-
-#if __cplusplus
-}
-#endif

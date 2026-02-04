@@ -1,55 +1,35 @@
 #pragma once
 
 // Project includes
-#include "plugin/audio_lerp_effect.hpp"
-#include "plugin/noise_generator.hpp"
-#include "plugin/param_multiplex.hpp"
-
-// Project includes
 #include <common/_clap.hpp>
 
 // C++ std includes
 #include <cstdint>
 
-static struct {
-  clap_plugin_descriptor_t const* desc;
-  clap_plugin_t*( CLAP_ABI* create )( clap_host_t const* host );
-} s_plugins[] = {
-    {
-        .desc = NoiseGenerator::descriptor_get(),
-        .create = NoiseGenerator::s_create,
-    },
-    {
-        .desc = AudioLerpEffect::descriptor_get(),
-        .create = AudioLerpEffect::s_create,
-    },
-    {
-        .desc = ParamMultiplex::descriptor_get(),
-        .create = ParamMultiplex::s_create,
-    },
-};
-static uint32_t plugin_factory_get_plugin_count( const struct clap_plugin_factory* factory );
-static clap_plugin_descriptor_t const* plugin_factory_get_plugin_descriptor( const struct clap_plugin_factory* factory, uint32_t index );
-static clap_plugin_t const* plugin_factory_create_plugin( const struct clap_plugin_factory* factory, clap_host_t const* host, char const* plugin_id );
-static clap_plugin_factory_t const s_plugin_factory = {
-    .get_plugin_count = plugin_factory_get_plugin_count,
-    .get_plugin_descriptor = plugin_factory_get_plugin_descriptor,
-    .create_plugin = plugin_factory_create_plugin,
-};
+#if defined( SFG_GEN_EXPORT_CLAP_INIT ) && ( defined( _WIN32 ) || defined( _WIN64 ) )
+#define SFG_GEN_CLASS_API __declspec( dllexport )
+#elif defined( _WIN32 ) || defined( _WIN64 )
+#define SFG_GEN_CLASS_API __declspec( dllimport )
+#endif
 
-static bool entry_init( char const* plugin_path );
-static void entry_deinit( void );
+uint32_t plugin_factory_get_plugin_count( clap_plugin_factory const* factory );
+clap_plugin_descriptor_t const* plugin_factory_get_plugin_descriptor( clap_plugin_factory const* factory, uint32_t index );
+clap_plugin_t const* plugin_factory_create_plugin( clap_plugin_factory const* factory, clap_host_t const* host, char const* plugin_id );
 
-// thread safe init counter
-static bool entry_init_guard( char const* plugin_path );
-// thread safe deinit counter
-static void entry_deinit_guard( void );
+#if __cplusplus
+extern "C" {
+#endif
+
+SFG_GEN_CLASS_API bool entry_init( char const* plugin_path );
+SFG_GEN_CLASS_API void entry_deinit( void );
+
 // factory
-static void const* entry_get_factory( char const* factory_id );
+SFG_GEN_CLASS_API void const* entry_get_factory( char const* factory_id );
 
-CLAP_EXPORT clap_plugin_entry_t const clap_entry = {
-    .clap_version = CLAP_VERSION_INIT,
-    .init = entry_init_guard,
-    .deinit = entry_deinit_guard,
-    .get_factory = entry_get_factory,
-};
+#if __cplusplus
+}
+#endif
+
+#if defined( SFG_GEN_CLASS_API )
+#undef SFG_GEN_CLASS_API
+#endif

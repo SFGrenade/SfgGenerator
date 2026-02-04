@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "ui/ui_noise_generator.hpp"
+#include "ui/UiNoiseGenerator.hpp"
 
 // Other lib includes
 #include <QWindow>

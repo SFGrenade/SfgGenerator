@@ -128,14 +128,7 @@ std::string BasePlugin::get_name( void ) const {
 
 void BasePlugin::init_logger( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-
-  auto fileSink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( "C:\\Users\\SFG\\Downloads\\log.log", true );
-  fileSink->set_level( spdlog::level::level_enum::trace );
-  logger_ = std::make_shared< spdlog::logger >( "main", fileSink );
-  logger_->set_level( spdlog::level::level_enum::trace );
-  logger_->flush_on( spdlog::level::level_enum::trace );
-  logger_->set_pattern( "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%n] [%l] %v" );
-  // spdlog::register_logger( logger_ );
+  logger_ = ClapGlobals::PLUGIN_LOGGER->clone( "BasePlugin" );
 }
 
 #pragma endregion
@@ -169,7 +162,12 @@ bool BasePlugin::init( void ) {
 
   init_logger();
 
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] ClapGlobals::PLUGIN_PATH={:?}", __FUNCTION__, static_cast< void* >( this ), ClapGlobals::PLUGIN_PATH );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] ClapGlobals::PLUGIN_PATH={:?}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 ClapGlobals::PLUGIN_PATH.string() );
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] host={:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host_ ) );
   SFG_LOG_TRACE( host_,
                  host_log_,

@@ -53,43 +53,45 @@ add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" }
 add_requires( "spdlog" )
 add_requires( "fmt" )
 add_requires( "protoc", "protobuf-cpp" )
+add_requires( "qt5core", "qt5gui", "qt5widgets" )
 add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 
 add_requireconfs( "spdlog", { configs = { header_only = true, fmt_external_ho = true } } )
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
 add_requireconfs("**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
 
-target( "SfgGeneratorCommon" )
-  set_kind( "static" )
+target( "SfgGeneratorMain" )
+  add_rules( "qt.shared", { public = false } )
   set_encodings( "utf-8" )
 
-  set_default( true )
+  set_default( false )
   set_group( "LIBS" )
 
-  add_packages( "spdlog", { public = true } )
-  add_packages( "fmt", { public = true } )
-  add_packages( "vcpkg-clap", { public = true } )
+  add_packages( "spdlog", { public = false } )
+  add_packages( "fmt", { public = false } )
+  add_packages( "protoc", "protobuf-cpp", { public = false } )
+  add_packages( "qt5core", "qt5gui", "qt5widgets", { public = false } )
+  add_packages( "vcpkg-clap", { public = false } )
+
+  add_defines( "SFG_GEN_EXPORT_CLAP_INIT", { public = false } )
+
+  add_rules( "protobuf.cpp" )
+  add_files( "proto/**.proto", { proto_public = false, proto_rootdir = path.join( "proto" ) } )
 
   add_includedirs( "include", { public = true } )
-  add_headerfiles( "include/(common/*.hpp)" )
+  add_headerfiles( "include/(plugin/main.hpp)" )
+  add_headerfiles( "include/common/*.hpp" )
+  add_headerfiles( "include/plugin/audio_lerp_efffect.hpp" )
+  add_headerfiles( "include/plugin/base_plugin.hpp" )
+  add_headerfiles( "include/plugin/noise_generator.hpp" )
+  add_headerfiles( "include/plugin/param_multiplex.hpp" )
+  add_headerfiles( "include/ui/*.hpp" )
   add_files( "src/common/*.cpp" )
-target_end()
-
-target( "SfgGeneratorUi" )
-  add_rules("qt.static")
-  set_encodings( "utf-8" )
-
-  set_default( true )
-  set_group( "LIBS" )
-
-  add_deps( "SfgGeneratorCommon", { public = true } )
-
-  add_includedirs( "include", { public = true } )
-  add_headerfiles( "include/(ui/*.hpp)" )
+  add_files( "src/plugin/*.cpp" )
   add_files( "include/ui/*.hpp" )
   add_files( "src/ui/*.cpp" )
 
-  add_frameworks( "QtCore", "QtGui", "QtWidgets" )
+  add_frameworks( "QtCore", "QtGui", "QtWidgets", { public = false } )
 target_end()
 
 target( "SfgGenerator" )
@@ -99,31 +101,25 @@ target( "SfgGenerator" )
   set_default( true )
   set_group( "LIBS" )
 
-  add_deps( "SfgGeneratorCommon", { public = true } )
-  add_deps( "SfgGeneratorUi", { public = true } )
+  add_packages( "vcpkg-clap", { public = false } )
 
-  add_packages( "protoc", "protobuf-cpp", { public = true } )
-
-  add_rules( "protobuf.cpp" )
-  add_files( "proto/**.proto", { proto_public = false, proto_rootdir = path.join( "proto" ) } )
-
-  add_includedirs( "include", { public = true } )
-  add_headerfiles( "include/(plugin/*.hpp)" )
-  add_files( "src/plugin/*.cpp" )
+  add_files( "src/main.cpp" )
 
   if is_plat( "linux" ) then
-    add_ldflags( "-Wl,--version-script=" .. path.join( os.scriptdir(), "linux-SfgGenerator.version" ), "-Wl,-z,defs", { force = true } )
+    add_ldflags( "-Wl,--version-script=" .. path.join( os.scriptdir(), "linux-clap-plugins.version" ), "-Wl,-z,defs", { force = true } )
     set_filename( "SfgGenerator.clap" )
   elseif is_plat( "macosx" ) then
     add_ldflags( "-exported_symbols_list " .. path.join( os.scriptdir(), "macos-symbols.txt" ), { force = true } )
     set_values( "bundle.extension", "clap" )
-    set_values( "bundle.identifier", "org.clap.example-plugins" )
+    set_values( "bundle.identifier", "de.sfgrena.SfgGenerator" )
     set_values( "bundle.version", "1" )
     set_values( "bundle.shortver", "1" )
     set_values( "bundle.plist", path.join( os.scriptdir(), "plugins.plist.in" ) )
   elseif is_plat( "windows" ) then
     set_filename( "SfgGenerator.clap" )
   end
+
+  add_rules( "utils.symbols.export_list", { symbols = { "clap_entry" } } )
 
   on_test( function ( target, opt )
     local args = {
@@ -153,19 +149,17 @@ target( "SfgGenerator" )
 target_end()
 
 target( "clap-validator" )
-    set_kind( "phony" )
-    set_default( false )
-    set_group( "EXES" )
-    add_deps( "SfgGenerator" )
-    on_run( function ( target )
-        import( "core.base.option" )
-        import( "devel.debugger" )
+  set_kind( "phony" )
+  set_default( false )
+  set_group( "EXES" )
+  on_run( function ( target )
+    import( "core.base.option" )
+    import( "devel.debugger" )
 
-        local targetfile = path.absolute( target:dep( "SfgGenerator" ):targetfile() )
-        if option.get( "debug" ) then
-            debugger.run( "C:\\_Programs\\clap-validator\\clap-validator", { "validate", "--in-process", targetfile } )
-        else
-            os.execv( "C:\\_Programs\\clap-validator\\clap-validator", { "validate", targetfile } )
-        end
-    end )
+    if option.get( "debug" ) then
+      debugger.run( "C:\\_Programs\\clap-validator\\clap-validator", { "validate", "--in-process", "C:\\VstPlugins\\hard_clapx64\\SfgGenerator.clap" } )
+    else
+      os.execv( "C:\\_Programs\\clap-validator\\clap-validator", { "validate", "C:\\VstPlugins\\hard_clapx64\\SfgGenerator.clap" } )
+    end
+  end )
 target_end()

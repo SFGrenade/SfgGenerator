@@ -38,6 +38,6 @@ class UiNgHolder {
   // pImpl programming technique
   private:
   struct Impl;
-  mutable std::unique_ptr<UiNgHolder::Impl> impl_;
+  mutable std::unique_ptr< UiNgHolder::Impl > impl_;
   std::shared_ptr< spdlog::logger > logger_;
 };

@@ -7,15 +7,11 @@
 // Project includes
 #include <common/_clap.hpp>
 #include <common/_fmt.hpp>
-#include <ui/param_multiplex.hpp>
+#include <ui/UiPmHolder.hpp>
 
 // C++ std includes
 #include <cstdint>
 #include <string>
-
-#if __cplusplus
-extern "C" {
-#endif
 
 class ParamMultiplex : BasePlugin {
   using _base_ = BasePlugin;
@@ -87,7 +83,3 @@ class ParamMultiplex : BasePlugin {
   static clap_plugin_t* s_create( clap_host_t const* host );
   static clap_plugin_descriptor_t* descriptor_get( void );
 };
-
-#if __cplusplus
-}
-#endif

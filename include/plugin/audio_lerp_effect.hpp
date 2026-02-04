@@ -7,15 +7,11 @@
 // Project includes
 #include <common/_clap.hpp>
 #include <common/_fmt.hpp>
-#include <ui/audio_lerp_effect.hpp>
+#include <ui/UiAleHolder.hpp>
 
 // C++ std includes
 #include <cstdint>
 #include <string>
-
-#if __cplusplus
-extern "C" {
-#endif
 
 class AudioLerpEffect : BasePlugin {
   using _base_ = BasePlugin;
@@ -85,7 +81,3 @@ class AudioLerpEffect : BasePlugin {
   static clap_plugin_t* s_create( clap_host_t const* host );
   static clap_plugin_descriptor_t* descriptor_get( void );
 };
-
-#if __cplusplus
-}
-#endif

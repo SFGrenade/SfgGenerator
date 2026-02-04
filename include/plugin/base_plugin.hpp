@@ -73,10 +73,6 @@
     logger_->critical( fmt_string, ##__VA_ARGS__ );       \
   }
 
-#if __cplusplus
-extern "C" {
-#endif
-
 class BasePlugin {
   public:
   BasePlugin();
@@ -350,10 +346,6 @@ class BasePlugin {
   clap_host_track_info_t const* host_track_info_ = nullptr;
   clap_host_voice_info_t const* host_voice_info_ = nullptr;
 };
-
-#if __cplusplus
-}
-#endif
 
 template < typename T >
 bool read_multi_byte( clap_istream_t const* stream, T* value, size_t size ) {

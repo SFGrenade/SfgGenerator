@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "ui/sfgEngine.hpp"
+#include "ui/SfgEngine.hpp"
 
 SfgEngine::SfgEngine( QApplication* app, QWidget* hiddenWatcher, QObject* parent ) : _base_( parent ), app_( app ), hiddenWatcher_( hiddenWatcher ) {
   timer_ = new QTimer( this );

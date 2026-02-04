@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "ui/ui_param_multiplex.hpp"
+#include "ui/UiParamMultiplex.hpp"
 
 // Other lib includes
 #include <QWindow>
