@@ -3,6 +3,7 @@
 #include <clap/all.h>
 
 // C++ std includes
+#include <atomic>
 #include <filesystem>
 #include <mutex>
 

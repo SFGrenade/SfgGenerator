@@ -3,7 +3,7 @@
 
 SfgEngine::SfgEngine( QApplication* app, QWidget* hiddenWatcher, QObject* parent ) : _base_( parent ), app_( app ), hiddenWatcher_( hiddenWatcher ) {
   timer_ = new QTimer( this );
-  timer_->setInterval( std::chrono::milliseconds( 1000 / 60 ) );
+  timer_->setInterval( std::chrono::milliseconds( 10 ) );
   timer_->setTimerType( Qt::TimerType::PreciseTimer );
   timer_->setSingleShot( false );
 
