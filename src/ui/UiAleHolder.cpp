@@ -27,9 +27,6 @@ struct UiAleHolder::Impl {
 
   bool windowParentSet = false;
   clap_window_t windowParent;
-  uint32_t out_width;
-  uint32_t out_height;
-  clap_gui_resize_hints_t out_hints;
 };
 
 UiAleHolder::UiAleHolder() : impl_( std::make_unique< UiAleHolder::Impl >() ) {}
@@ -50,11 +47,11 @@ bool UiAleHolder::clap_create( std::string const& api, bool is_floating ) {
   } );
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
-  impl_->qtWindow = new UiAudioLerpEffect( this->impl_->logger->clone( "UiAudioLerpEffect" ), nullptr );
+  impl_->qtWindow = new UiAudioLerpEffect( impl_->logger->clone( "UiAudioLerpEffect" ), nullptr );
   impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
 
   impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
-    static double last_ab = 0.0;
+    static double last_ab = -1.0;
     if( last_ab != this->impl_->state->a_b() ) {
       last_ab = this->impl_->state->a_b();
       this->impl_->qtWindow->setAbValue( last_ab );

@@ -3,6 +3,7 @@
 // Project includes
 #include <common/_clap.hpp>
 #include <common/_fmt.hpp>
+#include <plugin/NoiseGenerator.pb.h>
 
 // C++ std includes
 #include <cstdint>
@@ -26,6 +27,10 @@ class UiNgHolder {
   bool clap_show( void );
   bool clap_hide( void );
 
+  public:
+  void set_host( clap_host_t const* host );
+  void set_state( SfgGenerator::Proto::NoiseGenerator* state );
+
   // pImpl programming technique
   public:
   // UiNgHolder() = delete;
@@ -39,5 +44,4 @@ class UiNgHolder {
   private:
   struct Impl;
   mutable std::unique_ptr< UiNgHolder::Impl > impl_;
-  std::shared_ptr< spdlog::logger > logger_;
 };

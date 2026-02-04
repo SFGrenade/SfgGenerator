@@ -22,6 +22,8 @@ class UiAudioLerpEffect : public QWidget {
 
   public Q_SLOTS:
   void setAbValue( double value );
+
+  protected Q_SLOTS:
   void abSliderNewValue( int value );
 
   Q_SIGNALS:

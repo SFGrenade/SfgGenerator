@@ -3,6 +3,7 @@
 // Project includes
 #include <common/_clap.hpp>
 #include <common/_fmt.hpp>
+#include <plugin/ParamMultiplex.pb.h>
 
 // C++ std includes
 #include <cstdint>
@@ -26,6 +27,10 @@ class UiPmHolder {
   bool clap_show( void );
   bool clap_hide( void );
 
+  public:
+  void set_host( clap_host_t const* host );
+  void set_state( SfgGenerator::Proto::ParamMultiplex* state );
+
   // pImpl programming technique
   public:
   // UiPmHolder() = delete;
@@ -39,5 +44,4 @@ class UiPmHolder {
   private:
   struct Impl;
   mutable std::unique_ptr< UiPmHolder::Impl > impl_;
-  std::shared_ptr< spdlog::logger > logger_;
 };

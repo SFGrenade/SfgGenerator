@@ -36,7 +36,7 @@ UiAudioLerpEffect::UiAudioLerpEffect( std::shared_ptr< spdlog::logger > logger, 
   layout_->setColumnStretch( 1, 1 );
   layout_->setColumnStretch( 2, 0 );
 
-  this->setLayout( layout_ );
+  setLayout( layout_ );
 
   connect( abSlider_, &SfgSlider::valueChanged, this, &UiAudioLerpEffect::abSliderNewValue, Qt::QueuedConnection );
   connect( abSlider_, &SfgSlider::sliderMoved, this, &UiAudioLerpEffect::abSliderNewValue, Qt::QueuedConnection );
@@ -49,6 +49,6 @@ void UiAudioLerpEffect::setAbValue( double value ) {
 }
 
 void UiAudioLerpEffect::abSliderNewValue( int value ) {
-  double fraction = double( value - this->abSliderMinValue_ ) / double( this->abSliderMaxValue_ - this->abSliderMinValue_ );
-  emit this->abAdjusted( fraction );
+  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  emit abAdjusted( fraction );
 }

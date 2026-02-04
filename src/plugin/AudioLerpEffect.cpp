@@ -211,7 +211,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
   uint32_t ev_index = 0;
   uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
 
-  static double last_ab = 0.0;
+  static double last_ab = -1.0;
 
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nframes      ={:d}", __FUNCTION__, static_cast< void* >( this ), nframes );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nev          ={:d}", __FUNCTION__, static_cast< void* >( this ), nev );
@@ -245,7 +245,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
       out_ev.header.flags = CLAP_EVENT_IS_LIVE;
       out_ev.param_id = 1;
       out_ev.value = state_.a_b();
-      bool success = process->out_events->try_push( process->out_events, &out_ev.header );
+      process->out_events->try_push( process->out_events, &out_ev.header );
     }
 
     /* process every samples until the next event */
