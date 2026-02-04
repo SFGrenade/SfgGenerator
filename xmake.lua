@@ -52,6 +52,7 @@ add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" }
 
 add_requires( "spdlog" )
 add_requires( "fmt" )
+add_requires( "hedley" )
 add_requires( "protoc", "protobuf-cpp" )
 add_requires( "qt5core", "qt5gui", "qt5widgets" )
 add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
@@ -69,6 +70,7 @@ target( "SfgGeneratorMain" )
 
   add_packages( "spdlog", { public = false } )
   add_packages( "fmt", { public = false } )
+  add_packages( "hedley", { public = false } )
   add_packages( "protoc", "protobuf-cpp", { public = false } )
   add_packages( "qt5core", "qt5gui", "qt5widgets", { public = false } )
   add_packages( "vcpkg-clap", { public = false } )
