@@ -47,10 +47,14 @@ uint32_t plugin_factory_get_plugin_count( clap_plugin_factory const* factory ) {
 }
 
 clap_plugin_descriptor_t const* plugin_factory_get_plugin_descriptor( clap_plugin_factory const* factory, uint32_t index ) {
+  if( ClapGlobals::PLUGIN_LOGGER )
+    ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter( factory={:p}, index={:d} )", __FUNCTION__, static_cast< void const* >( factory ), index );
   return s_plugins[index].desc;
 }
 
 clap_plugin_t const* plugin_factory_create_plugin( clap_plugin_factory const* factory, clap_host_t const* host, char const* plugin_id ) {
+  if( ClapGlobals::PLUGIN_LOGGER )
+    ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter( factory={:p}, host={:p}, plugin_id={:?} )", __FUNCTION__, static_cast< void const* >( factory ), static_cast< void const* >( host ), plugin_id );
   if( !clap_version_is_compatible( host->clap_version ) ) {
     return nullptr;
   }
