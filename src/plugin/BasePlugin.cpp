@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "plugin/base_plugin.hpp"
+#include "plugin/BasePlugin.hpp"
 
 #pragma region Base Methods
 

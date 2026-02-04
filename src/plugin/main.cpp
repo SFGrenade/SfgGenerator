@@ -2,9 +2,9 @@
 #include "plugin/main.hpp"
 
 // Project includes
-#include "plugin/audio_lerp_effect.hpp"
-#include "plugin/noise_generator.hpp"
-#include "plugin/param_multiplex.hpp"
+#include "plugin/AudioLerpEffect.hpp"
+#include "plugin/NoiseGenerator.hpp"
+#include "plugin/ParamMultiplex.hpp"
 
 #define DEBUG_LOG_ARGS_PLUGIN( fmt_string, ... ) \
   plug->host_log->log( plug->host,               \

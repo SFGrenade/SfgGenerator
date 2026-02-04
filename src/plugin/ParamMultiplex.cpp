@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "plugin/param_multiplex.hpp"
+#include "plugin/ParamMultiplex.hpp"
 
 // C++ std includes
 #include <algorithm>
@@ -319,7 +319,7 @@ bool ParamMultiplex::gui_hide( void ) {
 
 uint32_t ParamMultiplex::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
-  // adjust according to param_multiplex.proto
+  // adjust according to ParamMultiplex.proto
   // while we could make it dynamic, without explicit gui i'd rather not
   return 3 + state_.amount_params();
 }

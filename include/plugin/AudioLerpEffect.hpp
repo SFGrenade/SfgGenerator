@@ -1,8 +1,8 @@
 #pragma once
 
 // Project includes
-#include "plugin/base_plugin.hpp"
-#include "plugin/audio_lerp_effect.pb.h"
+#include "plugin/BasePlugin.hpp"
+#include "plugin/AudioLerpEffect.pb.h"
 
 // Project includes
 #include <common/_clap.hpp>

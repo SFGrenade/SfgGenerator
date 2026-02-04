@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "plugin/audio_lerp_effect.hpp"
+#include "plugin/AudioLerpEffect.hpp"
 
 // C++ std includes
 #include <algorithm>
@@ -420,7 +420,7 @@ bool AudioLerpEffect::gui_hide( void ) {
 
 uint32_t AudioLerpEffect::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
-  // adjust according to audio_lerp_effect.proto
+  // adjust according to AudioLerpEffect.proto
   // while we could make it dynamic, without explicit gui i'd rather not
   return 1;
 }

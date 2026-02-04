@@ -53,6 +53,8 @@ REM CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL ||
 CALL :doCommand "90_copy_deps" "xcopy %ORIGINAL_DIR%\_dest\bin\* C:\VstPlugins\hard_clapx64\qt\ /S /I /F /R /Y /EXCLUDE:_copyExcludes.txt" && cd>NUL || Goto :END
 CALL :doCommand "99_copy_built_clap" "xcopy %ORIGINAL_DIR%\_dest\bin\SfgGenerator.clap C:\VstPlugins\hard_clapx64\ /S /I /F /R /Y" && cd>NUL || Goto :END
 
+echo Success
+
 :END
 cd %ORIGINAL_DIR%
 ENDLOCAL

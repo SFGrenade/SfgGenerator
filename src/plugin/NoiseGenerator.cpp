@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "plugin/noise_generator.hpp"
+#include "plugin/NoiseGenerator.hpp"
 
 // Project includes
 #include <common/math.hpp>
@@ -981,7 +981,7 @@ bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_po
 
 uint32_t NoiseGenerator::params_count( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] params_count()", __FUNCTION__, static_cast< void* >( this ) );
-  // adjust according to noise_generator.proto
+  // adjust according to NoiseGenerator.proto
   // while we could make it dynamic, without explicit gui i'd rather not
   return 24;
 }
