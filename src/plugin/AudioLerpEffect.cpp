@@ -36,6 +36,7 @@ bool AudioLerpEffect::init( void ) {
   uiAleHolder_.set_state( &state_ );
 
   state_.Clear();
+  state_.set_a_b( 0.5 );
 
   ret = ret && true;
   return ret;
@@ -56,6 +57,7 @@ void AudioLerpEffect::reset( void ) {
   _base_::reset();
 
   state_.Clear();
+  state_.set_a_b( 0.5 );
 }
 
 void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
@@ -68,12 +70,59 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
   if( hdr->space_id == CLAP_CORE_EVENT_SPACE_ID ) {
     switch( hdr->type ) {
       case CLAP_EVENT_NOTE_ON: {
+        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->note_id,
+                       ev->port_index,
+                       ev->channel,
+                       ev->key,
+                       ev->velocity );
         break;
       }
       case CLAP_EVENT_NOTE_OFF: {
+        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->note_id,
+                       ev->port_index,
+                       ev->channel,
+                       ev->key,
+                       ev->velocity );
         break;
       }
       case CLAP_EVENT_NOTE_CHOKE: {
+        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->note_id,
+                       ev->port_index,
+                       ev->channel,
+                       ev->key,
+                       ev->velocity );
+        break;
+      }
+      case CLAP_EVENT_NOTE_END: {
+        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_NOTE_END - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->note_id,
+                       ev->port_index,
+                       ev->channel,
+                       ev->key,
+                       ev->velocity );
         break;
       }
       case CLAP_EVENT_NOTE_EXPRESSION: {
@@ -113,89 +162,109 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
       }
       case CLAP_EVENT_PARAM_MOD: {
         clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->param_id,
-        //                ev->cookie,
-        //                ev->note_id,
-        //                ev->port_index,
-        //                ev->channel,
-        //                ev->key,
-        //                ev->amount );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->param_id,
+                       ev->cookie,
+                       ev->note_id,
+                       ev->port_index,
+                       ev->channel,
+                       ev->key,
+                       ev->amount );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_PARAM_GESTURE_BEGIN: {
         clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
-        // ev->param_id );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->param_id );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_PARAM_GESTURE_END: {
         clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
-        // ev->param_id );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->param_id );
         // TODO: handle parameter modulation
         break;
       }
       case CLAP_EVENT_TRANSPORT: {
         clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
-        //                "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
-        //                "tsig_num={:d}, tsig_denom={:d}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->flags,
-        //                ev->song_pos_beats,
-        //                ev->song_pos_seconds,
-        //                ev->tempo,
-        //                ev->tempo_inc,
-        //                ev->loop_start_beats,
-        //                ev->loop_end_beats,
-        //                ev->loop_start_seconds,
-        //                ev->loop_end_seconds,
-        //                ev->bar_start,
-        //                ev->bar_number,
-        //                ev->tsig_num,
-        //                ev->tsig_denom );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
+                       "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
+                       "tsig_num={:d}, tsig_denom={:d}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->flags,
+                       ev->song_pos_beats,
+                       ev->song_pos_seconds,
+                       ev->tempo,
+                       ev->tempo_inc,
+                       ev->loop_start_beats,
+                       ev->loop_end_beats,
+                       ev->loop_start_seconds,
+                       ev->loop_end_seconds,
+                       ev->bar_start,
+                       ev->bar_number,
+                       ev->tsig_num,
+                       ev->tsig_denom );
         // TODO: handle transport event
         break;
       }
       case CLAP_EVENT_MIDI: {
         clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                std::vector< uint8_t >( ev->data, ev->data + 3 ) );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->port_index,
+                       std::vector< uint8_t >( ev->data, ev->data + 3 ) );
         // TODO: handle MIDI event
+        if( ev->data[0] == 0xB0 ) {
+          // control change channel 0, i assume that might be param 0 then, so our slider
+          if( ev->data[1] == 0x00 ) {
+            // maybe this means param 0???
+            state_.set_a_b( double( ev->data[2] ) / double( 0x7F ) );
+          }
+        }
         break;
       }
       case CLAP_EVENT_MIDI_SYSEX: {
         clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                static_cast< void const* >( ev->buffer ),
-        //                ev->size );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->port_index,
+                       static_cast< void const* >( ev->buffer ),
+                       ev->size );
         // TODO: handle MIDI Sysex event
         break;
       }
       case CLAP_EVENT_MIDI2: {
         clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                std::vector< uint8_t >( ev->data, ev->data + 4 ) );
+        SFG_LOG_TRACE( host_,
+                       host_log_,
+                       "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
+                       __FUNCTION__,
+                       static_cast< void* >( this ),
+                       ev->port_index,
+                       std::vector< uint8_t >( ev->data, ev->data + 4 ) );
         // TODO: handle MIDI2 event
         break;
       }
@@ -226,6 +295,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
         next_ev_frame = hdr->time;
         break;
       }
+      // process->out_events->try_push( process->out_events, hdr );
       process_event( hdr, process->out_events );
       ++ev_index;
       if( ev_index == nev ) {
@@ -314,7 +384,7 @@ bool AudioLerpEffect::audio_ports_get( uint32_t index, bool is_input, clap_audio
   }
   out_info->id = 2;
   std::snprintf( out_info->name, sizeof( out_info->name ), "%s", "main" );
-  out_info->channel_count = 1;
+  out_info->channel_count = 2;
   out_info->flags = CLAP_AUDIO_PORT_IS_MAIN | CLAP_AUDIO_PORT_SUPPORTS_64BITS | CLAP_AUDIO_PORT_REQUIRES_COMMON_SAMPLE_SIZE;
   out_info->port_type = CLAP_PORT_STEREO;
   out_info->in_place_pair = CLAP_INVALID_ID;
@@ -463,7 +533,7 @@ bool AudioLerpEffect::params_get_info( uint32_t param_index, clap_param_info_t* 
       std::snprintf( out_param_info->module, sizeof( out_param_info->module ), "%s", "Main" );
       out_param_info->min_value = 0.0;
       out_param_info->max_value = 1.0;
-      out_param_info->default_value = out_param_info->min_value;
+      out_param_info->default_value = 0.5;
       break;
   }
   return true;
