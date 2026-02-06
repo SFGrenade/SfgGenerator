@@ -458,244 +458,292 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->space_id={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->space_id );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->type    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->type );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->flags   ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->flags );
-  if( hdr->space_id == CLAP_CORE_EVENT_SPACE_ID ) {
-    switch( hdr->type ) {
-      case CLAP_EVENT_NOTE_ON: {
-        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->note_id,
-        //                ev->port_index,
-        //                ev->channel,
-        //                ev->key,
-        //                ev->velocity );
-        if( ev->key == -1 ) {
-          for( auto& item : note_map_ ) {
-            item.second.phase = 0.0;
-            item.second.velocity = ev->velocity;
-          }
-        } else {
-          if( !note_map_.contains( ev->key ) ) {
-            note_map_[ev->key] = NoteData();
-          }
-          note_map_[ev->key].phase = 0.0;
-          note_map_[ev->key].velocity = ev->velocity;
-        }
-        break;
+  if( hdr->space_id != CLAP_CORE_EVENT_SPACE_ID ) {
+    return;
+  }
+  if( hdr->type == CLAP_EVENT_NOTE_ON ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+    if( ev->key == -1 ) {
+      for( auto& item : note_map_ ) {
+        item.second.phase = 0.0;
+        item.second.velocity = ev->velocity;
       }
-      case CLAP_EVENT_NOTE_OFF: {
-        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->note_id,
-        //                ev->port_index,
-        //                ev->channel,
-        //                ev->key,
-        //                ev->velocity );
-        if( ev->key == -1 ) {
-          note_map_.clear();
-        } else {
-          if( note_map_.contains( ev->key ) ) {
-            note_map_.erase( ev->key );
-          }
-        }
-        break;
+    } else {
+      if( !note_map_.contains( ev->key ) ) {
+        note_map_[ev->key] = NoteData();
       }
-      case CLAP_EVENT_NOTE_CHOKE: {
-        clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->note_id,
-        //                ev->port_index,
-        //                ev->channel,
-        //                ev->key,
-        //                ev->velocity );
-        if( ev->key == -1 ) {
-          note_map_.clear();
-        } else {
-          if( note_map_.contains( ev->key ) ) {
-            note_map_.erase( ev->key );
-          }
-        }
-        break;
-      }
-      case CLAP_EVENT_NOTE_EXPRESSION: {
-        clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
-        SFG_LOG_TRACE( host_,
-                       host_log_,
-                       "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->expression_id,
-                       ev->note_id,
-                       ev->port_index,
-                       ev->channel,
-                       ev->key,
-                       ev->value );
-        // TODO: handle note expression
-        break;
-      }
-      case CLAP_EVENT_PARAM_VALUE: {
-        clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
-        SFG_LOG_TRACE( host_,
-                       host_log_,
-                       "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                       __FUNCTION__,
-                       static_cast< void* >( this ),
-                       ev->param_id,
-                       ev->cookie,
-                       ev->note_id,
-                       ev->port_index,
-                       ev->channel,
-                       ev->key,
-                       ev->value );
-        if( ev->param_id == 1 ) {
-          state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( ev->value ) );
-        } else if( ev->param_id == 2 ) {
-          state_.set_synth_sine_wave_mix( ev->value );
-        } else if( ev->param_id == 3 ) {
-          state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( ev->value ) );
-        } else if( ev->param_id == 4 ) {
-          state_.set_synth_square_wave_pwm( ev->value );
-        } else if( ev->param_id == 5 ) {
-          state_.set_synth_square_wave_mix( ev->value );
-        } else if( ev->param_id == 6 ) {
-          state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( ev->value ) );
-        } else if( ev->param_id == 7 ) {
-          state_.set_synth_saw_wave_mix( ev->value );
-        } else if( ev->param_id == 8 ) {
-          state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( ev->value ) );
-        } else if( ev->param_id == 9 ) {
-          state_.set_synth_triangle_wave_mix( ev->value );
-        } else if( ev->param_id == 10 ) {
-          state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( ev->value ) );
-        } else if( ev->param_id == 11 ) {
-          state_.set_synth_white_noise_mix( ev->value );
-        } else if( ev->param_id == 12 ) {
-          state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
-        } else if( ev->param_id == 24 ) {
-          state_.set_synth_pink_noise_vossmccartney_number( ev->value );
-          // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
-        } else if( ev->param_id == 13 ) {
-          state_.set_synth_pink_noise_mix( ev->value );
-        } else if( ev->param_id == 14 ) {
-          state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( ev->value ) );
-        } else if( ev->param_id == 15 ) {
-          state_.set_synth_red_noise_mix( ev->value );
-        } else if( ev->param_id == 16 ) {
-          state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( ev->value ) );
-        } else if( ev->param_id == 17 ) {
-          state_.set_synth_blue_noise_mix( ev->value );
-        } else if( ev->param_id == 18 ) {
-          state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( ev->value ) );
-        } else if( ev->param_id == 19 ) {
-          state_.set_synth_violet_noise_mix( ev->value );
-        } else if( ev->param_id == 20 ) {
-          state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( ev->value ) );
-        } else if( ev->param_id == 21 ) {
-          state_.set_synth_grey_noise_mix( ev->value );
-        } else if( ev->param_id == 22 ) {
-          state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( ev->value ) );
-        } else if( ev->param_id == 23 ) {
-          state_.set_synth_velvet_noise_mix( ev->value );
-        }
-        break;
-      }
-      case CLAP_EVENT_PARAM_MOD: {
-        clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->param_id,
-        //                ev->cookie,
-        //                ev->note_id,
-        //                ev->port_index,
-        //                ev->channel,
-        //                ev->key,
-        //                ev->amount );
-        // TODO: handle parameter modulation
-        break;
-      }
-      case CLAP_EVENT_PARAM_GESTURE_BEGIN: {
-        clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
-        // ev->param_id );
-        // TODO: handle parameter modulation
-        break;
-      }
-      case CLAP_EVENT_PARAM_GESTURE_END: {
-        clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ),
-        // ev->param_id );
-        // TODO: handle parameter modulation
-        break;
-      }
-      case CLAP_EVENT_TRANSPORT: {
-        clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
-        //                "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
-        //                "tsig_num={:d}, tsig_denom={:d}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->flags,
-        //                ev->song_pos_beats,
-        //                ev->song_pos_seconds,
-        //                ev->tempo,
-        //                ev->tempo_inc,
-        //                ev->loop_start_beats,
-        //                ev->loop_end_beats,
-        //                ev->loop_start_seconds,
-        //                ev->loop_end_seconds,
-        //                ev->bar_start,
-        //                ev->bar_number,
-        //                ev->tsig_num,
-        //                ev->tsig_denom );
-        // TODO: handle transport event
-        break;
-      }
-      case CLAP_EVENT_MIDI: {
-        clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                std::vector< uint8_t >( ev->data, ev->data + 3 ) );
-        // TODO: handle MIDI event
-        break;
-      }
-      case CLAP_EVENT_MIDI_SYSEX: {
-        clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                static_cast< void const* >( ev->buffer ),
-        //                ev->size );
-        // TODO: handle MIDI Sysex event
-        break;
-      }
-      case CLAP_EVENT_MIDI2: {
-        clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
-        // SFG_LOG_TRACE( host_, host_log_,
-        //                "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
-        //                __FUNCTION__,
-        //                static_cast< void* >( this ),
-        //                ev->port_index,
-        //                std::vector< uint8_t >( ev->data, ev->data + 4 ) );
-        // TODO: handle MIDI2 event
-        break;
+      note_map_[ev->key].phase = 0.0;
+      note_map_[ev->key].velocity = ev->velocity;
+    }
+  } else if( hdr->type == CLAP_EVENT_NOTE_OFF ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+    if( ev->key == -1 ) {
+      note_map_.clear();
+    } else {
+      if( note_map_.contains( ev->key ) ) {
+        note_map_.erase( ev->key );
       }
     }
+  } else if( hdr->type == CLAP_EVENT_NOTE_CHOKE ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+    if( ev->key == -1 ) {
+      note_map_.clear();
+    } else {
+      if( note_map_.contains( ev->key ) ) {
+        note_map_.erase( ev->key );
+      }
+    }
+  } else if( hdr->type == CLAP_EVENT_NOTE_END ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_END - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+    if( ev->key == -1 ) {
+      note_map_.clear();
+    } else {
+      if( note_map_.contains( ev->key ) ) {
+        note_map_.erase( ev->key );
+      }
+    }
+  } else if( hdr->type == CLAP_EVENT_NOTE_EXPRESSION ) {
+    clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->expression_id,
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->value );
+  } else if( hdr->type == CLAP_EVENT_PARAM_VALUE ) {
+    clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->param_id,
+                   ev->cookie,
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->value );
+    if( ev->param_id == 1 ) {
+      state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( ev->value ) );
+    } else if( ev->param_id == 2 ) {
+      state_.set_synth_sine_wave_mix( ev->value );
+    } else if( ev->param_id == 3 ) {
+      state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( ev->value ) );
+    } else if( ev->param_id == 4 ) {
+      state_.set_synth_square_wave_pwm( ev->value );
+    } else if( ev->param_id == 5 ) {
+      state_.set_synth_square_wave_mix( ev->value );
+    } else if( ev->param_id == 6 ) {
+      state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( ev->value ) );
+    } else if( ev->param_id == 7 ) {
+      state_.set_synth_saw_wave_mix( ev->value );
+    } else if( ev->param_id == 8 ) {
+      state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( ev->value ) );
+    } else if( ev->param_id == 9 ) {
+      state_.set_synth_triangle_wave_mix( ev->value );
+    } else if( ev->param_id == 10 ) {
+      state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( ev->value ) );
+    } else if( ev->param_id == 11 ) {
+      state_.set_synth_white_noise_mix( ev->value );
+    } else if( ev->param_id == 12 ) {
+      state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
+    } else if( ev->param_id == 24 ) {
+      state_.set_synth_pink_noise_vossmccartney_number( ev->value );
+      // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
+    } else if( ev->param_id == 13 ) {
+      state_.set_synth_pink_noise_mix( ev->value );
+    } else if( ev->param_id == 14 ) {
+      state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( ev->value ) );
+    } else if( ev->param_id == 15 ) {
+      state_.set_synth_red_noise_mix( ev->value );
+    } else if( ev->param_id == 16 ) {
+      state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( ev->value ) );
+    } else if( ev->param_id == 17 ) {
+      state_.set_synth_blue_noise_mix( ev->value );
+    } else if( ev->param_id == 18 ) {
+      state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( ev->value ) );
+    } else if( ev->param_id == 19 ) {
+      state_.set_synth_violet_noise_mix( ev->value );
+    } else if( ev->param_id == 20 ) {
+      state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( ev->value ) );
+    } else if( ev->param_id == 21 ) {
+      state_.set_synth_grey_noise_mix( ev->value );
+    } else if( ev->param_id == 22 ) {
+      state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( ev->value ) );
+    } else if( ev->param_id == 23 ) {
+      state_.set_synth_velvet_noise_mix( ev->value );
+    }
+  } else if( hdr->type == CLAP_EVENT_PARAM_MOD ) {
+    clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->param_id,
+                   ev->cookie,
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->amount );
+  } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ) {
+    clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+  } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_END ) {
+    clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+  } else if( hdr->type == CLAP_EVENT_TRANSPORT ) {
+    clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
+                   "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
+                   "tsig_num={:d}, tsig_denom={:d}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->flags,
+                   ev->song_pos_beats,
+                   ev->song_pos_seconds,
+                   ev->tempo,
+                   ev->tempo_inc,
+                   ev->loop_start_beats,
+                   ev->loop_end_beats,
+                   ev->loop_start_seconds,
+                   ev->loop_end_seconds,
+                   ev->bar_start,
+                   ev->bar_number,
+                   ev->tsig_num,
+                   ev->tsig_denom );
+  } else if( hdr->type == CLAP_EVENT_MIDI ) {
+    clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->port_index,
+                   std::vector< uint8_t >( ev->data, ev->data + 3 ) );
+    if( ev->data[0] == 0xB0 ) {
+      // control change channel 0
+      int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
+      double value = double( ev->data[2] ) / double( 0x7F );
+      if( param_id == 1 ) {
+        state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( value ) );
+      } else if( param_id == 2 ) {
+        state_.set_synth_sine_wave_mix( value );
+      } else if( param_id == 3 ) {
+        state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( value ) );
+      } else if( param_id == 4 ) {
+        state_.set_synth_square_wave_pwm( value );
+      } else if( param_id == 5 ) {
+        state_.set_synth_square_wave_mix( value );
+      } else if( param_id == 6 ) {
+        state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( value ) );
+      } else if( param_id == 7 ) {
+        state_.set_synth_saw_wave_mix( value );
+      } else if( param_id == 8 ) {
+        state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( value ) );
+      } else if( param_id == 9 ) {
+        state_.set_synth_triangle_wave_mix( value );
+      } else if( param_id == 10 ) {
+        state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( value ) );
+      } else if( param_id == 11 ) {
+        state_.set_synth_white_noise_mix( value );
+      } else if( param_id == 12 ) {
+        state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( value ) );
+      } else if( param_id == 24 ) {
+        state_.set_synth_pink_noise_vossmccartney_number( value );
+        // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
+      } else if( param_id == 13 ) {
+        state_.set_synth_pink_noise_mix( value );
+      } else if( param_id == 14 ) {
+        state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( value ) );
+      } else if( param_id == 15 ) {
+        state_.set_synth_red_noise_mix( value );
+      } else if( param_id == 16 ) {
+        state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( value ) );
+      } else if( param_id == 17 ) {
+        state_.set_synth_blue_noise_mix( value );
+      } else if( param_id == 18 ) {
+        state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( value ) );
+      } else if( param_id == 19 ) {
+        state_.set_synth_violet_noise_mix( value );
+      } else if( param_id == 20 ) {
+        state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( value ) );
+      } else if( param_id == 21 ) {
+        state_.set_synth_grey_noise_mix( value );
+      } else if( param_id == 22 ) {
+        state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( value ) );
+      } else if( param_id == 23 ) {
+        state_.set_synth_velvet_noise_mix( value );
+      }
+    }
+  } else if( hdr->type == CLAP_EVENT_MIDI_SYSEX ) {
+    clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->port_index,
+                   static_cast< void const* >( ev->buffer ),
+                   ev->size );
+  } else if( hdr->type == CLAP_EVENT_MIDI2 ) {
+    clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->port_index,
+                   std::vector< uint8_t >( ev->data, ev->data + 4 ) );
   }
 }
 

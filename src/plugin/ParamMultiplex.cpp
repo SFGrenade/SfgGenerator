@@ -95,65 +95,244 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
   if( hdr->space_id != CLAP_CORE_EVENT_SPACE_ID ) {
     return;
   }
-  if( hdr->type != CLAP_EVENT_PARAM_VALUE ) {
-    return;
-  }
-  clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 ev->param_id,
-                 ev->cookie,
-                 ev->note_id,
-                 ev->port_index,
-                 ev->channel,
-                 ev->key,
-                 ev->value );
-  if( ev->param_id == 1 ) {
-    // this is output
-    state_.set_output_param( ev->value );
-  } else if( ev->param_id == 2 ) {
-    // we don't support resizing the amount of params
-    state_.set_amount_params( ev->value );
-    state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
-    doClearAndRescan_ = true;
-    host_->request_restart( host_ );
-  } else if( ev->param_id == 3 ) {
-    state_.set_selected_param( ev->value );
-    {
-      // send event to check for output param
-      clap_event_param_value_t out_ev{};
-      out_ev.header.size = sizeof( out_ev );
-      out_ev.header.time = hdr->time;
-      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
-      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-      out_ev.param_id = 1;
-      out_ev.value = state_.params( state_.selected_param() - 1 );
-      state_.set_output_param( out_ev.value );
-      bool success = out_events->try_push( out_events, &out_ev.header );
-      SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
-    }
-  } else if( ( ev->param_id - 4 ) < state_.amount_params() ) {
-    state_.set_params( ev->param_id - 4, ev->value );
-    if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
-      // if selected param was changed, have it rescan for the output param
+  if( hdr->type == CLAP_EVENT_NOTE_ON ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+  } else if( hdr->type == CLAP_EVENT_NOTE_OFF ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+  } else if( hdr->type == CLAP_EVENT_NOTE_CHOKE ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+  } else if( hdr->type == CLAP_EVENT_NOTE_END ) {
+    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_END - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->velocity );
+  } else if( hdr->type == CLAP_EVENT_NOTE_EXPRESSION ) {
+    clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->expression_id,
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->value );
+  } else if( hdr->type == CLAP_EVENT_PARAM_VALUE ) {
+    clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->param_id,
+                   ev->cookie,
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->value );
+    if( ev->param_id == 1 ) {
+      // this is output
+      state_.set_output_param( ev->value );
+    } else if( ev->param_id == 2 ) {
+      // we don't support resizing the amount of params
+      state_.set_amount_params( ev->value );
+      state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
+      doClearAndRescan_ = true;
+      host_->request_restart( host_ );
+    } else if( ev->param_id == 3 ) {
+      state_.set_selected_param( ev->value );
+      {
+        // send event to check for output param
+        clap_event_param_value_t out_ev{};
+        out_ev.header.size = sizeof( out_ev );
+        out_ev.header.time = hdr->time;
+        out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+        out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+        out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+        out_ev.param_id = 1;
+        out_ev.value = state_.params( state_.selected_param() - 1 );
+        state_.set_output_param( out_ev.value );
+        bool success = out_events->try_push( out_events, &out_ev.header );
+        SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+      }
+    } else if( ( ev->param_id - 4 ) < state_.amount_params() ) {
+      state_.set_params( ev->param_id - 4, ev->value );
+      if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
+        // if selected param was changed, have it rescan for the output param
 
-      // send event to check for output param
-      clap_event_param_value_t out_ev{};
-      out_ev.header.size = sizeof( out_ev );
-      out_ev.header.time = hdr->time;
-      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
-      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-      out_ev.param_id = 1;
-      out_ev.value = state_.params( state_.selected_param() - 1 );
-      state_.set_output_param( out_ev.value );
-      bool success = out_events->try_push( out_events, &out_ev.header );
-      SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+        // send event to check for output param
+        clap_event_param_value_t out_ev{};
+        out_ev.header.size = sizeof( out_ev );
+        out_ev.header.time = hdr->time;
+        out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+        out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+        out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+        out_ev.param_id = 1;
+        out_ev.value = state_.params( state_.selected_param() - 1 );
+        state_.set_output_param( out_ev.value );
+        bool success = out_events->try_push( out_events, &out_ev.header );
+        SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+      }
     }
+  } else if( hdr->type == CLAP_EVENT_PARAM_MOD ) {
+    clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->param_id,
+                   ev->cookie,
+                   ev->note_id,
+                   ev->port_index,
+                   ev->channel,
+                   ev->key,
+                   ev->amount );
+  } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ) {
+    clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+  } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_END ) {
+    clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
+  } else if( hdr->type == CLAP_EVENT_TRANSPORT ) {
+    clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_TRANSPORT - flags=0x{:0>8X}, song_pos_beats={:d}, song_pos_seconds={:d}, tempo={:f}, tempo_inc={:f}, "
+                   "loop_start_beats={:d}, loop_end_beats={:d}, loop_start_seconds={:d}, loop_end_seconds={:d}, bar_start={:d}, bar_number={:d}, "
+                   "tsig_num={:d}, tsig_denom={:d}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->flags,
+                   ev->song_pos_beats,
+                   ev->song_pos_seconds,
+                   ev->tempo,
+                   ev->tempo_inc,
+                   ev->loop_start_beats,
+                   ev->loop_end_beats,
+                   ev->loop_start_seconds,
+                   ev->loop_end_seconds,
+                   ev->bar_start,
+                   ev->bar_number,
+                   ev->tsig_num,
+                   ev->tsig_denom );
+  } else if( hdr->type == CLAP_EVENT_MIDI ) {
+    clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->port_index,
+                   std::vector< uint8_t >( ev->data, ev->data + 3 ) );
+    if( ev->data[0] == 0xB0 ) {
+      // control change channel 0
+      int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
+      double value = double( ev->data[2] ) / double( 0x7F );
+      if( param_id == 1 ) {
+        // this is output
+        state_.set_output_param( value );
+      } else if( param_id == 2 ) {
+        // we don't support resizing the amount of params
+        state_.set_amount_params( value );
+        state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
+        doClearAndRescan_ = true;
+        host_->request_restart( host_ );
+      } else if( param_id == 3 ) {
+        state_.set_selected_param( value );
+        {
+          // send event to check for output param
+          clap_event_param_value_t out_ev{};
+          out_ev.header.size = sizeof( out_ev );
+          out_ev.header.time = hdr->time;
+          out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+          out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+          out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+          out_ev.param_id = 1;
+          out_ev.value = state_.params( state_.selected_param() - 1 );
+          state_.set_output_param( out_ev.value );
+          bool success = out_events->try_push( out_events, &out_ev.header );
+          SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+        }
+      } else if( ( param_id - 4 ) < state_.amount_params() ) {
+        state_.set_params( param_id - 4, value );
+        if( ( param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
+          // if selected param was changed, have it rescan for the output param
+
+          // send event to check for output param
+          clap_event_param_value_t out_ev{};
+          out_ev.header.size = sizeof( out_ev );
+          out_ev.header.time = hdr->time;
+          out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+          out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+          out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+          out_ev.param_id = 1;
+          out_ev.value = state_.params( state_.selected_param() - 1 );
+          state_.set_output_param( out_ev.value );
+          bool success = out_events->try_push( out_events, &out_ev.header );
+          SFG_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
+        }
+      }
+    }
+  } else if( hdr->type == CLAP_EVENT_MIDI_SYSEX ) {
+    clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->port_index,
+                   static_cast< void const* >( ev->buffer ),
+                   ev->size );
+  } else if( hdr->type == CLAP_EVENT_MIDI2 ) {
+    clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
+    SFG_LOG_TRACE( host_,
+                   host_log_,
+                   "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
+                   __FUNCTION__,
+                   static_cast< void* >( this ),
+                   ev->port_index,
+                   std::vector< uint8_t >( ev->data, ev->data + 4 ) );
   }
 }
 
