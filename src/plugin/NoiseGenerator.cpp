@@ -403,6 +403,7 @@ bool NoiseGenerator::init( void ) {
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
 
   state_.Clear();
+  state_.set_synth_square_wave_pwm( 0.5 );
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -437,6 +438,7 @@ void NoiseGenerator::reset( void ) {
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
   state_.Clear();
+  state_.set_synth_square_wave_pwm( 0.5 );
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
