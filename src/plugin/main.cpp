@@ -54,7 +54,11 @@ clap_plugin_descriptor_t const* plugin_factory_get_plugin_descriptor( clap_plugi
 
 clap_plugin_t const* plugin_factory_create_plugin( clap_plugin_factory const* factory, clap_host_t const* host, char const* plugin_id ) {
   if( ClapGlobals::PLUGIN_LOGGER )
-    ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter( factory={:p}, host={:p}, plugin_id={:?} )", __FUNCTION__, static_cast< void const* >( factory ), static_cast< void const* >( host ), plugin_id );
+    ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter( factory={:p}, host={:p}, plugin_id={:?} )",
+                                       __FUNCTION__,
+                                       static_cast< void const* >( factory ),
+                                       static_cast< void const* >( host ),
+                                       plugin_id );
   if( !clap_version_is_compatible( host->clap_version ) ) {
     return nullptr;
   }
@@ -71,7 +75,8 @@ bool entry_init( char const* plugin_path ) {
   // perform the plugin initialization
   ClapGlobals::PLUGIN_PATH = plugin_path;
 
-  auto fileSink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( "C:\\Users\\SFG\\Downloads\\log.log", true );
+  std::filesystem::path tempFolder = std::getenv( "TEMP" );
+  auto fileSink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( ( tempFolder / "SfgGenerator.log" ).string(), false );
   fileSink->set_level( spdlog::level::level_enum::trace );
   ClapGlobals::PLUGIN_LOGGER = std::make_shared< spdlog::logger >( "main", fileSink );
   ClapGlobals::PLUGIN_LOGGER->set_level( spdlog::level::level_enum::trace );
