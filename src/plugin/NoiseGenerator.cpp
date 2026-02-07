@@ -398,6 +398,8 @@ bool NoiseGenerator::init( void ) {
 
   logger_ = logger_->clone( "NoiseGenerator" );
   uiNgHolder_.set_logger( logger_->clone( "UiNgHolder" ) );
+  uiNgHolder_.set_host( host_ );
+  uiNgHolder_.set_state( &state_ );
 
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
@@ -677,52 +679,63 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
       int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
       double value = double( ev->data[2] ) / double( 0x7F );
       if( param_id == 1 ) {
-        state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( value ) );
       } else if( param_id == 2 ) {
         state_.set_synth_sine_wave_mix( value );
       } else if( param_id == 3 ) {
-        state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( value ) );
       } else if( param_id == 4 ) {
         state_.set_synth_square_wave_pwm( value );
       } else if( param_id == 5 ) {
         state_.set_synth_square_wave_mix( value );
       } else if( param_id == 6 ) {
-        state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( value ) );
       } else if( param_id == 7 ) {
         state_.set_synth_saw_wave_mix( value );
       } else if( param_id == 8 ) {
-        state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( value ) );
       } else if( param_id == 9 ) {
         state_.set_synth_triangle_wave_mix( value );
       } else if( param_id == 10 ) {
-        state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( value ) );
       } else if( param_id == 11 ) {
         state_.set_synth_white_noise_mix( value );
       } else if( param_id == 12 ) {
-        state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( value ) );
       } else if( param_id == 24 ) {
         state_.set_synth_pink_noise_vossmccartney_number( value );
         // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
       } else if( param_id == 13 ) {
         state_.set_synth_pink_noise_mix( value );
       } else if( param_id == 14 ) {
-        state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( value ) );
       } else if( param_id == 15 ) {
         state_.set_synth_red_noise_mix( value );
       } else if( param_id == 16 ) {
-        state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( value ) );
       } else if( param_id == 17 ) {
         state_.set_synth_blue_noise_mix( value );
       } else if( param_id == 18 ) {
-        state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( value ) );
       } else if( param_id == 19 ) {
         state_.set_synth_violet_noise_mix( value );
       } else if( param_id == 20 ) {
-        state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( value ) );
       } else if( param_id == 21 ) {
         state_.set_synth_grey_noise_mix( value );
       } else if( param_id == 22 ) {
-        state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( value ) );
+        // todo: fixme: check if midi does weird shit
+        // state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( value ) );
       } else if( param_id == 23 ) {
         state_.set_synth_velvet_noise_mix( value );
       }
@@ -757,6 +770,30 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
   uint32_t ev_index = 0;
   uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
 
+  static double last_sineWaveType = -1.0;
+  static double last_sineWaveMix = -1.0;
+  static double last_squareWaveType = -1.0;
+  static double last_squareWavePwm = -1.0;
+  static double last_squareWaveMix = -1.0;
+  static double last_sawWaveType = -1.0;
+  static double last_sawWaveMix = -1.0;
+  static double last_triangleWaveType = -1.0;
+  static double last_triangleWaveMix = -1.0;
+  static double last_whiteNoiseType = -1.0;
+  static double last_whiteNoiseMix = -1.0;
+  static double last_pinkNoiseType = -1.0;
+  static double last_pinkNoiseMix = -1.0;
+  static double last_redNoiseType = -1.0;
+  static double last_redNoiseMix = -1.0;
+  static double last_blueNoiseType = -1.0;
+  static double last_blueNoiseMix = -1.0;
+  static double last_violetNoiseType = -1.0;
+  static double last_violetNoiseMix = -1.0;
+  static double last_greyNoiseType = -1.0;
+  static double last_greyNoiseMix = -1.0;
+  static double last_velvetNoiseType = -1.0;
+  static double last_velvetNoiseMix = -1.0;
+
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nframes      ={:d}", __FUNCTION__, static_cast< void* >( this ), nframes );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nev          ={:d}", __FUNCTION__, static_cast< void* >( this ), nev );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] ev_index     ={:d}", __FUNCTION__, static_cast< void* >( this ), ev_index );
@@ -777,6 +814,283 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
         next_ev_frame = nframes;
         break;
       }
+    }
+
+    if( last_sineWaveType != double( state_.synth_sine_wave_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 1;
+      out_ev.value = double( state_.synth_sine_wave_type() );
+      last_sineWaveType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_sineWaveMix != state_.synth_sine_wave_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 2;
+      out_ev.value = state_.synth_sine_wave_mix();
+      last_sineWaveMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_squareWaveType != double( state_.synth_square_wave_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 3;
+      out_ev.value = double( state_.synth_square_wave_type() );
+      last_squareWaveType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_squareWavePwm != state_.synth_square_wave_pwm() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 4;
+      out_ev.value = state_.synth_square_wave_pwm();
+      last_squareWavePwm = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_squareWaveMix != state_.synth_square_wave_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 5;
+      out_ev.value = state_.synth_square_wave_mix();
+      last_squareWaveMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_sawWaveType != double( state_.synth_saw_wave_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 6;
+      out_ev.value = double( state_.synth_saw_wave_type() );
+      last_sawWaveType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_sawWaveMix != state_.synth_saw_wave_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 7;
+      out_ev.value = state_.synth_saw_wave_mix();
+      last_sawWaveMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_triangleWaveType != double( state_.synth_triangle_wave_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 8;
+      out_ev.value = double( state_.synth_triangle_wave_type() );
+      last_triangleWaveType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_triangleWaveMix != state_.synth_triangle_wave_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 9;
+      out_ev.value = state_.synth_triangle_wave_mix();
+      last_triangleWaveMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_whiteNoiseType != double( state_.synth_white_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 10;
+      out_ev.value = double( state_.synth_white_noise_type() );
+      last_whiteNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_whiteNoiseMix != state_.synth_white_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 11;
+      out_ev.value = state_.synth_white_noise_mix();
+      last_whiteNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_pinkNoiseType != double( state_.synth_pink_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 12;
+      out_ev.value = double( state_.synth_pink_noise_type() );
+      last_pinkNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_pinkNoiseMix != state_.synth_pink_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 13;
+      out_ev.value = state_.synth_pink_noise_mix();
+      last_pinkNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_redNoiseType != double( state_.synth_red_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 14;
+      out_ev.value = double( state_.synth_red_noise_type() );
+      last_redNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_redNoiseMix != state_.synth_red_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 15;
+      out_ev.value = state_.synth_red_noise_mix();
+      last_redNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_blueNoiseType != double( state_.synth_blue_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 16;
+      out_ev.value = double( state_.synth_blue_noise_type() );
+      last_blueNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_blueNoiseMix != state_.synth_blue_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 17;
+      out_ev.value = state_.synth_blue_noise_mix();
+      last_blueNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_violetNoiseType != double( state_.synth_violet_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 18;
+      out_ev.value = double( state_.synth_violet_noise_type() );
+      last_violetNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_violetNoiseMix != state_.synth_violet_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 19;
+      out_ev.value = state_.synth_violet_noise_mix();
+      last_violetNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_greyNoiseType != double( state_.synth_grey_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 20;
+      out_ev.value = double( state_.synth_grey_noise_type() );
+      last_greyNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_greyNoiseMix != state_.synth_grey_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 21;
+      out_ev.value = state_.synth_grey_noise_mix();
+      last_greyNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_velvetNoiseType != double( state_.synth_velvet_noise_type() ) ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 22;
+      out_ev.value = double( state_.synth_velvet_noise_type() );
+      last_velvetNoiseType = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
+    }
+    if( last_velvetNoiseMix != state_.synth_velvet_noise_mix() ) {
+      clap_event_param_value_t out_ev{};
+      out_ev.header.size = sizeof( out_ev );
+      out_ev.header.time = i;
+      out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
+      out_ev.header.flags = CLAP_EVENT_IS_LIVE;
+      out_ev.param_id = 23;
+      out_ev.value = state_.synth_velvet_noise_mix();
+      last_velvetNoiseMix = out_ev.value;
+      process->out_events->try_push( process->out_events, &out_ev.header );
     }
 
     /* process every samples until the next event */
@@ -1382,7 +1696,7 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
 bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
   SFG_LOG_TRACE( host_,
                  host_log_,
-                 "[{:s}] [{:p}] enter( param_id={:d}, value={:f}, out_buffer={:p}, out_info={:d} )",
+                 "[{:s}] [{:p}] enter( param_id={:d}, value={:f}, out_buffer={:p}, out_buffer_capacity={:d} )",
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  param_id,
@@ -1391,7 +1705,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
                  out_buffer_capacity );
   if( !out_buffer || ( out_buffer_capacity == 0 ) )
     return false;
-  if( param_id == 1 ) {
+  /*if( param_id == 1 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = _pb_::SineWaveType_Name( static_cast< _pb_::SineWaveType >( value ) );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
@@ -1511,7 +1825,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
-  }
+  }*/
   return false;
 }
 

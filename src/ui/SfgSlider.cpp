@@ -5,7 +5,9 @@ SfgSlider::SfgSlider( int minVal, int maxVal, Qt::Orientation orientation, QWidg
     : SfgSlider( minVal, maxVal, ( minVal + maxVal ) / 2, orientation, parent ) {}
 
 SfgSlider::SfgSlider( int minVal, int maxVal, int defaultVal, Qt::Orientation orientation, QWidget* parent )
-    : _base_( orientation, parent ), minValue_( minVal ), maxValue_( maxVal ), defaultValue_( defaultVal ) {}
+    : _base_( orientation, parent ), minValue_( minVal ), maxValue_( maxVal ), defaultValue_( defaultVal ) {
+  setRange( minValue_, maxValue_, defaultValue_ );
+}
 
 SfgSlider::~SfgSlider() {}
 

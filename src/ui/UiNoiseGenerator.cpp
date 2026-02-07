@@ -177,104 +177,190 @@ UiNoiseGenerator::UiNoiseGenerator( std::shared_ptr< spdlog::logger > logger, QW
   layout_->setColumnStretch( 5, 1 );
 
   setLayout( layout_ );
+
+  connect( comboBoxSineWaveType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::sineWaveTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderSineWaveMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::sineWaveMixNewValue, Qt::QueuedConnection );
+  connect( sliderSineWaveMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::sineWaveMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxSquareWaveType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::squareWaveTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderSquareWavePwm_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::squareWavePwmNewValue, Qt::QueuedConnection );
+  connect( sliderSquareWavePwm_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::squareWavePwmNewValue, Qt::QueuedConnection );
+  connect( sliderSquareWaveMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::squareWaveMixNewValue, Qt::QueuedConnection );
+  connect( sliderSquareWaveMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::squareWaveMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxSawWaveType_, QOverload< int >::of( &QComboBox::currentIndexChanged ), this, &UiNoiseGenerator::sawWaveTypeNewValue, Qt::QueuedConnection );
+  connect( sliderSawWaveMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::sawWaveMixNewValue, Qt::QueuedConnection );
+  connect( sliderSawWaveMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::sawWaveMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxTriangleWaveType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::triangleWaveTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderTriangleWaveMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::triangleWaveMixNewValue, Qt::QueuedConnection );
+  connect( sliderTriangleWaveMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::triangleWaveMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxWhiteNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::whiteNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderWhiteNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::whiteNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderWhiteNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::whiteNoiseMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxPinkNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::pinkNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderPinkNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::pinkNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderPinkNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::pinkNoiseMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxRedNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::redNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderRedNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::redNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderRedNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::redNoiseMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxBlueNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::blueNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderBlueNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::blueNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderBlueNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::blueNoiseMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxVioletNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::violetNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderVioletNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::violetNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderVioletNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::violetNoiseMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxGreyNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::greyNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderGreyNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::greyNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderGreyNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::greyNoiseMixNewValue, Qt::QueuedConnection );
+
+  connect( comboBoxVelvetNoiseType_,
+           QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this,
+           &UiNoiseGenerator::velvetNoiseTypeNewValue,
+           Qt::QueuedConnection );
+  connect( sliderVelvetNoiseMix_, &SfgSlider::valueChanged, this, &UiNoiseGenerator::velvetNoiseMixNewValue, Qt::QueuedConnection );
+  connect( sliderVelvetNoiseMix_, &SfgSlider::sliderMoved, this, &UiNoiseGenerator::velvetNoiseMixNewValue, Qt::QueuedConnection );
 }
 
 UiNoiseGenerator::~UiNoiseGenerator() {}
 
 void UiNoiseGenerator::setSineWaveTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxSineWaveType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setSineWaveMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderSineWaveMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setSquareWaveTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxSquareWaveType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setSquareWavePwmValue( double value ) {
-  // todo: fixme: add implementation
+  sliderSquareWavePwm_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setSquareWaveMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderSquareWaveMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setSawWaveTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxSawWaveType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setSawWaveMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderSawWaveMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setTriangleWaveTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxTriangleWaveType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setTriangleWaveMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderTriangleWaveMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setWhiteNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxWhiteNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setWhiteNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderWhiteNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setPinkNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxPinkNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setPinkNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderPinkNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setRedNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxRedNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setRedNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderRedNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setBlueNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxBlueNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setBlueNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderBlueNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setVioletNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxVioletNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setVioletNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderVioletNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setGreyNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxGreyNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setGreyNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderGreyNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::setVelvetNoiseTypeValue( double value ) {
-  // todo: fixme: add implementation
+  comboBoxVelvetNoiseType_->setCurrentIndex( int( std::round( value ) ) );
 }
 
 void UiNoiseGenerator::setVelvetNoiseMixValue( double value ) {
-  // todo: fixme: add implementation
+  sliderVelvetNoiseMix_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiNoiseGenerator::sineWaveTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit sineWaveTypeAdjusted( fraction );
 }
 
@@ -284,7 +370,7 @@ void UiNoiseGenerator::sineWaveMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::squareWaveTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit squareWaveTypeAdjusted( fraction );
 }
 
@@ -299,7 +385,7 @@ void UiNoiseGenerator::squareWaveMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::sawWaveTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit sawWaveTypeAdjusted( fraction );
 }
 
@@ -309,7 +395,7 @@ void UiNoiseGenerator::sawWaveMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::triangleWaveTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit triangleWaveTypeAdjusted( fraction );
 }
 
@@ -319,7 +405,7 @@ void UiNoiseGenerator::triangleWaveMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::whiteNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit whiteNoiseTypeAdjusted( fraction );
 }
 
@@ -329,7 +415,7 @@ void UiNoiseGenerator::whiteNoiseMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::pinkNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit pinkNoiseTypeAdjusted( fraction );
 }
 
@@ -339,7 +425,7 @@ void UiNoiseGenerator::pinkNoiseMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::redNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit redNoiseTypeAdjusted( fraction );
 }
 
@@ -349,7 +435,7 @@ void UiNoiseGenerator::redNoiseMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::blueNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit blueNoiseTypeAdjusted( fraction );
 }
 
@@ -359,7 +445,7 @@ void UiNoiseGenerator::blueNoiseMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::violetNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit violetNoiseTypeAdjusted( fraction );
 }
 
@@ -369,7 +455,7 @@ void UiNoiseGenerator::violetNoiseMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::greyNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit greyNoiseTypeAdjusted( fraction );
 }
 
@@ -379,7 +465,7 @@ void UiNoiseGenerator::greyNoiseMixNewValue( int value ) {
 }
 
 void UiNoiseGenerator::velvetNoiseTypeNewValue( int value ) {
-  double fraction = double( value - abSliderMinValue_ ) / double( abSliderMaxValue_ - abSliderMinValue_ );
+  double fraction = double( value );
   emit velvetNoiseTypeAdjusted( fraction );
 }
 

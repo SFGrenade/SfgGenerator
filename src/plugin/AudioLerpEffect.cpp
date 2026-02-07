@@ -272,6 +272,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
       out_ev.header.flags = CLAP_EVENT_IS_LIVE;
       out_ev.param_id = 1;
       out_ev.value = state_.a_b();
+      last_ab = out_ev.value;
       process->out_events->try_push( process->out_events, &out_ev.header );
     }
 

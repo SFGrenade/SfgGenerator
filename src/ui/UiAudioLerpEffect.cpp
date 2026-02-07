@@ -45,7 +45,7 @@ UiAudioLerpEffect::UiAudioLerpEffect( std::shared_ptr< spdlog::logger > logger, 
 UiAudioLerpEffect::~UiAudioLerpEffect() {}
 
 void UiAudioLerpEffect::setAbValue( double value ) {
-  abSlider_->setValue( int( abSliderMinValue_ + ( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
+  abSlider_->setValue( int( abSliderMinValue_ + std::round( double( abSliderMaxValue_ - abSliderMinValue_ ) * value ) ) );
 }
 
 void UiAudioLerpEffect::abSliderNewValue( int value ) {

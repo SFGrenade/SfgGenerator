@@ -33,6 +33,8 @@ bool ParamMultiplex::init( void ) {
 
   logger_ = logger_->clone( "ParamMultiplex" );
   uiPmHolder_.set_logger( logger_->clone( "UiPmHolder" ) );
+  uiPmHolder_.set_host( host_ );
+  uiPmHolder_.set_state( &state_ );
 
   state_.Clear();
   state_.set_output_param( 0.0 );
