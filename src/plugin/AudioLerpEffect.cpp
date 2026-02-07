@@ -237,8 +237,6 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
   uint32_t ev_index = 0;
   uint32_t next_ev_frame = nev > 0 ? 0 : nframes;
 
-  static double last_ab = -1.0;
-
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nframes      ={:d}", __FUNCTION__, static_cast< void* >( this ), nframes );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] nev          ={:d}", __FUNCTION__, static_cast< void* >( this ), nev );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] ev_index     ={:d}", __FUNCTION__, static_cast< void* >( this ), ev_index );
@@ -262,7 +260,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
       }
     }
 
-    if( last_ab != state_.a_b() ) {
+    if( last_ab_ != state_.a_b() ) {
       // a_b changed, safety event
       clap_event_param_value_t out_ev{};
       out_ev.header.size = sizeof( out_ev );
@@ -272,7 +270,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
       out_ev.header.flags = CLAP_EVENT_IS_LIVE;
       out_ev.param_id = 1;
       out_ev.value = state_.a_b();
-      last_ab = out_ev.value;
+      last_ab_ = out_ev.value;
       process->out_events->try_push( process->out_events, &out_ev.header );
     }
 

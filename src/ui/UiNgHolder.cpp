@@ -27,6 +27,31 @@ struct UiNgHolder::Impl {
 
   bool windowParentSet = false;
   clap_window_t windowParent;
+
+  // for checking for changes
+  double last_sineWaveType = -1.0;
+  double last_sineWaveMix = -1.0;
+  double last_squareWaveType = -1.0;
+  double last_squareWavePwm = -1.0;
+  double last_squareWaveMix = -1.0;
+  double last_sawWaveType = -1.0;
+  double last_sawWaveMix = -1.0;
+  double last_triangleWaveType = -1.0;
+  double last_triangleWaveMix = -1.0;
+  double last_whiteNoiseType = -1.0;
+  double last_whiteNoiseMix = -1.0;
+  double last_pinkNoiseType = -1.0;
+  double last_pinkNoiseMix = -1.0;
+  double last_redNoiseType = -1.0;
+  double last_redNoiseMix = -1.0;
+  double last_blueNoiseType = -1.0;
+  double last_blueNoiseMix = -1.0;
+  double last_violetNoiseType = -1.0;
+  double last_violetNoiseMix = -1.0;
+  double last_greyNoiseType = -1.0;
+  double last_greyNoiseMix = -1.0;
+  double last_velvetNoiseType = -1.0;
+  double last_velvetNoiseMix = -1.0;
 };
 
 UiNgHolder::UiNgHolder() : impl_( std::make_unique< UiNgHolder::Impl >() ) {}
@@ -51,120 +76,97 @@ bool UiNgHolder::clap_create( std::string const& api, bool is_floating ) {
   impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
 
   impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
-    static double last_sineWaveType = -1.0;
-    static double last_sineWaveMix = -1.0;
-    static double last_squareWaveType = -1.0;
-    static double last_squareWavePwm = -1.0;
-    static double last_squareWaveMix = -1.0;
-    static double last_sawWaveType = -1.0;
-    static double last_sawWaveMix = -1.0;
-    static double last_triangleWaveType = -1.0;
-    static double last_triangleWaveMix = -1.0;
-    static double last_whiteNoiseType = -1.0;
-    static double last_whiteNoiseMix = -1.0;
-    static double last_pinkNoiseType = -1.0;
-    static double last_pinkNoiseMix = -1.0;
-    static double last_redNoiseType = -1.0;
-    static double last_redNoiseMix = -1.0;
-    static double last_blueNoiseType = -1.0;
-    static double last_blueNoiseMix = -1.0;
-    static double last_violetNoiseType = -1.0;
-    static double last_violetNoiseMix = -1.0;
-    static double last_greyNoiseType = -1.0;
-    static double last_greyNoiseMix = -1.0;
-    static double last_velvetNoiseType = -1.0;
-    static double last_velvetNoiseMix = -1.0;
-    if( last_sineWaveType != double( this->impl_->state->synth_sine_wave_type() ) ) {
-      last_sineWaveType = double( this->impl_->state->synth_sine_wave_type() );
-      this->impl_->qtWindow->setSineWaveTypeValue( last_sineWaveType );
+    if( this->impl_->last_sineWaveType != double( this->impl_->state->synth_sine_wave_type() ) ) {
+      this->impl_->last_sineWaveType = double( this->impl_->state->synth_sine_wave_type() );
+      this->impl_->qtWindow->setSineWaveTypeValue( this->impl_->last_sineWaveType );
     }
-    if( last_sineWaveMix != this->impl_->state->synth_sine_wave_mix() ) {
-      last_sineWaveMix = this->impl_->state->synth_sine_wave_mix();
-      this->impl_->qtWindow->setSineWaveMixValue( last_sineWaveMix );
+    if( this->impl_->last_sineWaveMix != this->impl_->state->synth_sine_wave_mix() ) {
+      this->impl_->last_sineWaveMix = this->impl_->state->synth_sine_wave_mix();
+      this->impl_->qtWindow->setSineWaveMixValue( this->impl_->last_sineWaveMix );
     }
-    if( last_squareWaveType != double( this->impl_->state->synth_square_wave_type() ) ) {
-      last_squareWaveType = double( this->impl_->state->synth_square_wave_type() );
-      this->impl_->qtWindow->setSquareWaveTypeValue( last_squareWaveType );
+    if( this->impl_->last_squareWaveType != double( this->impl_->state->synth_square_wave_type() ) ) {
+      this->impl_->last_squareWaveType = double( this->impl_->state->synth_square_wave_type() );
+      this->impl_->qtWindow->setSquareWaveTypeValue( this->impl_->last_squareWaveType );
     }
-    if( last_squareWavePwm != this->impl_->state->synth_square_wave_pwm() ) {
-      last_squareWavePwm = this->impl_->state->synth_square_wave_pwm();
-      this->impl_->qtWindow->setSquareWavePwmValue( last_squareWavePwm );
+    if( this->impl_->last_squareWavePwm != this->impl_->state->synth_square_wave_pwm() ) {
+      this->impl_->last_squareWavePwm = this->impl_->state->synth_square_wave_pwm();
+      this->impl_->qtWindow->setSquareWavePwmValue( this->impl_->last_squareWavePwm );
     }
-    if( last_squareWaveMix != this->impl_->state->synth_square_wave_mix() ) {
-      last_squareWaveMix = this->impl_->state->synth_square_wave_mix();
-      this->impl_->qtWindow->setSquareWaveMixValue( last_squareWaveMix );
+    if( this->impl_->last_squareWaveMix != this->impl_->state->synth_square_wave_mix() ) {
+      this->impl_->last_squareWaveMix = this->impl_->state->synth_square_wave_mix();
+      this->impl_->qtWindow->setSquareWaveMixValue( this->impl_->last_squareWaveMix );
     }
-    if( last_sawWaveType != double( this->impl_->state->synth_saw_wave_type() ) ) {
-      last_sawWaveType = double( this->impl_->state->synth_saw_wave_type() );
-      this->impl_->qtWindow->setSawWaveTypeValue( last_sawWaveType );
+    if( this->impl_->last_sawWaveType != double( this->impl_->state->synth_saw_wave_type() ) ) {
+      this->impl_->last_sawWaveType = double( this->impl_->state->synth_saw_wave_type() );
+      this->impl_->qtWindow->setSawWaveTypeValue( this->impl_->last_sawWaveType );
     }
-    if( last_sawWaveMix != this->impl_->state->synth_saw_wave_mix() ) {
-      last_sawWaveMix = this->impl_->state->synth_saw_wave_mix();
-      this->impl_->qtWindow->setSawWaveMixValue( last_sawWaveMix );
+    if( this->impl_->last_sawWaveMix != this->impl_->state->synth_saw_wave_mix() ) {
+      this->impl_->last_sawWaveMix = this->impl_->state->synth_saw_wave_mix();
+      this->impl_->qtWindow->setSawWaveMixValue( this->impl_->last_sawWaveMix );
     }
-    if( last_triangleWaveType != double( this->impl_->state->synth_triangle_wave_type() ) ) {
-      last_triangleWaveType = double( this->impl_->state->synth_triangle_wave_type() );
-      this->impl_->qtWindow->setTriangleWaveTypeValue( last_triangleWaveType );
+    if( this->impl_->last_triangleWaveType != double( this->impl_->state->synth_triangle_wave_type() ) ) {
+      this->impl_->last_triangleWaveType = double( this->impl_->state->synth_triangle_wave_type() );
+      this->impl_->qtWindow->setTriangleWaveTypeValue( this->impl_->last_triangleWaveType );
     }
-    if( last_triangleWaveMix != this->impl_->state->synth_triangle_wave_mix() ) {
-      last_triangleWaveMix = this->impl_->state->synth_triangle_wave_mix();
-      this->impl_->qtWindow->setTriangleWaveMixValue( last_triangleWaveMix );
+    if( this->impl_->last_triangleWaveMix != this->impl_->state->synth_triangle_wave_mix() ) {
+      this->impl_->last_triangleWaveMix = this->impl_->state->synth_triangle_wave_mix();
+      this->impl_->qtWindow->setTriangleWaveMixValue( this->impl_->last_triangleWaveMix );
     }
-    if( last_whiteNoiseType != double( this->impl_->state->synth_white_noise_type() ) ) {
-      last_whiteNoiseType = double( this->impl_->state->synth_white_noise_type() );
-      this->impl_->qtWindow->setWhiteNoiseTypeValue( last_whiteNoiseType );
+    if( this->impl_->last_whiteNoiseType != double( this->impl_->state->synth_white_noise_type() ) ) {
+      this->impl_->last_whiteNoiseType = double( this->impl_->state->synth_white_noise_type() );
+      this->impl_->qtWindow->setWhiteNoiseTypeValue( this->impl_->last_whiteNoiseType );
     }
-    if( last_whiteNoiseMix != this->impl_->state->synth_white_noise_mix() ) {
-      last_whiteNoiseMix = this->impl_->state->synth_white_noise_mix();
-      this->impl_->qtWindow->setWhiteNoiseMixValue( last_whiteNoiseMix );
+    if( this->impl_->last_whiteNoiseMix != this->impl_->state->synth_white_noise_mix() ) {
+      this->impl_->last_whiteNoiseMix = this->impl_->state->synth_white_noise_mix();
+      this->impl_->qtWindow->setWhiteNoiseMixValue( this->impl_->last_whiteNoiseMix );
     }
-    if( last_pinkNoiseType != double( this->impl_->state->synth_pink_noise_type() ) ) {
-      last_pinkNoiseType = double( this->impl_->state->synth_pink_noise_type() );
-      this->impl_->qtWindow->setPinkNoiseTypeValue( last_pinkNoiseType );
+    if( this->impl_->last_pinkNoiseType != double( this->impl_->state->synth_pink_noise_type() ) ) {
+      this->impl_->last_pinkNoiseType = double( this->impl_->state->synth_pink_noise_type() );
+      this->impl_->qtWindow->setPinkNoiseTypeValue( this->impl_->last_pinkNoiseType );
     }
-    if( last_pinkNoiseMix != this->impl_->state->synth_pink_noise_mix() ) {
-      last_pinkNoiseMix = this->impl_->state->synth_pink_noise_mix();
-      this->impl_->qtWindow->setPinkNoiseMixValue( last_pinkNoiseMix );
+    if( this->impl_->last_pinkNoiseMix != this->impl_->state->synth_pink_noise_mix() ) {
+      this->impl_->last_pinkNoiseMix = this->impl_->state->synth_pink_noise_mix();
+      this->impl_->qtWindow->setPinkNoiseMixValue( this->impl_->last_pinkNoiseMix );
     }
-    if( last_redNoiseType != double( this->impl_->state->synth_red_noise_type() ) ) {
-      last_redNoiseType = double( this->impl_->state->synth_red_noise_type() );
-      this->impl_->qtWindow->setRedNoiseTypeValue( last_redNoiseType );
+    if( this->impl_->last_redNoiseType != double( this->impl_->state->synth_red_noise_type() ) ) {
+      this->impl_->last_redNoiseType = double( this->impl_->state->synth_red_noise_type() );
+      this->impl_->qtWindow->setRedNoiseTypeValue( this->impl_->last_redNoiseType );
     }
-    if( last_redNoiseMix != this->impl_->state->synth_red_noise_mix() ) {
-      last_redNoiseMix = this->impl_->state->synth_red_noise_mix();
-      this->impl_->qtWindow->setRedNoiseMixValue( last_redNoiseMix );
+    if( this->impl_->last_redNoiseMix != this->impl_->state->synth_red_noise_mix() ) {
+      this->impl_->last_redNoiseMix = this->impl_->state->synth_red_noise_mix();
+      this->impl_->qtWindow->setRedNoiseMixValue( this->impl_->last_redNoiseMix );
     }
-    if( last_blueNoiseType != double( this->impl_->state->synth_blue_noise_type() ) ) {
-      last_blueNoiseType = double( this->impl_->state->synth_blue_noise_type() );
-      this->impl_->qtWindow->setBlueNoiseTypeValue( last_blueNoiseType );
+    if( this->impl_->last_blueNoiseType != double( this->impl_->state->synth_blue_noise_type() ) ) {
+      this->impl_->last_blueNoiseType = double( this->impl_->state->synth_blue_noise_type() );
+      this->impl_->qtWindow->setBlueNoiseTypeValue( this->impl_->last_blueNoiseType );
     }
-    if( last_blueNoiseMix != this->impl_->state->synth_blue_noise_mix() ) {
-      last_blueNoiseMix = this->impl_->state->synth_blue_noise_mix();
-      this->impl_->qtWindow->setBlueNoiseMixValue( last_blueNoiseMix );
+    if( this->impl_->last_blueNoiseMix != this->impl_->state->synth_blue_noise_mix() ) {
+      this->impl_->last_blueNoiseMix = this->impl_->state->synth_blue_noise_mix();
+      this->impl_->qtWindow->setBlueNoiseMixValue( this->impl_->last_blueNoiseMix );
     }
-    if( last_violetNoiseType != double( this->impl_->state->synth_violet_noise_type() ) ) {
-      last_violetNoiseType = double( this->impl_->state->synth_violet_noise_type() );
-      this->impl_->qtWindow->setVioletNoiseTypeValue( last_violetNoiseType );
+    if( this->impl_->last_violetNoiseType != double( this->impl_->state->synth_violet_noise_type() ) ) {
+      this->impl_->last_violetNoiseType = double( this->impl_->state->synth_violet_noise_type() );
+      this->impl_->qtWindow->setVioletNoiseTypeValue( this->impl_->last_violetNoiseType );
     }
-    if( last_violetNoiseMix != this->impl_->state->synth_violet_noise_mix() ) {
-      last_violetNoiseMix = this->impl_->state->synth_violet_noise_mix();
-      this->impl_->qtWindow->setVioletNoiseMixValue( last_violetNoiseMix );
+    if( this->impl_->last_violetNoiseMix != this->impl_->state->synth_violet_noise_mix() ) {
+      this->impl_->last_violetNoiseMix = this->impl_->state->synth_violet_noise_mix();
+      this->impl_->qtWindow->setVioletNoiseMixValue( this->impl_->last_violetNoiseMix );
     }
-    if( last_greyNoiseType != double( this->impl_->state->synth_grey_noise_type() ) ) {
-      last_greyNoiseType = double( this->impl_->state->synth_grey_noise_type() );
-      this->impl_->qtWindow->setGreyNoiseTypeValue( last_greyNoiseType );
+    if( this->impl_->last_greyNoiseType != double( this->impl_->state->synth_grey_noise_type() ) ) {
+      this->impl_->last_greyNoiseType = double( this->impl_->state->synth_grey_noise_type() );
+      this->impl_->qtWindow->setGreyNoiseTypeValue( this->impl_->last_greyNoiseType );
     }
-    if( last_greyNoiseMix != this->impl_->state->synth_grey_noise_mix() ) {
-      last_greyNoiseMix = this->impl_->state->synth_grey_noise_mix();
-      this->impl_->qtWindow->setGreyNoiseMixValue( last_greyNoiseMix );
+    if( this->impl_->last_greyNoiseMix != this->impl_->state->synth_grey_noise_mix() ) {
+      this->impl_->last_greyNoiseMix = this->impl_->state->synth_grey_noise_mix();
+      this->impl_->qtWindow->setGreyNoiseMixValue( this->impl_->last_greyNoiseMix );
     }
-    if( last_velvetNoiseType != double( this->impl_->state->synth_velvet_noise_type() ) ) {
-      last_velvetNoiseType = double( this->impl_->state->synth_velvet_noise_type() );
-      this->impl_->qtWindow->setVelvetNoiseTypeValue( last_velvetNoiseType );
+    if( this->impl_->last_velvetNoiseType != double( this->impl_->state->synth_velvet_noise_type() ) ) {
+      this->impl_->last_velvetNoiseType = double( this->impl_->state->synth_velvet_noise_type() );
+      this->impl_->qtWindow->setVelvetNoiseTypeValue( this->impl_->last_velvetNoiseType );
     }
-    if( last_velvetNoiseMix != this->impl_->state->synth_velvet_noise_mix() ) {
-      last_velvetNoiseMix = this->impl_->state->synth_velvet_noise_mix();
-      this->impl_->qtWindow->setVelvetNoiseMixValue( last_velvetNoiseMix );
+    if( this->impl_->last_velvetNoiseMix != this->impl_->state->synth_velvet_noise_mix() ) {
+      this->impl_->last_velvetNoiseMix = this->impl_->state->synth_velvet_noise_mix();
+      this->impl_->qtWindow->setVelvetNoiseMixValue( this->impl_->last_velvetNoiseMix );
     }
   } );
   impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::sineWaveTypeAdjusted, [this]( double value ) {

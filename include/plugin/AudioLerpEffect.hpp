@@ -80,4 +80,8 @@ class AudioLerpEffect : BasePlugin {
   public:
   static clap_plugin_t* s_create( clap_host_t const* host );
   static clap_plugin_descriptor_t* descriptor_get( void );
+
+  // for checking for changes
+  private:
+  double last_ab_ = -1.0;
 };

@@ -27,6 +27,9 @@ struct UiPmHolder::Impl {
 
   bool windowParentSet = false;
   clap_window_t windowParent;
+
+  // for checking for changes
+  // double last_ab = -1.0;
 };
 
 UiPmHolder::UiPmHolder() : impl_( std::make_unique< UiPmHolder::Impl >() ) {}
@@ -51,10 +54,9 @@ bool UiPmHolder::clap_create( std::string const& api, bool is_floating ) {
   impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
 
   impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
-    // static double last_ab = -1.0;
-    // if( last_ab != this->impl_->state->a_b() ) {
-    //   last_ab = this->impl_->state->a_b();
-    //   this->impl_->qtWindow->setAbValue( last_ab );
+    // if( this->impl_->last_ab != this->impl_->state->a_b() ) {
+    //   this->impl_->last_ab = this->impl_->state->a_b();
+    //   this->impl_->qtWindow->setAbValue( this->impl_->last_ab );
     // }
   } );
   // impl_->qtWindow->connect( impl_->qtWindow, &UiParamMultiplex::abAdjusted, [this]( double value ) {

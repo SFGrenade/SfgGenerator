@@ -130,4 +130,30 @@ class NoiseGenerator : BasePlugin {
   public:
   static clap_plugin_t* s_create( clap_host_t const* host );
   static clap_plugin_descriptor_t* descriptor_get( void );
+
+  // for checking for changes
+  private:
+  double last_sineWaveType_ = -1.0;
+  double last_sineWaveMix_ = -1.0;
+  double last_squareWaveType_ = -1.0;
+  double last_squareWavePwm_ = -1.0;
+  double last_squareWaveMix_ = -1.0;
+  double last_sawWaveType_ = -1.0;
+  double last_sawWaveMix_ = -1.0;
+  double last_triangleWaveType_ = -1.0;
+  double last_triangleWaveMix_ = -1.0;
+  double last_whiteNoiseType_ = -1.0;
+  double last_whiteNoiseMix_ = -1.0;
+  double last_pinkNoiseType_ = -1.0;
+  double last_pinkNoiseMix_ = -1.0;
+  double last_redNoiseType_ = -1.0;
+  double last_redNoiseMix_ = -1.0;
+  double last_blueNoiseType_ = -1.0;
+  double last_blueNoiseMix_ = -1.0;
+  double last_violetNoiseType_ = -1.0;
+  double last_violetNoiseMix_ = -1.0;
+  double last_greyNoiseType_ = -1.0;
+  double last_greyNoiseMix_ = -1.0;
+  double last_velvetNoiseType_ = -1.0;
+  double last_velvetNoiseMix_ = -1.0;
 };
