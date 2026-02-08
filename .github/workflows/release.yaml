@@ -74,7 +74,7 @@ jobs:
     - name: Copy files to the right location (windows)
       if: ${{ startsWith(matrix.os.name, 'windows') }}
       run: |
-        mkdir dest/qt/
+        mkdir -p dest/qt/
         mv tmpDest/bin/SfgGenerator.clap dest/
         mv tmpDest/bin/* dest/qt/
       shell: bash
@@ -82,7 +82,7 @@ jobs:
     - name: Copy files to the right location (mac & linux)
       if: ${{ !startsWith(matrix.os.name, 'windows') }}
       run: |
-        mkdir dest/qt/
+        mkdir -p dest/qt/
         mv tmpDest/lib/SfgGenerator.clap dest/
         mv tmpDest/lib/* dest/qt/
       shell: bash
