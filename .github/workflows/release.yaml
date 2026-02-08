@@ -69,21 +69,28 @@ jobs:
     #  run: xmake run -vD --group=TESTS
 
     - name: Install everything
-      run: xmake install -a -vD -o dest/
+      run: xmake install -a -vD -o tmpDest/
 
-    - name: Archive result (windows)
-      uses: ihiroky/archive-action@v1
+    - name: Copy files to the right location (windows)
       if: ${{ startsWith(matrix.os.name, 'windows') }}
-      with:
-        root_dir: dest/bin
-        file_path: ${{ env.OUTPUT_FILE }}
-        verbose: true
+      run: |
+        mkdir dest/qt/
+        mv tmpDest/bin/SfgGenerator.clap dest/
+        mv tmpDest/bin/* dest/qt/
+      shell: bash
 
-    - name: Archive result (mac & linux)
-      uses: ihiroky/archive-action@v1
+    - name: Copy files to the right location (mac & linux)
       if: ${{ !startsWith(matrix.os.name, 'windows') }}
+      run: |
+        mkdir dest/qt/
+        mv tmpDest/lib/SfgGenerator.clap dest/
+        mv tmpDest/lib/* dest/qt/
+      shell: bash
+
+    - name: Archive result
+      uses: ihiroky/archive-action@v1
       with:
-        root_dir: dest/lib
+        root_dir: dest
         file_path: ${{ env.OUTPUT_FILE }}
         verbose: true
 
