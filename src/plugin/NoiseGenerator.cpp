@@ -15,6 +15,14 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
+bool NoiseGenerator::NoteDescription::operator==( NoiseGenerator::NoteDescription const& b ) const {
+  return ( this->channelId == b.channelId ) && ( this->noteId == b.noteId );
+}
+
+bool NoiseGenerator::NoteDescription::operator<( NoiseGenerator::NoteDescription const& b ) const {
+  return ( this->channelId < b.channelId ) || ( ( this->channelId == b.channelId ) && ( this->noteId < b.noteId ) );
+}
+
 NoiseGenerator::NoiseGenerator() : _base_() {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
@@ -477,17 +485,47 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->velocity );
-    if( ev->key == -1 ) {
-      for( auto& item : note_map_ ) {
-        item.second.phase = 0.0;
-        item.second.velocity = ev->velocity;
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
+    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
+      // all channels and all notes
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        iter->second.phase = 0.0;
+        iter->second.velocity = ev->velocity;
+        iter++;
       }
-    } else {
-      if( !note_map_.contains( ev->key ) ) {
-        note_map_[ev->key] = NoteData();
+    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
+      // all channels but specific note
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.noteId != key.noteId ) {
+          iter++;
+          continue;
+        }
+        iter->second.phase = 0.0;
+        iter->second.velocity = ev->velocity;
+        iter++;
       }
-      note_map_[ev->key].phase = 0.0;
-      note_map_[ev->key].velocity = ev->velocity;
+    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
+      // specific channel but all notes
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.channelId != key.channelId ) {
+          iter++;
+          continue;
+        }
+        iter->second.phase = 0.0;
+        iter->second.velocity = ev->velocity;
+        iter++;
+      }
+    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
+      // specific channel and specific note
+      auto iter = note_map_.find( key );
+      if( iter == note_map_.end() ) {
+        auto [tmpIter, success] = note_map_.insert( { key, NoteData() } );
+        if( success ) {
+          iter = tmpIter;
+        }
+      }
+      iter->second.phase = 0.0;
+      iter->second.velocity = ev->velocity;
     }
   } else if( hdr->type == CLAP_EVENT_NOTE_OFF ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
@@ -501,12 +539,31 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->velocity );
-    if( ev->key == -1 ) {
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
+    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
+      // all channels and all notes
       note_map_.clear();
-    } else {
-      if( note_map_.contains( ev->key ) ) {
-        note_map_.erase( ev->key );
+    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
+      // all channels but specific note
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.noteId != key.noteId ) {
+          iter++;
+          continue;
+        }
+        iter = note_map_.erase( iter );
       }
+    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
+      // specific channel but all notes
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.channelId != key.channelId ) {
+          iter++;
+          continue;
+        }
+        iter = note_map_.erase( iter );
+      }
+    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
+      // specific channel and specific note
+      note_map_.erase( key );
     }
   } else if( hdr->type == CLAP_EVENT_NOTE_CHOKE ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
@@ -520,12 +577,31 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->velocity );
-    if( ev->key == -1 ) {
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
+    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
+      // all channels and all notes
       note_map_.clear();
-    } else {
-      if( note_map_.contains( ev->key ) ) {
-        note_map_.erase( ev->key );
+    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
+      // all channels but specific note
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.noteId != key.noteId ) {
+          iter++;
+          continue;
+        }
+        iter = note_map_.erase( iter );
       }
+    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
+      // specific channel but all notes
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.channelId != key.channelId ) {
+          iter++;
+          continue;
+        }
+        iter = note_map_.erase( iter );
+      }
+    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
+      // specific channel and specific note
+      note_map_.erase( key );
     }
   } else if( hdr->type == CLAP_EVENT_NOTE_END ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
@@ -539,12 +615,31 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->velocity );
-    if( ev->key == -1 ) {
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
+    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
+      // all channels and all notes
       note_map_.clear();
-    } else {
-      if( note_map_.contains( ev->key ) ) {
-        note_map_.erase( ev->key );
+    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
+      // all channels but specific note
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.noteId != key.noteId ) {
+          iter++;
+          continue;
+        }
+        iter = note_map_.erase( iter );
       }
+    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
+      // specific channel but all notes
+      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
+        if( iter->first.channelId != key.channelId ) {
+          iter++;
+          continue;
+        }
+        iter = note_map_.erase( iter );
+      }
+    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
+      // specific channel and specific note
+      note_map_.erase( key );
     }
   } else if( hdr->type == CLAP_EVENT_NOTE_EXPRESSION ) {
     clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
@@ -559,6 +654,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->value );
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
   } else if( hdr->type == CLAP_EVENT_PARAM_VALUE ) {
     clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
     SFG_LOG_TRACE( host_,
@@ -573,6 +669,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->value );
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
     if( ev->param_id == 1 ) {
       state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( ev->value ) );
     } else if( ev->param_id == 2 ) {
@@ -637,6 +734,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->amount );
+    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
   } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ) {
     clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
     SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
@@ -1076,7 +1174,7 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
         if( active_ && process_ ) {
           for( auto& item : note_map_ ) {
             // A4 (note id 69) is 440.0 Hz
-            double freq = 440.0 * std::pow( 2.0, ( item.first - 69 ) / 12.0 );
+            double freq = 440.0 * std::pow( 2.0, ( double( item.first.noteId ) - 69.0 ) / 12.0 );
 
             double sample = 0.0;
             // phase is 0.0 .. 1.0

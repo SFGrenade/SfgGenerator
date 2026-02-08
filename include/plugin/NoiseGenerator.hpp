@@ -22,11 +22,21 @@ class NoiseGenerator : BasePlugin {
   using _pb_ = SfgGenerator::Proto::NoiseGenerator;
 
   // see `clap_event_note_t`, this is a map of key to note
+  struct NoteDescription {
+    int16_t channelId = -1;
+    int16_t noteId = -1;
+    bool operator==( NoteDescription const& b ) const;
+    bool operator<( NoteDescription const& b ) const;
+    bool operator!=( NoteDescription const& b ) const { return !( *this == b ); };
+    bool operator>( NoteDescription const& b ) const { return b < *this; }
+    bool operator<=( NoteDescription const& b ) const { return !( *this > b ); }
+    bool operator>=( NoteDescription const& b ) const { return !( *this < b ); }
+  };
   struct NoteData {
     double phase = 0.0;
     double velocity = 0.0;  // aka amplitude
   };
-  typedef std::map< int16_t, NoteData > NoteMap;
+  typedef std::map< NoteDescription, NoteData > NoteMap;
 
   public:
   NoiseGenerator();
