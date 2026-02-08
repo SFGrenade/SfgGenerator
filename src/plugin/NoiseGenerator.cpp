@@ -15,14 +15,6 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
-bool NoiseGenerator::NoteDescription::operator==( NoiseGenerator::NoteDescription const& b ) const {
-  return ( this->channelId == b.channelId ) && ( this->noteId == b.noteId );
-}
-
-bool NoiseGenerator::NoteDescription::operator<( NoiseGenerator::NoteDescription const& b ) const {
-  return ( this->channelId < b.channelId ) || ( ( this->channelId == b.channelId ) && ( this->noteId < b.noteId ) );
-}
-
 NoiseGenerator::NoiseGenerator() : _base_() {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
@@ -425,7 +417,7 @@ bool NoiseGenerator::init( void ) {
   pink_economy_b1_ = 0.0;
   pink_economy_b2_ = 0.0;
   red_leaky_integrator_prev_ = 0.0;
-  note_map_.clear();
+  noteMap_.clear();
 
   ret = ret && true;
   return ret;
@@ -462,7 +454,7 @@ void NoiseGenerator::reset( void ) {
   pink_economy_b1_ = 0.0;
   pink_economy_b2_ = 0.0;
   red_leaky_integrator_prev_ = 0.0;
-  note_map_.clear();
+  noteMap_.clear();
 }
 
 void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
@@ -477,172 +469,16 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
   }
   if( hdr->type == CLAP_EVENT_NOTE_ON ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
-    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
-      // all channels and all notes
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        iter->second.phase = 0.0;
-        iter->second.velocity = ev->velocity;
-        iter++;
-      }
-    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
-      // all channels but specific note
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.noteId != key.noteId ) {
-          iter++;
-          continue;
-        }
-        iter->second.phase = 0.0;
-        iter->second.velocity = ev->velocity;
-        iter++;
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
-      // specific channel but all notes
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.channelId != key.channelId ) {
-          iter++;
-          continue;
-        }
-        iter->second.phase = 0.0;
-        iter->second.velocity = ev->velocity;
-        iter++;
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
-      // specific channel and specific note
-      auto iter = note_map_.find( key );
-      if( iter == note_map_.end() ) {
-        auto [tmpIter, success] = note_map_.insert( { key, NoteData() } );
-        if( success ) {
-          iter = tmpIter;
-        }
-      }
-      iter->second.phase = 0.0;
-      iter->second.velocity = ev->velocity;
-    }
+    noteMap_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_OFF ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
-    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
-      // all channels and all notes
-      note_map_.clear();
-    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
-      // all channels but specific note
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.noteId != key.noteId ) {
-          iter++;
-          continue;
-        }
-        iter = note_map_.erase( iter );
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
-      // specific channel but all notes
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.channelId != key.channelId ) {
-          iter++;
-          continue;
-        }
-        iter = note_map_.erase( iter );
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
-      // specific channel and specific note
-      note_map_.erase( key );
-    }
+    noteMap_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_CHOKE ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
-    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
-      // all channels and all notes
-      note_map_.clear();
-    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
-      // all channels but specific note
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.noteId != key.noteId ) {
-          iter++;
-          continue;
-        }
-        iter = note_map_.erase( iter );
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
-      // specific channel but all notes
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.channelId != key.channelId ) {
-          iter++;
-          continue;
-        }
-        iter = note_map_.erase( iter );
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
-      // specific channel and specific note
-      note_map_.erase( key );
-    }
+    noteMap_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_END ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_END - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
-    if( ( key.channelId == -1 ) && ( key.noteId == -1 ) ) {
-      // all channels and all notes
-      note_map_.clear();
-    } else if( ( key.channelId == -1 ) && ( key.noteId != -1 ) ) {
-      // all channels but specific note
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.noteId != key.noteId ) {
-          iter++;
-          continue;
-        }
-        iter = note_map_.erase( iter );
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId == -1 ) ) {
-      // specific channel but all notes
-      for( auto iter = note_map_.begin(); iter != note_map_.end(); ) {
-        if( iter->first.channelId != key.channelId ) {
-          iter++;
-          continue;
-        }
-        iter = note_map_.erase( iter );
-      }
-    } else if( ( key.channelId != -1 ) && ( key.noteId != -1 ) ) {
-      // specific channel and specific note
-      note_map_.erase( key );
-    }
+    noteMap_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_EXPRESSION ) {
     clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
     SFG_LOG_TRACE( host_,
@@ -656,71 +492,92 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->value );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
   } else if( hdr->type == CLAP_EVENT_PARAM_VALUE ) {
     clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->param_id,
-                   ev->cookie,
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->value );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
+    // SFG_LOG_TRACE( host_,
+    //                host_log_,
+    //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+    //                __FUNCTION__,
+    //                static_cast< void* >( this ),
+    //                ev->param_id,
+    //                ev->cookie,
+    //                ev->note_id,
+    //                ev->port_index,
+    //                ev->channel,
+    //                ev->key,
+    //                ev->value );
     if( ev->param_id == 1 ) {
       state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( ev->value ) );
+      last_sineWaveType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 2 ) {
       state_.set_synth_sine_wave_mix( ev->value );
+      last_sineWaveMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 3 ) {
       state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( ev->value ) );
+      last_squareWaveType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 4 ) {
       state_.set_synth_square_wave_pwm( ev->value );
+      last_squareWavePwm_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 5 ) {
       state_.set_synth_square_wave_mix( ev->value );
+      last_squareWaveMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 6 ) {
       state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( ev->value ) );
+      last_sawWaveType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 7 ) {
       state_.set_synth_saw_wave_mix( ev->value );
+      last_sawWaveMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 8 ) {
       state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( ev->value ) );
+      last_triangleWaveType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 9 ) {
       state_.set_synth_triangle_wave_mix( ev->value );
+      last_triangleWaveMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 10 ) {
       state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( ev->value ) );
+      last_whiteNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 11 ) {
       state_.set_synth_white_noise_mix( ev->value );
+      last_whiteNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 12 ) {
       state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
+      last_pinkNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 24 ) {
       state_.set_synth_pink_noise_vossmccartney_number( ev->value );
       // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
     } else if( ev->param_id == 13 ) {
       state_.set_synth_pink_noise_mix( ev->value );
+      last_pinkNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 14 ) {
       state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( ev->value ) );
+      last_redNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 15 ) {
       state_.set_synth_red_noise_mix( ev->value );
+      last_redNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 16 ) {
       state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( ev->value ) );
+      last_blueNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 17 ) {
       state_.set_synth_blue_noise_mix( ev->value );
+      last_blueNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 18 ) {
       state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( ev->value ) );
+      last_violetNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 19 ) {
       state_.set_synth_violet_noise_mix( ev->value );
+      last_violetNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 20 ) {
       state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( ev->value ) );
+      last_greyNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 21 ) {
       state_.set_synth_grey_noise_mix( ev->value );
+      last_greyNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 22 ) {
       state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( ev->value ) );
+      last_velvetNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 23 ) {
       state_.set_synth_velvet_noise_mix( ev->value );
+      last_velvetNoiseMix_ = ev->value;  // we only want to show things when UI changes state
     }
   } else if( hdr->type == CLAP_EVENT_PARAM_MOD ) {
     clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
@@ -736,7 +593,6 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->amount );
-    NoiseGenerator::NoteDescription key{ .channelId = ev->channel, .noteId = ev->key };
   } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ) {
     clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
     SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
@@ -767,13 +623,14 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->tsig_denom );
   } else if( hdr->type == CLAP_EVENT_MIDI ) {
     clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->port_index,
-                   std::vector< uint8_t >( ev->data, ev->data + 3 ) );
+    noteMap_.handleEvent( ev );
+    // SFG_LOG_TRACE( host_,
+    //                host_log_,
+    //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
+    //                __FUNCTION__,
+    //                static_cast< void* >( this ),
+    //                ev->port_index,
+    //                std::vector< uint8_t >( ev->data, ev->data + 3 ) );
     if( ev->data[0] == 0xB0 ) {
       // control change channel 0
       int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
@@ -781,63 +638,86 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
       if( param_id == 1 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_sine_wave_type( static_cast< _pb_::SineWaveType >( value ) );
+        // last_sineWaveType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 2 ) {
         state_.set_synth_sine_wave_mix( value );
+        last_sineWaveMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 3 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_square_wave_type( static_cast< _pb_::SquareWaveType >( value ) );
+        // last_squareWaveType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 4 ) {
         state_.set_synth_square_wave_pwm( value );
+        last_squareWavePwm_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 5 ) {
         state_.set_synth_square_wave_mix( value );
+        last_squareWaveMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 6 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_saw_wave_type( static_cast< _pb_::SawWaveType >( value ) );
+        // last_sawWaveType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 7 ) {
         state_.set_synth_saw_wave_mix( value );
+        last_sawWaveMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 8 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_triangle_wave_type( static_cast< _pb_::TriangleWaveType >( value ) );
+        // last_triangleWaveType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 9 ) {
         state_.set_synth_triangle_wave_mix( value );
+        last_triangleWaveMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 10 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_white_noise_type( static_cast< _pb_::WhiteNoiseType >( value ) );
+        // last_whiteNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 11 ) {
         state_.set_synth_white_noise_mix( value );
+        last_whiteNoiseMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 12 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( value ) );
+        // last_pinkNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 24 ) {
         state_.set_synth_pink_noise_vossmccartney_number( value );
         // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
       } else if( param_id == 13 ) {
         state_.set_synth_pink_noise_mix( value );
+        last_pinkNoiseMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 14 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_red_noise_type( static_cast< _pb_::RedNoiseType >( value ) );
+        // last_redNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 15 ) {
         state_.set_synth_red_noise_mix( value );
+        last_redNoiseMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 16 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_blue_noise_type( static_cast< _pb_::BlueNoiseType >( value ) );
+        // last_blueNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 17 ) {
         state_.set_synth_blue_noise_mix( value );
+        last_blueNoiseMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 18 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_violet_noise_type( static_cast< _pb_::VioletNoiseType >( value ) );
+        // last_violetNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 19 ) {
         state_.set_synth_violet_noise_mix( value );
+        last_violetNoiseMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 20 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_grey_noise_type( static_cast< _pb_::GreyNoiseType >( value ) );
+        // last_greyNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 21 ) {
         state_.set_synth_grey_noise_mix( value );
+        last_greyNoiseMix_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 22 ) {
         // todo: fixme: check if midi does weird shit
         // state_.set_synth_velvet_noise_type( static_cast< _pb_::VelvetNoiseType >( value ) );
+        // last_velvetNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 23 ) {
         state_.set_synth_velvet_noise_mix( value );
+        last_velvetNoiseMix_ = value;  // we only want to show things when UI changes state
       }
     }
   } else if( hdr->type == CLAP_EVENT_MIDI_SYSEX ) {
@@ -1174,30 +1054,30 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
         double out = 0.0;
         if( active_ && process_ ) {
-          for( auto& item : note_map_ ) {
+          noteMap_.foreach( [this, &out]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
             // A4 (note id 69) is 440.0 Hz
-            double freq = 440.0 * std::pow( 2.0, ( double( item.first.noteId ) - 69.0 ) / 12.0 );
+            double freq = 440.0 * std::pow( 2.0, ( double( entry.first.key ) - 69.0 ) / 12.0 );
 
             double sample = 0.0;
             // phase is 0.0 .. 1.0
-            sample += get_sample_sine_wave( item.second.phase );
-            sample += get_sample_square_wave( item.second.phase );
-            sample += get_sample_saw_wave( item.second.phase );
-            sample += get_sample_triangle_wave( item.second.phase );
-            sample += get_sample_white_noise( item.second.phase );
-            sample += get_sample_pink_noise( item.second.phase );
-            sample += get_sample_red_noise( item.second.phase );
-            sample += get_sample_blue_noise( item.second.phase );
-            sample += get_sample_violet_noise( item.second.phase );
-            sample += get_sample_grey_noise( item.second.phase );
-            sample += get_sample_velvet_noise( item.second.phase );
+            sample += get_sample_sine_wave( entry.second.phase );
+            sample += get_sample_square_wave( entry.second.phase );
+            sample += get_sample_saw_wave( entry.second.phase );
+            sample += get_sample_triangle_wave( entry.second.phase );
+            sample += get_sample_white_noise( entry.second.phase );
+            sample += get_sample_pink_noise( entry.second.phase );
+            sample += get_sample_red_noise( entry.second.phase );
+            sample += get_sample_blue_noise( entry.second.phase );
+            sample += get_sample_violet_noise( entry.second.phase );
+            sample += get_sample_grey_noise( entry.second.phase );
+            sample += get_sample_velvet_noise( entry.second.phase );
 
-            item.second.phase += freq / sample_rate_;
-            if( item.second.phase >= 1.0 )
-              item.second.phase -= 1.0;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0 )
+              entry.second.phase -= 1.0;
 
-            out += sample * item.second.velocity;
-          }
+            out += sample * entry.second.velocity;
+          } );
         }
         // store output
         if( process->audio_outputs[0].data32 )
@@ -1412,7 +1292,7 @@ bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_po
   if( is_input ) {
     out_info->id = 0;
     std::snprintf( out_info->name, sizeof( out_info->name ), "%s", "main" );
-    out_info->supported_dialects = CLAP_NOTE_DIALECT_CLAP | CLAP_NOTE_DIALECT_MIDI_MPE | CLAP_NOTE_DIALECT_MIDI2;
+    out_info->supported_dialects = CLAP_NOTE_DIALECT_CLAP | CLAP_NOTE_DIALECT_MIDI /*| CLAP_NOTE_DIALECT_MIDI2*/;
     out_info->preferred_dialect = CLAP_NOTE_DIALECT_CLAP;
     return true;
   }

@@ -73,82 +73,32 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
     return;
   }
   if( hdr->type == CLAP_EVENT_NOTE_ON ) {
-    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_ON - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
+    // ignored
   } else if( hdr->type == CLAP_EVENT_NOTE_OFF ) {
-    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_OFF - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
+    // ignored
   } else if( hdr->type == CLAP_EVENT_NOTE_CHOKE ) {
-    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_CHOKE - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
+    // ignored
   } else if( hdr->type == CLAP_EVENT_NOTE_END ) {
-    clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_END - note_id={:d}, port_index={:d}, channel={:d}, key={:d}, velocity={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->velocity );
+    // ignored
   } else if( hdr->type == CLAP_EVENT_NOTE_EXPRESSION ) {
-    clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->expression_id,
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->value );
+    // ignored
   } else if( hdr->type == CLAP_EVENT_PARAM_VALUE ) {
     clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->param_id,
-                   ev->cookie,
-                   ev->note_id,
-                   ev->port_index,
-                   ev->channel,
-                   ev->key,
-                   ev->value );
+    // SFG_LOG_TRACE( host_,
+    //                host_log_,
+    //                "[{:s}] [{:p}] CLAP_EVENT_PARAM_VALUE - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
+    //                __FUNCTION__,
+    //                static_cast< void* >( this ),
+    //                ev->param_id,
+    //                ev->cookie,
+    //                ev->note_id,
+    //                ev->port_index,
+    //                ev->channel,
+    //                ev->key,
+    //                ev->value );
     if( ev->param_id == 1 ) {
       state_.set_a_b( ev->value );
+      last_ab_ = ev->value;  // we only want to show things when UI changes state
     }
   } else if( hdr->type == CLAP_EVENT_PARAM_MOD ) {
     clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
@@ -194,19 +144,20 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
                    ev->tsig_denom );
   } else if( hdr->type == CLAP_EVENT_MIDI ) {
     clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-    SFG_LOG_TRACE( host_,
-                   host_log_,
-                   "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
-                   __FUNCTION__,
-                   static_cast< void* >( this ),
-                   ev->port_index,
-                   std::vector< uint8_t >( ev->data, ev->data + 3 ) );
+    // SFG_LOG_TRACE( host_,
+    //                host_log_,
+    //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
+    //                __FUNCTION__,
+    //                static_cast< void* >( this ),
+    //                ev->port_index,
+    //                std::vector< uint8_t >( ev->data, ev->data + 3 ) );
     if( ev->data[0] == 0xB0 ) {
       // control change channel 0
       int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
       double value = double( ev->data[2] ) / double( 0x7F );
       if( param_id == 1 ) {
         state_.set_a_b( value );
+        last_ab_ = value;  // we only want to show things when UI changes state
       }
     }
   } else if( hdr->type == CLAP_EVENT_MIDI_SYSEX ) {

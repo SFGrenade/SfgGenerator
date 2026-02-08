@@ -3,13 +3,13 @@
 // Project includes
 #include "common/_clap.hpp"
 #include "common/_fmt.hpp"
+#include "common/NoteMap.hpp"
 #include "plugin/BasePlugin.hpp"
 #include "plugin/NoiseGenerator.pb.h"
 #include "ui/UiNgHolder.hpp"
 
 // C++ std includes
 #include <cstdint>
-#include <map>
 #include <random>
 #include <string>
 #include <vector>
@@ -18,23 +18,6 @@ class NoiseGenerator : BasePlugin {
   using _base_ = BasePlugin;
   using _base_::_base_;
   using _pb_ = SfgGenerator::Proto::NoiseGenerator;
-
-  // see `clap_event_note_t`, this is a map of key to note
-  struct NoteDescription {
-    int16_t channelId = -1;
-    int16_t noteId = -1;
-    bool operator==( NoteDescription const& b ) const;
-    bool operator<( NoteDescription const& b ) const;
-    bool operator!=( NoteDescription const& b ) const { return !( *this == b ); };
-    bool operator>( NoteDescription const& b ) const { return b < *this; }
-    bool operator<=( NoteDescription const& b ) const { return !( *this > b ); }
-    bool operator>=( NoteDescription const& b ) const { return !( *this < b ); }
-  };
-  struct NoteData {
-    double phase = 0.0;
-    double velocity = 0.0;  // aka amplitude
-  };
-  typedef std::map< NoteDescription, NoteData > NoteMap;
 
   public:
   NoiseGenerator();
@@ -132,7 +115,7 @@ class NoiseGenerator : BasePlugin {
   double red_leaky_integrator_prev_ = 0.0;
 
   // temporary values
-  NoteMap note_map_;
+  NoteMap noteMap_;
 
   // shit for the factory
   public:
