@@ -19,8 +19,8 @@ jobs:
       matrix:
         os:
         - { name: linux, image: ubuntu-latest, arch: x86_64 }
-        - { name: macos-x64, image: macos-15-large, arch: x86_64 }
-        - { name: macos-arm64, image: macos-15-xlarge, arch: arm64 }
+        - { name: macos-x64, image: macos-14-large, arch: x86_64 }
+        - { name: macos-arm64, image: macos-14-xlarge, arch: arm64 }
         - { name: windows, image: windows-latest, arch: x64 }
         mode: [debug, release]
 
