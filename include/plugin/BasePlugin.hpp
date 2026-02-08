@@ -1,8 +1,8 @@
 #pragma once
 
 // Project includes
-#include <common/_clap.hpp>
-#include <common/_fmt.hpp>
+#include "common/_clap.hpp"
+#include "common/_fmt.hpp"
 
 // C++ std includes
 #include <atomic>

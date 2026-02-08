@@ -1,10 +1,8 @@
 #pragma once
 
 // Project includes
+#include "common/_fmt.hpp"
 #include "ui/SfgSlider.hpp"
-
-// Project includes
-#include <common/_fmt.hpp>
 
 // Other lib includes
 #include <QComboBox>
@@ -19,7 +17,7 @@ class UiNoiseGenerator : public QWidget {
   using _base_::_base_;
 
   public:
-  UiNoiseGenerator( std::shared_ptr< spdlog::logger > logger, QWidget *parent = nullptr );
+  UiNoiseGenerator( std::shared_ptr< spdlog::logger > logger, QWidget* parent = nullptr );
   virtual ~UiNoiseGenerator();
 
   public Q_SLOTS:

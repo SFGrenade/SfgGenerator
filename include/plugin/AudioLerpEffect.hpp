@@ -1,13 +1,11 @@
 #pragma once
 
 // Project includes
-#include "plugin/BasePlugin.hpp"
+#include "common/_clap.hpp"
+#include "common/_fmt.hpp"
 #include "plugin/AudioLerpEffect.pb.h"
-
-// Project includes
-#include <common/_clap.hpp>
-#include <common/_fmt.hpp>
-#include <ui/UiAleHolder.hpp>
+#include "plugin/BasePlugin.hpp"
+#include "ui/UiAleHolder.hpp"
 
 // C++ std includes
 #include <cstdint>

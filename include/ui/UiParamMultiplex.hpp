@@ -1,10 +1,8 @@
 #pragma once
 
 // Project includes
+#include "common/_fmt.hpp"
 #include "ui/SfgSlider.hpp"
-
-// Project includes
-#include <common/_fmt.hpp>
 
 // Other lib includes
 #include <QGridLayout>
@@ -17,7 +15,7 @@ class UiParamMultiplex : public QWidget {
   using _base_::_base_;
 
   public:
-  UiParamMultiplex( std::shared_ptr< spdlog::logger > logger, QWidget *parent = nullptr );
+  UiParamMultiplex( std::shared_ptr< spdlog::logger > logger, QWidget* parent = nullptr );
   virtual ~UiParamMultiplex();
 
   public Q_SLOTS:

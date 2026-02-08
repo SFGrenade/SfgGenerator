@@ -1,9 +1,9 @@
 #pragma once
 
 // Project includes
-#include <common/_clap.hpp>
-#include <common/_fmt.hpp>
-#include <plugin/AudioLerpEffect.pb.h>
+#include "common/_clap.hpp"
+#include "common/_fmt.hpp"
+#include "plugin/AudioLerpEffect.pb.h"
 
 // C++ std includes
 #include <cstdint>

@@ -1,13 +1,11 @@
 #pragma once
 
 // Project includes
+#include "common/_clap.hpp"
+#include "common/_fmt.hpp"
 #include "plugin/BasePlugin.hpp"
 #include "plugin/NoiseGenerator.pb.h"
-
-// Project includes
-#include <common/_clap.hpp>
-#include <common/_fmt.hpp>
-#include <ui/UiNgHolder.hpp>
+#include "ui/UiNgHolder.hpp"
 
 // C++ std includes
 #include <cstdint>

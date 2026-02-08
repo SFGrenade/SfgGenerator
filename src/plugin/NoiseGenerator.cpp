@@ -2,7 +2,7 @@
 #include "plugin/NoiseGenerator.hpp"
 
 // Project includes
-#include <common/math.hpp>
+#include "common/math.hpp"
 
 // C++ std includes
 #include <algorithm>
@@ -437,7 +437,9 @@ void NoiseGenerator::on_main_thread( void ) {
 
   // synchronization of values needed:
   // 1. gui does `clap_host_->request_callback( clap_host_ );`
-  // 2. this method does `clap_host_params_->rescan( clap_host_, CLAP_PARAM_RESCAN_VALUES );`
+  // 2. this method does `clap_host_state_->mark_dirty( clap_host_ );`
+  // 3. this method does `clap_host_params_->rescan( clap_host_, CLAP_PARAM_RESCAN_VALUES );`
+  host_state_->mark_dirty( host_ );
   host_params_->rescan( host_, CLAP_PARAM_RESCAN_VALUES );
 }
 
@@ -2040,39 +2042,20 @@ void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_ev
 
 bool NoiseGenerator::state_save( clap_ostream_t const* stream ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
-  bool ret = true;
-  std::string buffer{};
-  if( !state_.SerializeToString( &buffer ) ) {
-    ret = false;
-  } else {
-    int64_t written = 0;
-    while( written < static_cast< int64_t >( buffer.size() ) ) {
-      int64_t tmp = stream->write( stream, buffer.data() + written, buffer.size() - written );
-      if( tmp < 0 ) {
-        return false;
-      }
-      written += tmp;
-    }
-    ret = written == static_cast< int64_t >( buffer.size() );
-  }
+
+  ClapOStream tmp( stream );
+  bool ret = state_.SerializeToOstream( &tmp );
+
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }
 
 bool NoiseGenerator::state_load( clap_istream_t const* stream ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( stream={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( stream ) );
-  bool ret = true;
-  std::string buffer{};
-  std::array< char, 4096 > temp;
-  while( true ) {
-    int64_t n = stream->read( stream, temp.data(), temp.size() );
-    if( n <= 0 ) {
-      break;
-    }
-    buffer.append( temp.data(), static_cast< size_t >( n ) );
-  }
-  ret = ret && ( buffer.size() > 0 );
-  ret = ret && state_.ParseFromString( buffer );
+
+  ClapIStream tmp( stream );
+  bool ret = state_.ParseFromIstream( &tmp );
+
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
   return ret;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 // Project includes
-#include <common/_clap.hpp>
+#include "common/_clap.hpp"
 
 // Other lib includes
 #include <hedley/hedley.h>

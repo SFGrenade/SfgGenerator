@@ -1,10 +1,8 @@
 #pragma once
 
 // Project includes
+#include "common/_fmt.hpp"
 #include "ui/SfgSlider.hpp"
-
-// Project includes
-#include <common/_fmt.hpp>
 
 // Other lib includes
 #include <QGridLayout>
