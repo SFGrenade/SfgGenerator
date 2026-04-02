@@ -1,10 +1,12 @@
 #pragma once
 
+// Project includes
+#include "common/Timer.hpp"
+
 // Other lib includes
 #include <QApplication>
 #include <QEventLoop>
 #include <QObject>
-#include <QTimer>
 #include <QWidget>
 
 class SfgEngine : public QObject {
@@ -29,5 +31,5 @@ class SfgEngine : public QObject {
   private:
   QApplication* app_ = nullptr;
   QWidget* hiddenWatcher_ = nullptr;
-  QTimer* timer_ = nullptr;
+  std::unique_ptr<Timer> timer_ = nullptr;
 };

@@ -75,6 +75,17 @@ target( "SfgGeneratorMain" )
   add_packages( "qt5core", "qt5gui", "qt5widgets", { public = false } )
   add_packages( "vcpkg-clap", { public = false } )
 
+  if is_plat( "linux" ) then
+    add_defines( "SFG_GEN_IS_LINUX", { public = true } )
+    add_ldflags( "rt" ) -- for the timer
+  elseif is_plat( "macosx" ) then
+    add_defines( "SFG_GEN_IS_MACOS", { public = true } )
+    add_frameworks( "CoreFoundation" ) -- for the timer
+  elseif is_plat( "windows" ) then
+    add_defines( "SFG_GEN_IS_WINDOWS", { public = true } )
+    add_ldflags( "User32" ) -- for the timer
+  end
+
   add_defines( "SFG_GEN_EXPORT_CLAP_INIT", { public = false } )
 
   add_rules( "protobuf.cpp" )

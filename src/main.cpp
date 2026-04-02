@@ -9,7 +9,9 @@
 
 // System includes
 #if defined( _WIN32 ) || defined( _WIN64 )
+#if !defined( WIN32_LEAN_AND_MEAN )
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 typedef HMODULE LoadedDllHandle;
 #elif defined( __APPLE__ ) || defined( __linux__ )
