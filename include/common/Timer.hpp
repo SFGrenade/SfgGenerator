@@ -35,7 +35,7 @@ class LinuxTimer final : public Timer {
 
   uint32_t const durationMs_;
   std::function< void() > const cb_;
-  sigaction signalAction_;
+  struct sigaction signalAction_;
   sigset_t signalMask_;
   sigevent signalEvent_;
   timer_t timer_;
