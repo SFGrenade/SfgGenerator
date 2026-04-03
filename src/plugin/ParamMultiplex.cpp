@@ -376,7 +376,26 @@ clap_process_status ParamMultiplex::process( clap_process_t const* process ) {
         break;
       }
     }
-    i = next_ev_frame;
+
+    /* process every samples until the next event */
+    for( ; i < next_ev_frame; ++i ) {
+      for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
+        double out = 0.0;
+        if( active_ && process_ ) {
+          if( process->audio_inputs[0].data32 ) {
+            out = process->audio_inputs[0].data32[c][i];
+          } else if( process->audio_inputs[0].data64 ) {
+            out = process->audio_inputs[0].data64[c][i];
+          }
+        }
+        // store output
+        if( process->audio_outputs[0].data32 ) {
+          process->audio_outputs[0].data32[c][i] = static_cast< float >( out );
+        } else if( process->audio_outputs[0].data64 ) {
+          process->audio_outputs[0].data64[c][i] = out;
+        }
+      }
+    }
   }
 
   return CLAP_PROCESS_CONTINUE;
@@ -385,6 +404,42 @@ clap_process_status ParamMultiplex::process( clap_process_t const* process ) {
 #pragma endregion
 
 #pragma region CLAP extensions
+
+uint32_t ParamMultiplex::audio_ports_count( bool is_input ) {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( is_input={} )", __FUNCTION__, static_cast< void* >( this ), is_input );
+  return 1;
+}
+
+bool ParamMultiplex::audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) {
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 index,
+                 is_input,
+                 static_cast< void* >( out_info ) )
+  if( index >= audio_ports_count( is_input ) )
+    return false;
+  if( !out_info )
+    return false;
+  if( is_input ) {
+    out_info->id = 0;
+    std::snprintf( out_info->name, sizeof( out_info->name ), "%s %d", "in", index );
+    out_info->channel_count = 2;
+    out_info->flags = CLAP_AUDIO_PORT_IS_MAIN | CLAP_AUDIO_PORT_SUPPORTS_64BITS | CLAP_AUDIO_PORT_REQUIRES_COMMON_SAMPLE_SIZE;
+    out_info->port_type = CLAP_PORT_STEREO;
+    out_info->in_place_pair = CLAP_INVALID_ID;
+    return true;
+  }
+  out_info->id = 1;
+  std::snprintf( out_info->name, sizeof( out_info->name ), "%s", "out" );
+  out_info->channel_count = 2;
+  out_info->flags = CLAP_AUDIO_PORT_IS_MAIN | CLAP_AUDIO_PORT_SUPPORTS_64BITS | CLAP_AUDIO_PORT_REQUIRES_COMMON_SAMPLE_SIZE;
+  out_info->port_type = CLAP_PORT_STEREO;
+  out_info->in_place_pair = CLAP_INVALID_ID;
+  return true;
+}
 
 bool ParamMultiplex::gui_is_api_supported( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );

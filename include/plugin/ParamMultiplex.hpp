@@ -34,6 +34,8 @@ class ParamMultiplex : BasePlugin {
 
   // CLAP extensions
   public:
+  uint32_t audio_ports_count( bool is_input ) override;
+  bool audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) override;
   bool gui_is_api_supported( std::string const& api, bool is_floating ) override;
   bool gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) override;
   bool gui_create( std::string const& api, bool is_floating ) override;
