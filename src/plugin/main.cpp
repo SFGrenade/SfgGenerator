@@ -2,6 +2,7 @@
 #include "plugin/main.hpp"
 
 // Project includes
+#include "plugin/AudioAnalysis.hpp"
 #include "plugin/AudioLerpEffect.hpp"
 #include "plugin/NoiseGenerator.hpp"
 #include "plugin/ParamMultiplex.hpp"
@@ -31,6 +32,10 @@ static struct {
     {
         .desc = ParamMultiplex::descriptor_get(),
         .create = ParamMultiplex::s_create,
+    },
+    {
+        .desc = AudioAnalysis::descriptor_get(),
+        .create = AudioAnalysis::s_create,
     },
 };
 

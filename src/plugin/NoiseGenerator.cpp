@@ -124,7 +124,7 @@ double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist,
     return 0.0;
   double sum = 0.0;
   for( uint64_t i = 0; i < streams.size(); i++ ) {
-    if( ( sampleIndex % sfg_upow( 2ull, i ) ) == 0 ) {
+    if( ( sampleIndex % sfg_upow( 2ull, static_cast< int64_t >( i ) ) ) == 0 ) {
       streams[i] = dist( eng );
     }
     sum += streams[i];
@@ -132,109 +132,109 @@ double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist,
   sampleIndex++;
   return sum / static_cast< double >( streams.size() );
 }
-double pink_noise_IirFilterApproximation( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double pink_noise_IirFilterApproximation( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double red_noise_BasicIntegration( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double red_noise_BasicIntegration( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double red_noise_LeakyIntegration( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double red_noise_LeakyIntegration( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double red_noise_IntegerWalk( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double red_noise_IntegerWalk( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double red_noise_OnePoleIirFilter( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double red_noise_OnePoleIirFilter( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double red_noise_CumulativeWithClamp( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double red_noise_CumulativeWithClamp( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double blue_noise_VoidAndCluster( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double blue_noise_VoidAndCluster( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double blue_noise_PoissonDiskSampling( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double blue_noise_PoissonDiskSampling( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double blue_noise_SimpleSpectralShaping( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double blue_noise_SimpleSpectralShaping( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double blue_noise_R2JitteredSampling( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double blue_noise_R2JitteredSampling( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double blue_noise_PermutedGradientNoise( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double blue_noise_PermutedGradientNoise( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double violet_noise_FirstOrderDifference( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double violet_noise_FirstOrderDifference( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double violet_noise_FirstOrderIirFilter( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double violet_noise_FirstOrderIirFilter( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double grey_noise_PsychoacousticFilter( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double grey_noise_PsychoacousticFilter( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double grey_noise_AweightingInversion( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double grey_noise_AweightingInversion( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double grey_noise_MultiBandpass( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double grey_noise_MultiBandpass( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double grey_noise_EqualLoudnessApproximation( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double grey_noise_EqualLoudnessApproximation( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-double velvet_noise_SporadicImpulse( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double mix ) {
+double velvet_noise_SporadicImpulse( std::uniform_real_distribution< double >& /*dist*/, std::mt19937_64& /*eng*/, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   // TODO: FIXME: ADD IMPLEMENTATION
@@ -284,7 +284,7 @@ double NoiseGenerator::get_sample_triangle_wave( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_white_noise( double phase ) {
+double NoiseGenerator::get_sample_white_noise( double /*phase*/ ) {
   switch( state_.synth_white_noise_type() ) {
     case _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom:
       return SFG_PRIVATE::white_noise_StdRandom( dist_, eng_, state_.synth_white_noise_mix() );
@@ -295,7 +295,7 @@ double NoiseGenerator::get_sample_white_noise( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_pink_noise( double phase ) {
+double NoiseGenerator::get_sample_pink_noise( double /*phase*/ ) {
   switch( state_.synth_pink_noise_type() ) {
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined:
       return SFG_PRIVATE::pink_noise_PaulKellettRefined( dist_,
@@ -319,7 +319,7 @@ double NoiseGenerator::get_sample_pink_noise( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_red_noise( double phase ) {
+double NoiseGenerator::get_sample_red_noise( double /*phase*/ ) {
   switch( state_.synth_red_noise_type() ) {
     case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration:
       return SFG_PRIVATE::red_noise_BasicIntegration( dist_, eng_, state_.synth_red_noise_mix() );
@@ -336,7 +336,7 @@ double NoiseGenerator::get_sample_red_noise( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_blue_noise( double phase ) {
+double NoiseGenerator::get_sample_blue_noise( double /*phase*/ ) {
   switch( state_.synth_blue_noise_type() ) {
     case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster:
       return SFG_PRIVATE::blue_noise_VoidAndCluster( dist_, eng_, state_.synth_blue_noise_mix() );
@@ -353,7 +353,7 @@ double NoiseGenerator::get_sample_blue_noise( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_violet_noise( double phase ) {
+double NoiseGenerator::get_sample_violet_noise( double /*phase*/ ) {
   switch( state_.synth_violet_noise_type() ) {
     case _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference:
       return SFG_PRIVATE::violet_noise_FirstOrderDifference( dist_, eng_, state_.synth_violet_noise_mix() );
@@ -364,7 +364,7 @@ double NoiseGenerator::get_sample_violet_noise( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_grey_noise( double phase ) {
+double NoiseGenerator::get_sample_grey_noise( double /*phase*/ ) {
   switch( state_.synth_grey_noise_type() ) {
     case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter:
       return SFG_PRIVATE::grey_noise_PsychoacousticFilter( dist_, eng_, state_.synth_grey_noise_mix() );
@@ -379,7 +379,7 @@ double NoiseGenerator::get_sample_grey_noise( double phase ) {
   }
 }
 
-double NoiseGenerator::get_sample_velvet_noise( double phase ) {
+double NoiseGenerator::get_sample_velvet_noise( double /*phase*/ ) {
   switch( state_.synth_velvet_noise_type() ) {
     case _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse:
       return SFG_PRIVATE::velvet_noise_SporadicImpulse( dist_, eng_, state_.synth_velvet_noise_mix() );
@@ -457,7 +457,7 @@ void NoiseGenerator::reset( void ) {
   noteMap_.clear();
 }
 
-void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) {
+void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_events_t const* /*out_events*/ ) {
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( hdr={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( hdr ) );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->size    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->size );
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] hdr->time    ={:d} )", __FUNCTION__, static_cast< void* >( this ), hdr->time );
@@ -543,7 +543,7 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
       state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( ev->value ) );
       last_pinkNoiseType_ = ev->value;  // we only want to show things when UI changes state
     } else if( ev->param_id == 24 ) {
-      state_.set_synth_pink_noise_vossmccartney_number( ev->value );
+      state_.set_synth_pink_noise_vossmccartney_number( static_cast< uint64_t >( ev->value ) );
       // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
     } else if( ev->param_id == 13 ) {
       state_.set_synth_pink_noise_mix( ev->value );
@@ -678,7 +678,10 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
         // state_.set_synth_pink_noise_type( static_cast< _pb_::PinkNoiseType >( value ) );
         // last_pinkNoiseType_ = value;  // we only want to show things when UI changes state
       } else if( param_id == 24 ) {
-        state_.set_synth_pink_noise_vossmccartney_number( value );
+        clap_param_info_t tmp;
+        params_get_info( 23, &tmp );
+        double actualValue = tmp.min_value + ( ( tmp.max_value - tmp.min_value ) * value );
+        state_.set_synth_pink_noise_vossmccartney_number( static_cast< uint64_t >( actualValue ) );
         // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
       } else if( param_id == 13 ) {
         state_.set_synth_pink_noise_mix( value );
@@ -1610,7 +1613,7 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
     ( *out_value ) = state_.synth_pink_noise_type();
     return true;
   } else if( param_id == 24 ) {
-    ( *out_value ) = state_.synth_pink_noise_vossmccartney_number();
+    ( *out_value ) = static_cast< double >( state_.synth_pink_noise_vossmccartney_number() );
     return true;
   } else if( param_id == 13 ) {
     ( *out_value ) = state_.synth_pink_noise_mix();

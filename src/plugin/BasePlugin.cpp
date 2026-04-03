@@ -324,12 +324,12 @@ void BasePlugin::reset( void ) {
 
 #pragma region CLAP exts instance methods
 
-bool BasePlugin::ambisonic_is_config_supported( clap_ambisonic_config_t const* config ) {
+bool BasePlugin::ambisonic_is_config_supported( clap_ambisonic_config_t const* /*config*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::ambisonic_get_config( bool is_input, uint32_t port_index, clap_ambisonic_config_t* out_config ) {
+bool BasePlugin::ambisonic_get_config( bool /*is_input*/, uint32_t /*port_index*/, clap_ambisonic_config_t* /*out_config*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -339,7 +339,7 @@ bool BasePlugin::audio_ports_activation_can_activate_while_processing() {
   return false;
 }
 
-bool BasePlugin::audio_ports_activation_set_active( bool is_input, uint32_t port_index, bool is_active, uint32_t sample_size ) {
+bool BasePlugin::audio_ports_activation_set_active( bool /*is_input*/, uint32_t /*port_index*/, bool /*is_active*/, uint32_t /*sample_size*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -349,12 +349,12 @@ uint32_t BasePlugin::audio_ports_config_count( void ) {
   return 0;
 }
 
-bool BasePlugin::audio_ports_config_get( uint32_t index, clap_audio_ports_config_t* out_config ) {
+bool BasePlugin::audio_ports_config_get( uint32_t /*index*/, clap_audio_ports_config_t* /*out_config*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::audio_ports_config_select( clap_id config_id ) {
+bool BasePlugin::audio_ports_config_select( clap_id /*config_id*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -364,52 +364,52 @@ clap_id BasePlugin::audio_ports_config_info_current_config( void ) {
   return 0;
 }
 
-bool BasePlugin::audio_ports_config_info_get( clap_id config_id, uint32_t port_index, bool is_input, clap_audio_port_info_t* out_info ) {
+bool BasePlugin::audio_ports_config_info_get( clap_id /*config_id*/, uint32_t /*port_index*/, bool /*is_input*/, clap_audio_port_info_t* /*out_info*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-uint32_t BasePlugin::audio_ports_count( bool is_input ) {
+uint32_t BasePlugin::audio_ports_count( bool /*is_input*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
-bool BasePlugin::audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) {
+bool BasePlugin::audio_ports_get( uint32_t /*index*/, bool /*is_input*/, clap_audio_port_info_t* /*out_info*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::configurable_audio_ports_can_apply_configuration( clap_audio_port_configuration_request const* requests, uint32_t request_count ) {
+bool BasePlugin::configurable_audio_ports_can_apply_configuration( clap_audio_port_configuration_request const* /*requests*/, uint32_t /*request_count*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::configurable_audio_ports_apply_configuration( clap_audio_port_configuration_request const* requests, uint32_t request_count ) {
+bool BasePlugin::configurable_audio_ports_apply_configuration( clap_audio_port_configuration_request const* /*requests*/, uint32_t /*request_count*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::context_menu_populate( clap_context_menu_target_t const* target, clap_context_menu_builder_t const* builder ) {
+bool BasePlugin::context_menu_populate( clap_context_menu_target_t const* /*target*/, clap_context_menu_builder_t const* /*builder*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::context_menu_perform( clap_context_menu_target_t const* target, clap_id action_id ) {
+bool BasePlugin::context_menu_perform( clap_context_menu_target_t const* /*target*/, clap_id /*action_id*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_is_api_supported( std::string const& api, bool is_floating ) {
+bool BasePlugin::gui_is_api_supported( std::string const& /*api*/, bool /*is_floating*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
+bool BasePlugin::gui_get_preferred_api( std::string& /*out_api*/, bool* /*out_is_floating*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_create( std::string const& api, bool is_floating ) {
+bool BasePlugin::gui_create( std::string const& /*api*/, bool /*is_floating*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -419,12 +419,12 @@ void BasePlugin::gui_destroy( void ) {
   return;
 }
 
-bool BasePlugin::gui_set_scale( double scale ) {
+bool BasePlugin::gui_set_scale( double /*scale*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
+bool BasePlugin::gui_get_size( uint32_t* /*out_width*/, uint32_t* /*out_height*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -434,32 +434,32 @@ bool BasePlugin::gui_can_resize( void ) {
   return false;
 }
 
-bool BasePlugin::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
+bool BasePlugin::gui_get_resize_hints( clap_gui_resize_hints_t* /*out_hints*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
+bool BasePlugin::gui_adjust_size( uint32_t* /*out_width*/, uint32_t* /*out_height*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_set_size( uint32_t width, uint32_t height ) {
+bool BasePlugin::gui_set_size( uint32_t /*width*/, uint32_t /*height*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_set_parent( clap_window_t const* window ) {
+bool BasePlugin::gui_set_parent( clap_window_t const* /*window*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::gui_set_transient( clap_window_t const* window ) {
+bool BasePlugin::gui_set_transient( clap_window_t const* /*window*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-void BasePlugin::gui_suggest_title( std::string const& title ) {
+void BasePlugin::gui_suggest_title( std::string const& /*title*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
@@ -484,31 +484,31 @@ uint32_t BasePlugin::note_name_count( void ) {
   return 0;
 }
 
-bool BasePlugin::note_name_get( uint32_t index, clap_note_name_t* out_note_name ) {
+bool BasePlugin::note_name_get( uint32_t /*index*/, clap_note_name_t* /*out_note_name*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-uint32_t BasePlugin::note_ports_count( bool is_input ) {
+uint32_t BasePlugin::note_ports_count( bool /*is_input*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
 
-bool BasePlugin::note_ports_get( uint32_t index, bool is_input, clap_note_port_info_t* out_info ) {
+bool BasePlugin::note_ports_get( uint32_t /*index*/, bool /*is_input*/, clap_note_port_info_t* /*out_info*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-void BasePlugin::param_indication_set_mapping( clap_id param_id,
-                                               bool has_mapping,
-                                               clap_color_t const* color,
-                                               std::string const& label,
-                                               std::string const& description ) {
+void BasePlugin::param_indication_set_mapping( clap_id /*param_id*/,
+                                               bool /*has_mapping*/,
+                                               clap_color_t const* /*color*/,
+                                               std::string const& /*label*/,
+                                               std::string const& /*description*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
-void BasePlugin::param_indication_set_automation( clap_id param_id, uint32_t automation_state, clap_color_t const* color ) {
+void BasePlugin::param_indication_set_automation( clap_id /*param_id*/, uint32_t /*automation_state*/, clap_color_t const* /*color*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
@@ -518,37 +518,37 @@ uint32_t BasePlugin::params_count( void ) {
   return 0;
 }
 
-bool BasePlugin::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
+bool BasePlugin::params_get_info( uint32_t /*param_index*/, clap_param_info_t* /*out_param_info*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::params_get_value( clap_id param_id, double* out_value ) {
+bool BasePlugin::params_get_value( clap_id /*param_id*/, double* /*out_value*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
+bool BasePlugin::params_value_to_text( clap_id /*param_id*/, double /*value*/, char* /*out_buffer*/, uint32_t /*out_buffer_capacity*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
+bool BasePlugin::params_text_to_value( clap_id /*param_id*/, std::string const& /*param_value_text*/, double* /*out_value*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-void BasePlugin::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
+void BasePlugin::params_flush( clap_input_events_t const* /*in*/, clap_output_events_t const* /*out*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
-void BasePlugin::posix_fd_support_on_fd( int fd, clap_posix_fd_flags_t flags ) {
+void BasePlugin::posix_fd_support_on_fd( int /*fd*/, clap_posix_fd_flags_t /*flags*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
-bool BasePlugin::preset_load_from_location( uint32_t location_kind, std::string const& location, std::string const& load_key ) {
+bool BasePlugin::preset_load_from_location( uint32_t /*location_kind*/, std::string const& /*location*/, std::string const& /*load_key*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -558,7 +558,7 @@ uint32_t BasePlugin::remote_controls_count( void ) {
   return 0;
 }
 
-bool BasePlugin::remote_controls_get( uint32_t page_index, clap_remote_controls_page_t* out_page ) {
+bool BasePlugin::remote_controls_get( uint32_t /*page_index*/, clap_remote_controls_page_t* /*out_page*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
@@ -568,37 +568,37 @@ bool BasePlugin::render_has_hard_realtime_requirement( void ) {
   return false;
 }
 
-bool BasePlugin::render_set( clap_plugin_render_mode mode ) {
+bool BasePlugin::render_set( clap_plugin_render_mode /*mode*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::state_context_save( clap_ostream_t const* stream, uint32_t context_type ) {
+bool BasePlugin::state_context_save( clap_ostream_t const* /*stream*/, uint32_t /*context_type*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::state_context_load( clap_istream_t const* stream, uint32_t context_type ) {
+bool BasePlugin::state_context_load( clap_istream_t const* /*stream*/, uint32_t /*context_type*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::state_save( clap_ostream_t const* stream ) {
+bool BasePlugin::state_save( clap_ostream_t const* /*stream*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::state_load( clap_istream_t const* stream ) {
+bool BasePlugin::state_load( clap_istream_t const* /*stream*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-bool BasePlugin::surround_is_channel_mask_supported( uint64_t channel_mask ) {
+bool BasePlugin::surround_is_channel_mask_supported( uint64_t /*channel_mask*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }
 
-uint32_t BasePlugin::surround_get_channel_map( bool is_input, uint32_t port_index, uint8_t* out_channel_map, uint32_t channel_map_capacity ) {
+uint32_t BasePlugin::surround_get_channel_map( bool /*is_input*/, uint32_t /*port_index*/, uint8_t* /*out_channel_map*/, uint32_t /*channel_map_capacity*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return 0;
 }
@@ -608,12 +608,12 @@ uint32_t BasePlugin::tail_get( void ) {
   return 0;
 }
 
-void BasePlugin::thread_pool_exec( uint32_t task_index ) {
+void BasePlugin::thread_pool_exec( uint32_t /*task_index*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
 
-void BasePlugin::timer_support_on_timer( clap_id timer_id ) {
+void BasePlugin::timer_support_on_timer( clap_id /*timer_id*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return;
 }
@@ -623,7 +623,7 @@ void BasePlugin::track_info_changed( void ) {
   return;
 }
 
-bool BasePlugin::voice_info_get( clap_voice_info_t* out_info ) {
+bool BasePlugin::voice_info_get( clap_voice_info_t* /*out_info*/ ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return false;
 }

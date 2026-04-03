@@ -36,9 +36,9 @@ CALL :doCommand "00_made_build_logs" "echo we did it" && cd>NUL || Goto :END
 
 CALL :doCommand "01_xmake_set_theme" "xmake global --theme=plain" && cd>NUL || Goto :END
 
-CALL :doCommand "02_xmake_configure_debug" "xmake config -vD --plat=windows --arch=x64 --kind=static --mode=debug --runtimes=MDd --yes --policies=package.precompiled:n" && cd>NUL || Goto :END
+REM CALL :doCommand "02_xmake_configure_debug" "xmake config -vD --plat=windows --arch=x64 --kind=static --mode=debug --runtimes=MDd --yes --policies=package.precompiled:n" && cd>NUL || Goto :END
 
-CALL :doCommand "03_xmake_build_debug" "xmake build -a -vD" && cd>NUL || Goto :END
+REM CALL :doCommand "03_xmake_build_debug" "xmake build -a -vD" && cd>NUL || Goto :END
 
 CALL :doCommand "04_xmake_configure_release" "xmake config -vD --plat=windows --arch=x64 --kind=static --mode=release --runtimes=MD --yes --policies=package.precompiled:n" && cd>NUL || Goto :END
 
