@@ -55,16 +55,16 @@ bool UiAaHolder::clap_create( std::string const& api, bool is_floating ) {
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
   impl_->qtWindow = new UiAudioAnalysis( impl_->logger->clone( "UiAudioAnalysis" ), impl_->sampleRate, nullptr );
-  impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
+  impl_->qtEngine = new SfgEngine( impl_->logger->clone( "UiAaEngine" ), impl_->qtApp, impl_->qtWindow );
   impl_->qtWindow->resize( impl_->state->gui_width(), impl_->state->gui_height() );
 
-  impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
+  impl_->qtApp->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
     // if( this->impl_->last_time_window != this->impl_->state->time_window() ) {
     //   this->impl_->last_time_window = this->impl_->state->time_window();
     //   this->impl_->qtWindow->setTimeWindowValue( this->impl_->last_time_window );
     // }
   } );
-  // impl_->qtWindow->connect( impl_->qtWindow, &UiAudioAnalysis::timeWindowAdjusted, [this]( double value ) {
+  // impl_->qtApp->connect( impl_->qtWindow, &UiAudioAnalysis::timeWindowAdjusted, [this]( double value ) {
   //   this->impl_->state->set_time_window( value );
   //   this->impl_->host->request_callback( this->impl_->host );
   // } );
@@ -83,18 +83,22 @@ void UiAaHolder::clap_destroy( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   impl_->qtNativeParent = nullptr;
   if( impl_->qtWindow ) {
+    impl_->qtWindow->disconnect();
     delete impl_->qtWindow;
     impl_->qtWindow = nullptr;
   }
   if( impl_->qtEngine ) {
+    impl_->qtEngine->disconnect();
     delete impl_->qtEngine;
     impl_->qtEngine = nullptr;
   }
   if( impl_->qtApp ) {
+    impl_->qtApp->disconnect();
     impl_->qtApp->quit();
     delete impl_->qtApp;
     impl_->qtApp = nullptr;
   }
+  QApplication::exit( 0 );
   impl_->initialized = false;
 }
 
@@ -248,18 +252,22 @@ bool UiAaHolder::clap_hide( void ) {
 }
 
 void UiAaHolder::set_host( clap_host_t const* host ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( host={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host ) );
   impl_->host = host;
 }
 
 void UiAaHolder::set_state( SfgGenerator::Proto::AudioAnalysis* state ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( state={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( state ) );
   impl_->state = state;
 }
 
 void UiAaHolder::set_sample_rate( double sample_rate ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( sample_rate={:f} )", __FUNCTION__, static_cast< void* >( this ), sample_rate );
   impl_->sampleRate = sample_rate;
 }
 
 void UiAaHolder::push_sample( double sample, uint32_t channel ) {
+  // impl_->logger->trace( "[{:s}] [{:p}] enter( sample={:f}, channel={:d} )", __FUNCTION__, static_cast< void* >( this ), sample, channel );
   if( impl_->qtWindow ) {
     impl_->qtWindow->pushSample( sample, channel );
   }
@@ -267,4 +275,5 @@ void UiAaHolder::push_sample( double sample, uint32_t channel ) {
 
 void UiAaHolder::set_logger( std::shared_ptr< spdlog::logger > logger ) {
   impl_->logger = logger;
+  impl_->logger->trace( "[{:s}] [{:p}] enter( logger={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( logger.get() ) );
 }

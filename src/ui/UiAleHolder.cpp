@@ -51,16 +51,16 @@ bool UiAleHolder::clap_create( std::string const& api, bool is_floating ) {
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
   impl_->qtWindow = new UiAudioLerpEffect( impl_->logger->clone( "UiAudioLerpEffect" ), nullptr );
-  impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
+  impl_->qtEngine = new SfgEngine( impl_->logger->clone( "UiAleEngine" ), impl_->qtApp, impl_->qtWindow );
   impl_->qtWindow->resize( impl_->state->gui_width(), impl_->state->gui_height() );
 
-  impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
+  impl_->qtApp->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
     if( this->impl_->last_ab != this->impl_->state->a_b() ) {
       this->impl_->last_ab = this->impl_->state->a_b();
       this->impl_->qtWindow->setAbValue( this->impl_->last_ab );
     }
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiAudioLerpEffect::abAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiAudioLerpEffect::abAdjusted, [this]( double value ) {
     this->impl_->state->set_a_b( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
@@ -79,18 +79,22 @@ void UiAleHolder::clap_destroy( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   impl_->qtNativeParent = nullptr;
   if( impl_->qtWindow ) {
+    impl_->qtWindow->disconnect();
     delete impl_->qtWindow;
     impl_->qtWindow = nullptr;
   }
   if( impl_->qtEngine ) {
+    impl_->qtEngine->disconnect();
     delete impl_->qtEngine;
     impl_->qtEngine = nullptr;
   }
   if( impl_->qtApp ) {
+    impl_->qtApp->disconnect();
     impl_->qtApp->quit();
     delete impl_->qtApp;
     impl_->qtApp = nullptr;
   }
+  QApplication::exit( 0 );
   impl_->initialized = false;
 }
 
@@ -244,13 +248,16 @@ bool UiAleHolder::clap_hide( void ) {
 }
 
 void UiAleHolder::set_host( clap_host_t const* host ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( host={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host ) );
   impl_->host = host;
 }
 
 void UiAleHolder::set_state( SfgGenerator::Proto::AudioLerpEffect* state ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( state={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( state ) );
   impl_->state = state;
 }
 
 void UiAleHolder::set_logger( std::shared_ptr< spdlog::logger > logger ) {
   impl_->logger = logger;
+  impl_->logger->trace( "[{:s}] [{:p}] enter( logger={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( logger.get() ) );
 }

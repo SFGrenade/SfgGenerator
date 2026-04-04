@@ -73,10 +73,10 @@ bool UiNgHolder::clap_create( std::string const& api, bool is_floating ) {
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
   impl_->qtWindow = new UiNoiseGenerator( impl_->logger->clone( "UiNoiseGenerator" ), nullptr );
-  impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
+  impl_->qtEngine = new SfgEngine( impl_->logger->clone( "UiNgEngine" ), impl_->qtApp, impl_->qtWindow );
   impl_->qtWindow->resize( impl_->state->gui_width(), impl_->state->gui_height() );
 
-  impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
+  impl_->qtApp->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
     if( this->impl_->last_sineWaveType != double( this->impl_->state->synth_sine_wave_type() ) ) {
       this->impl_->last_sineWaveType = double( this->impl_->state->synth_sine_wave_type() );
       this->impl_->qtWindow->setSineWaveTypeValue( this->impl_->last_sineWaveType );
@@ -170,95 +170,95 @@ bool UiNgHolder::clap_create( std::string const& api, bool is_floating ) {
       this->impl_->qtWindow->setVelvetNoiseMixValue( this->impl_->last_velvetNoiseMix );
     }
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::sineWaveTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::sineWaveTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_sine_wave_type( SfgGenerator::Proto::NoiseGenerator_SineWaveType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::sineWaveMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::sineWaveMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_sine_wave_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::squareWaveTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::squareWaveTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_square_wave_type( SfgGenerator::Proto::NoiseGenerator_SquareWaveType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::squareWavePwmAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::squareWavePwmAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_square_wave_pwm( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::squareWaveMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::squareWaveMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_square_wave_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::sawWaveTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::sawWaveTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_saw_wave_type( SfgGenerator::Proto::NoiseGenerator_SawWaveType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::sawWaveMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::sawWaveMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_saw_wave_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::triangleWaveTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::triangleWaveTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_triangle_wave_type( SfgGenerator::Proto::NoiseGenerator_TriangleWaveType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::triangleWaveMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::triangleWaveMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_triangle_wave_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::whiteNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::whiteNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_white_noise_type( SfgGenerator::Proto::NoiseGenerator_WhiteNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::whiteNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::whiteNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_white_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::pinkNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::pinkNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_pink_noise_type( SfgGenerator::Proto::NoiseGenerator_PinkNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::pinkNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::pinkNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_pink_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::redNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::redNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_red_noise_type( SfgGenerator::Proto::NoiseGenerator_RedNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::redNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::redNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_red_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::blueNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::blueNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_blue_noise_type( SfgGenerator::Proto::NoiseGenerator_BlueNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::blueNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::blueNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_blue_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::violetNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::violetNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_violet_noise_type( SfgGenerator::Proto::NoiseGenerator_VioletNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::violetNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::violetNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_violet_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::greyNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::greyNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_grey_noise_type( SfgGenerator::Proto::NoiseGenerator_GreyNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::greyNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::greyNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_grey_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::velvetNoiseTypeAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::velvetNoiseTypeAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_velvet_noise_type( SfgGenerator::Proto::NoiseGenerator_VelvetNoiseType( std::round( value ) ) );
     this->impl_->host->request_callback( this->impl_->host );
   } );
-  impl_->qtWindow->connect( impl_->qtWindow, &UiNoiseGenerator::velvetNoiseMixAdjusted, [this]( double value ) {
+  impl_->qtApp->connect( impl_->qtWindow, &UiNoiseGenerator::velvetNoiseMixAdjusted, [this]( double value ) {
     this->impl_->state->set_synth_velvet_noise_mix( value );
     this->impl_->host->request_callback( this->impl_->host );
   } );
@@ -277,18 +277,22 @@ void UiNgHolder::clap_destroy( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   impl_->qtNativeParent = nullptr;
   if( impl_->qtWindow ) {
+    impl_->qtWindow->disconnect();
     delete impl_->qtWindow;
     impl_->qtWindow = nullptr;
   }
   if( impl_->qtEngine ) {
+    impl_->qtEngine->disconnect();
     delete impl_->qtEngine;
     impl_->qtEngine = nullptr;
   }
   if( impl_->qtApp ) {
+    impl_->qtApp->disconnect();
     impl_->qtApp->quit();
     delete impl_->qtApp;
     impl_->qtApp = nullptr;
   }
+  QApplication::exit( 0 );
   impl_->initialized = false;
 }
 
@@ -442,13 +446,16 @@ bool UiNgHolder::clap_hide( void ) {
 }
 
 void UiNgHolder::set_host( clap_host_t const* host ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( host={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( host ) );
   impl_->host = host;
 }
 
 void UiNgHolder::set_state( SfgGenerator::Proto::NoiseGenerator* state ) {
+  impl_->logger->trace( "[{:s}] [{:p}] enter( state={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( state ) );
   impl_->state = state;
 }
 
 void UiNgHolder::set_logger( std::shared_ptr< spdlog::logger > logger ) {
   impl_->logger = logger;
+  impl_->logger->trace( "[{:s}] [{:p}] enter( logger={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( logger.get() ) );
 }

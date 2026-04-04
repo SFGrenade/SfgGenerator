@@ -152,6 +152,8 @@ WindowsTimer::~WindowsTimer() {
 }
 
 void WindowsTimer::start() {
+  bool tmpBool = false;
+  SetUserObjectInformation( GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &tmpBool, sizeof( tmpBool ) );
   timer_ = SetTimer( nullptr, 0, durationMs_, &WindowsTimer::onTimer );
 
   if( timer_ ) {

@@ -1,12 +1,14 @@
 #pragma once
 
 // Project includes
+#include "common/_fmt.hpp"
 #include "common/Timer.hpp"
 
 // Other lib includes
 #include <QApplication>
 #include <QEventLoop>
 #include <QObject>
+#include <QTimer>
 #include <QWidget>
 
 class SfgEngine : public QObject {
@@ -15,7 +17,7 @@ class SfgEngine : public QObject {
   using _base_::_base_;
 
   public:
-  SfgEngine( QApplication* app, QWidget* hiddenWatcher, QObject* parent = nullptr );
+  SfgEngine( std::shared_ptr< spdlog::logger > logger, QApplication* app, QWidget* hiddenWatcher, QObject* parent = nullptr );
   virtual ~SfgEngine();
 
   public Q_SLOTS:
@@ -29,7 +31,9 @@ class SfgEngine : public QObject {
   void timerTicked();
 
   private:
+  std::shared_ptr< spdlog::logger > logger_;
   QApplication* app_ = nullptr;
   QWidget* hiddenWatcher_ = nullptr;
-  std::unique_ptr<Timer> timer_ = nullptr;
+  QTimer* timer_ = nullptr;
+  // std::unique_ptr<Timer> timer_ = nullptr;
 };
