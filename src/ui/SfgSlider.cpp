@@ -11,10 +11,6 @@ SfgSlider::SfgSlider( int minVal, int maxVal, int defaultVal, Qt::Orientation or
 
 SfgSlider::~SfgSlider() {}
 
-void SfgSlider::mouseDoubleClickEvent( QMouseEvent* ) {
-  setValue( defaultValue_ );
-}
-
 void SfgSlider::setRange( int min, int max ) {
   setRange( min, max, ( min + max ) / 2 );
 }
@@ -24,4 +20,9 @@ void SfgSlider::setRange( int min, int max, int def ) {
   minValue_ = min;
   maxValue_ = max;
   defaultValue_ = def;
+}
+
+void SfgSlider::mouseDoubleClickEvent( QMouseEvent* event ) {
+  _base_::mouseDoubleClickEvent( event );
+  setValue( defaultValue_ );
 }

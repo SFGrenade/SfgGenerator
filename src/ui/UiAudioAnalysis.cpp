@@ -39,37 +39,25 @@ UiAudioAnalysis::UiAudioAnalysis( std::shared_ptr< spdlog::logger > logger, doub
   momentaryRmsLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
   momentaryRmsValueLabel_ = new QLabel( "Silence", this );
   momentaryRmsValueLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
-  momentaryRmsSlider_ = new SfgSlider( 0, 1 << 30, Qt::Horizontal, this );
-  momentaryRmsSlider_->setRange( sliderMinValue_, sliderMaxValue_ );
-  momentaryRmsSlider_->setValue( sliderMinValue_ );
-  momentaryRmsSlider_->setEnabled( false );
+  momentaryRmsSlider_ = new SfgDbfsDisplay( Qt::Horizontal, this );
 
   shortTermRmsLabel_ = new QLabel( "Short-Term RMS", this );
   shortTermRmsLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
   shortTermRmsValueLabel_ = new QLabel( "Silence", this );
   shortTermRmsValueLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
-  shortTermRmsSlider_ = new SfgSlider( 0, 1 << 30, Qt::Horizontal, this );
-  shortTermRmsSlider_->setRange( sliderMinValue_, sliderMaxValue_ );
-  shortTermRmsSlider_->setValue( sliderMinValue_ );
-  shortTermRmsSlider_->setEnabled( false );
+  shortTermRmsSlider_ = new SfgDbfsDisplay( Qt::Horizontal, this );
 
   momentaryLufsLabel_ = new QLabel( "Momentary LUFS", this );
   momentaryLufsLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
   momentaryLufsValueLabel_ = new QLabel( "Silence", this );
   momentaryLufsValueLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
-  momentaryLufsSlider_ = new SfgSlider( 0, 1 << 30, Qt::Horizontal, this );
-  momentaryLufsSlider_->setRange( sliderMinValue_, sliderMaxValue_ );
-  momentaryLufsSlider_->setValue( sliderMinValue_ );
-  momentaryLufsSlider_->setEnabled( false );
+  momentaryLufsSlider_ = new SfgDbfsDisplay( Qt::Horizontal, this );
 
   shortTermLufsLabel_ = new QLabel( "Short-Term LUFS", this );
   shortTermLufsLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
   shortTermLufsValueLabel_ = new QLabel( "Silence", this );
   shortTermLufsValueLabel_->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
-  shortTermLufsSlider_ = new SfgSlider( 0, 1 << 30, Qt::Horizontal, this );
-  shortTermLufsSlider_->setRange( sliderMinValue_, sliderMaxValue_ );
-  shortTermLufsSlider_->setValue( sliderMinValue_ );
-  shortTermLufsSlider_->setEnabled( false );
+  shortTermLufsSlider_ = new SfgDbfsDisplay( Qt::Horizontal, this );
 
   // construct the main layout
   layout_ = new QGridLayout( this );
@@ -139,26 +127,26 @@ void UiAudioAnalysis::lufsSampleReceived( double lufsSample, uint32_t channel ) 
 
 void UiAudioAnalysis::rmsMomentaryValueReceived( double rmsMomentaryValue ) {
   momentaryRmsValueLabel_->setText( valueToFs( rmsMomentaryValue, "dBFS" ) );
-  momentaryRmsSlider_->setValue( sliderMinValue_ + int( double( sliderMaxValue_ - sliderMinValue_ ) * rmsMomentaryValue ) );
+  momentaryRmsSlider_->setValue( rmsMomentaryValue );
   rmsShortTermValueBuffer_.push_back( rmsMomentaryValue );
   Q_EMIT emitRmsShortTermValue( averageOf( rmsShortTermValueBuffer_ ) );
 }
 
 void UiAudioAnalysis::lufsMomentaryValueReceived( double lufsMomentaryValue ) {
   momentaryLufsValueLabel_->setText( valueToFs( lufsMomentaryValue, "LUFS" ) );
-  momentaryLufsSlider_->setValue( sliderMinValue_ + int( double( sliderMaxValue_ - sliderMinValue_ ) * lufsMomentaryValue ) );
+  momentaryLufsSlider_->setValue( lufsMomentaryValue );
   lufsShortTermValueBuffer_.push_back( lufsMomentaryValue );
   Q_EMIT emitLufsShortTermValue( averageOf( lufsShortTermValueBuffer_ ) );
 }
 
 void UiAudioAnalysis::rmsShortTermValueReceived( double rmsShortTermValue ) {
   shortTermRmsValueLabel_->setText( valueToFs( rmsShortTermValue, "dBFS" ) );
-  shortTermRmsSlider_->setValue( sliderMinValue_ + int( double( sliderMaxValue_ - sliderMinValue_ ) * rmsShortTermValue ) );
+  shortTermRmsSlider_->setValue( rmsShortTermValue );
 }
 
 void UiAudioAnalysis::lufsShortTermValueReceived( double lufsShortTermValue ) {
   shortTermLufsValueLabel_->setText( valueToFs( lufsShortTermValue, "LUFS" ) );
-  shortTermLufsSlider_->setValue( sliderMinValue_ + int( double( sliderMaxValue_ - sliderMinValue_ ) * lufsShortTermValue ) );
+  shortTermLufsSlider_->setValue( lufsShortTermValue );
 }
 
 // void UiAudioAnalysis::setTimeWindowValue( double value ) {
