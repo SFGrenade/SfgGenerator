@@ -2,6 +2,7 @@
 
 // Project includes
 #include "common/_fmt.hpp"
+#include "ui/SfgDbfsDisplay.hpp"
 #include "ui/SfgSlider.hpp"
 
 // Other lib includes
@@ -69,16 +70,16 @@ class UiAudioAnalysis : public QWidget {
   QGridLayout* layout_ = nullptr;
   QLabel* momentaryRmsLabel_ = nullptr;
   QLabel* momentaryRmsValueLabel_ = nullptr;
-  SfgSlider* momentaryRmsSlider_ = nullptr;
+  SfgDbfsDisplay* momentaryRmsSlider_ = nullptr;
   QLabel* shortTermRmsLabel_ = nullptr;
   QLabel* shortTermRmsValueLabel_ = nullptr;
-  SfgSlider* shortTermRmsSlider_ = nullptr;
+  SfgDbfsDisplay* shortTermRmsSlider_ = nullptr;
   QLabel* momentaryLufsLabel_ = nullptr;
   QLabel* momentaryLufsValueLabel_ = nullptr;
-  SfgSlider* momentaryLufsSlider_ = nullptr;
+  SfgDbfsDisplay* momentaryLufsSlider_ = nullptr;
   QLabel* shortTermLufsLabel_ = nullptr;
   QLabel* shortTermLufsValueLabel_ = nullptr;
-  SfgSlider* shortTermLufsSlider_ = nullptr;
+  SfgDbfsDisplay* shortTermLufsSlider_ = nullptr;
   // SfgSlider* timeWindowSlider_ = nullptr;
 
   private:
