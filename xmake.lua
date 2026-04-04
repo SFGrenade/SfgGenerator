@@ -64,7 +64,7 @@ add_requireconfs( "boost", { configs = { header_only = true } } )
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
 add_requireconfs( "spdlog", { configs = { header_only = true, fmt_external_ho = true } } )
 add_requireconfs( "vcpkg-fftw3", { configs = { features = { "threads" } } } )
-add_requireconfs("**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
+add_requireconfs( "**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
 
 target( "SfgGeneratorMain" )
   add_rules( "qt.shared", { public = false } )

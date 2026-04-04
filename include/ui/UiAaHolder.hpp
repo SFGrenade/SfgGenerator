@@ -33,7 +33,7 @@ class UiAaHolder {
 
   public:
   void set_sample_rate( double sample_rate );
-  void push_sample( double sample );
+  void push_sample( double sample, uint32_t channel );
 
   // pImpl programming technique
   public:

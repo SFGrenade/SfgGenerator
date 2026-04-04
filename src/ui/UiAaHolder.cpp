@@ -17,11 +17,6 @@ struct UiAaHolder::Impl {
   clap_host_t const* host;
   SfgGenerator::Proto::AudioAnalysis* state;
   double sampleRate;
-  Iir::Butterworth::HighShelf< 1 > kWeightingFilterPart1;
-  Iir::Butterworth::HighPass< 2 > kWeightingFilterPart2;
-  boost::circular_buffer< double > rmsSampleBuffer;
-  boost::circular_buffer< double > lufsSampleBuffer;
-  uint32_t bufferedSamples_ = 0;
 
   bool initialized = false;
   QApplication* qtApp = nullptr;
@@ -59,8 +54,9 @@ bool UiAaHolder::clap_create( std::string const& api, bool is_floating ) {
   } );
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
-  impl_->qtWindow = new UiAudioAnalysis( impl_->logger->clone( "UiAudioAnalysis" ), nullptr );
+  impl_->qtWindow = new UiAudioAnalysis( impl_->logger->clone( "UiAudioAnalysis" ), impl_->sampleRate, nullptr );
   impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
+  impl_->qtWindow->resize( impl_->state->gui_width(), impl_->state->gui_height() );
 
   impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
     // if( this->impl_->last_time_window != this->impl_->state->time_window() ) {
@@ -159,6 +155,8 @@ bool UiAaHolder::clap_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
     impl_->qtWindow->resize( *out_width, *out_height );
     *out_width = impl_->qtWindow->width();
     *out_height = impl_->qtWindow->height();
+    impl_->state->set_gui_width( *out_width );
+    impl_->state->set_gui_height( *out_height );
     return true;
   }
   return false;
@@ -168,6 +166,8 @@ bool UiAaHolder::clap_set_size( uint32_t width, uint32_t height ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
   if( impl_->qtWindow ) {
     impl_->qtWindow->resize( width, height );
+    impl_->state->set_gui_width( width );
+    impl_->state->set_gui_height( height );
     return true;
   }
   return false;
@@ -233,7 +233,6 @@ bool UiAaHolder::clap_show( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->show();
-    impl_->qtEngine->start();
     return true;
   }
   return false;
@@ -243,7 +242,6 @@ bool UiAaHolder::clap_hide( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->hide();
-    impl_->qtEngine->stop();
     return true;
   }
   return false;
@@ -259,32 +257,11 @@ void UiAaHolder::set_state( SfgGenerator::Proto::AudioAnalysis* state ) {
 
 void UiAaHolder::set_sample_rate( double sample_rate ) {
   impl_->sampleRate = sample_rate;
-  impl_->kWeightingFilterPart1.setup( impl_->sampleRate, 2000, 4.0 );
-  impl_->kWeightingFilterPart2.setup( impl_->sampleRate, 100.0 );
-  // the momentary loudness of LUFS is specified to be a 400ms window with 75% overlap, so every 100ms a new value towards QT
-  impl_->rmsSampleBuffer.resize( impl_->sampleRate * 0.4, 0.0 );
-  impl_->lufsSampleBuffer.resize( impl_->sampleRate * 0.4, 0.0 );
 }
 
-void UiAaHolder::push_sample( double sample ) {
-  impl_->rmsSampleBuffer.push_back( sample );
-  impl_->lufsSampleBuffer.push_back( impl_->kWeightingFilterPart2.filter( impl_->kWeightingFilterPart1.filter( sample ) ) );
-  impl_->bufferedSamples_++;
-  if( impl_->bufferedSamples_ >= ( impl_->sampleRate * 0.1 ) ) {
-    impl_->bufferedSamples_ = 0;
-
-    if( impl_->qtWindow ) {
-      impl_->qtWindow->pushRmsMomentary( std::accumulate( impl_->rmsSampleBuffer.cbegin(),
-                                                          impl_->rmsSampleBuffer.cend(),
-                                                          0.0,
-                                                          []( double a, double b ) { return std::abs( a ) + std::abs( b ); } )
-                                         / double( impl_->rmsSampleBuffer.size() ) );
-      impl_->qtWindow->pushLufsMomentary( std::accumulate( impl_->lufsSampleBuffer.cbegin(),
-                                                           impl_->lufsSampleBuffer.cend(),
-                                                           0.0,
-                                                           []( double a, double b ) { return std::abs( a ) + std::abs( b ); } )
-                                          / double( impl_->lufsSampleBuffer.size() ) );
-    }
+void UiAaHolder::push_sample( double sample, uint32_t channel ) {
+  if( impl_->qtWindow ) {
+    impl_->qtWindow->pushSample( sample, channel );
   }
 }
 

@@ -36,6 +36,8 @@ bool AudioAnalysis::init( void ) {
   uiAaHolder_.set_state( &state_ );
 
   state_.Clear();
+  state_.set_gui_width( 300 );
+  state_.set_gui_height( 200 );
   // state_.set_time_window( 0.1 );
 
   ret = ret && true;
@@ -76,6 +78,8 @@ void AudioAnalysis::reset( void ) {
   _base_::reset();
 
   state_.Clear();
+  state_.set_gui_width( 300 );
+  state_.set_gui_height( 200 );
   // state_.set_time_window( 0.1 );
 }
 
@@ -246,7 +250,6 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
 
     /* process every samples until the next event */
     for( ; i < next_ev_frame; ++i ) {
-      double monoOut = 0.0;
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
         double out = 0.0;
         if( active_ && process_ ) {
@@ -256,7 +259,7 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
             out = process->audio_inputs[0].data64[c][i];
         }
 
-        monoOut += out;
+        uiAaHolder_.push_sample( out, c );
 
         // store output
         if( process->audio_outputs[0].data32 )
@@ -264,7 +267,6 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
         else if( process->audio_outputs[0].data64 )
           process->audio_outputs[0].data64[c][i] = out;
       }
-      uiAaHolder_.push_sample( monoOut / double( process->audio_outputs[0].channel_count ) );
     }
   }
 

@@ -52,6 +52,7 @@ bool UiAleHolder::clap_create( std::string const& api, bool is_floating ) {
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );
   impl_->qtWindow = new UiAudioLerpEffect( impl_->logger->clone( "UiAudioLerpEffect" ), nullptr );
   impl_->qtEngine = new SfgEngine( impl_->qtApp, impl_->qtWindow );
+  impl_->qtWindow->resize( impl_->state->gui_width(), impl_->state->gui_height() );
 
   impl_->qtWindow->connect( impl_->qtEngine, &SfgEngine::timerTicked, [this]() {
     if( this->impl_->last_ab != this->impl_->state->a_b() ) {
@@ -150,6 +151,8 @@ bool UiAleHolder::clap_adjust_size( uint32_t* out_width, uint32_t* out_height ) 
     impl_->qtWindow->resize( *out_width, *out_height );
     *out_width = impl_->qtWindow->width();
     *out_height = impl_->qtWindow->height();
+    impl_->state->set_gui_width( *out_width );
+    impl_->state->set_gui_height( *out_height );
     return true;
   }
   return false;
@@ -159,6 +162,8 @@ bool UiAleHolder::clap_set_size( uint32_t width, uint32_t height ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
   if( impl_->qtWindow ) {
     impl_->qtWindow->resize( width, height );
+    impl_->state->set_gui_width( width );
+    impl_->state->set_gui_height( height );
     return true;
   }
   return false;
@@ -224,7 +229,6 @@ bool UiAleHolder::clap_show( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->show();
-    impl_->qtEngine->start();
     return true;
   }
   return false;
@@ -234,7 +238,6 @@ bool UiAleHolder::clap_hide( void ) {
   impl_->logger->trace( "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   if( impl_->qtWindow ) {
     impl_->qtWindow->hide();
-    impl_->qtEngine->stop();
     return true;
   }
   return false;

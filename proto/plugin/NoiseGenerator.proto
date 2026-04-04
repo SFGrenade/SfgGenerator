@@ -58,6 +58,9 @@ message NoiseGenerator {
     SporadicImpulse = 0;
   }
 
+  uint32 gui_width = 101;
+  uint32 gui_height = 102;
+
   // params
   SineWaveType synth_sine_wave_type = 1;
   double synth_sine_wave_mix = 2;

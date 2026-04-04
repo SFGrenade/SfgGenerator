@@ -37,6 +37,8 @@ bool ParamMultiplex::init( void ) {
   uiPmHolder_.set_state( &state_ );
 
   state_.Clear();
+  state_.set_gui_width( 300 );
+  state_.set_gui_height( 200 );
   state_.set_output_param( 0.0 );
   state_.set_amount_params( 16 );
   state_.set_selected_param( 1 );
@@ -81,6 +83,8 @@ void ParamMultiplex::reset( void ) {
   _base_::reset();
 
   state_.Clear();
+  state_.set_gui_width( 300 );
+  state_.set_gui_height( 200 );
   state_.set_output_param( 0.0 );
   state_.set_amount_params( 16 );
   state_.set_selected_param( 1 );

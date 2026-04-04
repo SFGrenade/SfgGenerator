@@ -36,6 +36,8 @@ bool AudioLerpEffect::init( void ) {
   uiAleHolder_.set_state( &state_ );
 
   state_.Clear();
+  state_.set_gui_width( 300 );
+  state_.set_gui_height( 200 );
   state_.set_a_b( 0.5 );
 
   ret = ret && true;
@@ -59,6 +61,8 @@ void AudioLerpEffect::reset( void ) {
   _base_::reset();
 
   state_.Clear();
+  state_.set_gui_width( 300 );
+  state_.set_gui_height( 200 );
   state_.set_a_b( 0.5 );
 }
 
