@@ -6,7 +6,7 @@
 #include "common/NoteMap.hpp"
 #include "plugin/BasePlugin.hpp"
 #include "plugin/NoiseGenerator.pb.h"
-#include "ui/UiNgHolder.hpp"
+#include "ui-holders/UiNgHolder.hpp"
 
 // C++ std includes
 #include <cstdint>

@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "ui/UiNgHolder.hpp"
+#include "ui-holders/UiNgHolder.hpp"
 
 // Project includes
 #include "ui/SfgEngine.hpp"

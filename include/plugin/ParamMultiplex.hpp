@@ -5,7 +5,7 @@
 #include "common/_fmt.hpp"
 #include "plugin/BasePlugin.hpp"
 #include "plugin/ParamMultiplex.pb.h"
-#include "ui/UiPmHolder.hpp"
+#include "ui-holders/UiPmHolder.hpp"
 
 // C++ std includes
 #include <cstdint>

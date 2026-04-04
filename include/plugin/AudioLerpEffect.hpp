@@ -5,7 +5,7 @@
 #include "common/_fmt.hpp"
 #include "plugin/AudioLerpEffect.pb.h"
 #include "plugin/BasePlugin.hpp"
-#include "ui/UiAleHolder.hpp"
+#include "ui-holders/UiAleHolder.hpp"
 
 // C++ std includes
 #include <cstdint>

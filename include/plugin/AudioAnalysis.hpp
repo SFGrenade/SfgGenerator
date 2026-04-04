@@ -5,7 +5,7 @@
 #include "common/_fmt.hpp"
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
-#include "ui/UiAaHolder.hpp"
+#include "ui-holders/UiAaHolder.hpp"
 
 // C++ std includes
 #include <cstdint>
