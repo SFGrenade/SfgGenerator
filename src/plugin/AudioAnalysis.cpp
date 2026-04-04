@@ -11,7 +11,11 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
-AudioAnalysis::AudioAnalysis() : _base_() {
+AudioAnalysis::AudioAnalysis()
+    : _base_(), guiWindow_( nullptr, []( SDL_Window* ptr ) {
+        SDL_HideWindow( ptr );
+        SDL_DestroyWindow( ptr );
+      } ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
@@ -31,9 +35,9 @@ bool AudioAnalysis::init( void ) {
   bool ret = _base_::init();
 
   logger_ = logger_->clone( "AudioAnalysis" );
-  uiAaHolder_.set_logger( logger_->clone( "UiAaHolder" ) );
-  uiAaHolder_.set_host( host_ );
-  uiAaHolder_.set_state( &state_ );
+  // uiAaHolder_.set_logger( logger_->clone( "UiAaHolder" ) );
+  // uiAaHolder_.set_host( host_ );
+  // uiAaHolder_.set_state( &state_ );
 
   state_.Clear();
   state_.set_gui_width( 300 );
@@ -55,7 +59,7 @@ bool AudioAnalysis::activate( double sample_rate, uint32_t min_frames_count, uin
                  max_frames_count );
   bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
 
-  uiAaHolder_.set_sample_rate( sample_rate );
+  // uiAaHolder_.set_sample_rate( sample_rate );
 
   ret = ret && true;
   return ret;
@@ -259,7 +263,7 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
             out = process->audio_inputs[0].data64[c][i];
         }
 
-        uiAaHolder_.push_sample( out, c );
+        // uiAaHolder_.push_sample( out, c );
 
         // store output
         if( process->audio_outputs[0].data32 )
@@ -333,20 +337,73 @@ bool AudioAnalysis::gui_get_preferred_api( std::string& out_api, bool* out_is_fl
 
 bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
-  bool ret = _base_::gui_create( api, is_floating );
-  return ret || uiAaHolder_.clap_create( api, is_floating );
+  tmpGuiApi_ = api;
+  tmpGuiFloating_ = is_floating;
+
+  if( !initializedSdl_ ) {
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
+    if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+      SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    }
+    initializedSdl_ = true;
+  }
+
+  SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, true );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  if( guiParentWindow_.ptr ) {
+    if( guiParentWindow_.api == CLAP_WINDOW_API_WIN32 ) {
+      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, guiParentWindow_.win32 );
+      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIN32_PIXEL_FORMAT_HWND_POINTER, guiParentWindow_.win32 );
+    } else if( guiParentWindow_.api == CLAP_WINDOW_API_COCOA ) {
+      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, guiParentWindow_.cocoa );
+    } else if( guiParentWindow_.api == CLAP_WINDOW_API_X11 ) {
+      SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X11_WINDOW_NUMBER, guiParentWindow_.x11 );
+    } else if( guiParentWindow_.api == CLAP_WINDOW_API_WAYLAND ) {
+      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER, guiParentWindow_.ptr );
+    } else {
+      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, guiParentWindow_.ptr );
+    }
+  }
+  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
+    if( ptr ) {
+      SDL_HideWindow( ptr );
+      SDL_DestroyWindow( ptr );
+    }
+  } );
+
+  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
+    if( ptr ) {
+      SDL_DestroyRenderer( ptr );
+    }
+  } );
+  SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+  guiTimer_ = Timer::createNative( 10, std::bind( &AudioAnalysis::guiTimerCallback, this ) );
+  return true;
 }
 
 void AudioAnalysis::gui_destroy( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  uiAaHolder_.clap_destroy();
-  _base_::gui_destroy();
+  guiTimer_.reset();
+  guiWindowRenderer_.reset();
+  guiWindow_.reset();
+  guiParentWindow_ = { .api = "", .ptr = nullptr };
+
+  if( initializedSdl_ ) {
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
+    SDL_Quit();
+    initializedSdl_ = false;
+  }
 }
 
 bool AudioAnalysis::gui_set_scale( double scale ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
-  bool ret = _base_::gui_set_scale( scale );
-  return ret || uiAaHolder_.clap_set_scale( scale );
+  return false;
 }
 
 bool AudioAnalysis::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
@@ -357,14 +414,13 @@ bool AudioAnalysis::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
                  static_cast< void* >( this ),
                  static_cast< void* >( out_width ),
                  static_cast< void* >( out_height ) );
-  bool ret = _base_::gui_get_size( out_width, out_height );
-  return ret || uiAaHolder_.clap_get_size( out_width, out_height );
+  SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
+  return true;
 }
 
 bool AudioAnalysis::gui_can_resize( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_can_resize();
-  return ret || uiAaHolder_.clap_can_resize();
+  return ( SDL_GetWindowFlags( guiWindow_.get() ) & SDL_WINDOW_RESIZABLE );
 }
 
 bool AudioAnalysis::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
@@ -375,8 +431,7 @@ bool AudioAnalysis::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
                  static_cast< void* >( this ),
                  __FUNCTION__,
                  static_cast< void* >( out_hints ) );
-  bool ret = _base_::gui_get_resize_hints( out_hints );
-  return ret || uiAaHolder_.clap_get_resize_hints( out_hints );
+  return false;
 }
 
 bool AudioAnalysis::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
@@ -387,44 +442,66 @@ bool AudioAnalysis::gui_adjust_size( uint32_t* out_width, uint32_t* out_height )
                  static_cast< void* >( this ),
                  *out_width,
                  *out_height );
-  bool ret = _base_::gui_adjust_size( out_width, out_height );
-  return ret || uiAaHolder_.clap_adjust_size( out_width, out_height );
+  SDL_SetWindowSize( guiWindow_.get(), *out_width, *out_height );
+  gui_get_size( out_width, out_height );
+  state_.set_gui_width( *out_width );
+  state_.set_gui_height( *out_height );
+  return true;
 }
 
 bool AudioAnalysis::gui_set_size( uint32_t width, uint32_t height ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
-  bool ret = _base_::gui_set_size( width, height );
-  return ret || uiAaHolder_.clap_set_size( width, height );
+  SDL_SetWindowSize( guiWindow_.get(), width, height );
+  state_.set_gui_width( width );
+  state_.set_gui_height( height );
+  return true;
 }
 
 bool AudioAnalysis::gui_set_parent( clap_window_t const* window ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_parent( window );
-  return ret || uiAaHolder_.clap_set_parent( window );
+
+  guiParentWindow_.api = window->api;
+  if( window->api == CLAP_WINDOW_API_WIN32 ) {
+    guiParentWindow_.win32 = window->win32;
+  } else if( window->api == CLAP_WINDOW_API_COCOA ) {
+    guiParentWindow_.cocoa = window->cocoa;
+  } else if( window->api == CLAP_WINDOW_API_X11 ) {
+    guiParentWindow_.x11 = window->x11;
+  } else if( window->api == CLAP_WINDOW_API_WAYLAND ) {
+    guiParentWindow_.ptr = window->ptr;
+  } else {
+    guiParentWindow_.ptr = window->ptr;
+  }
+
+  if( !guiWindow_ ) {
+    return true;
+  }
+  gui_destroy();
+  gui_create( tmpGuiApi_, tmpGuiFloating_ );
+  return true;
 }
 
 bool AudioAnalysis::gui_set_transient( clap_window_t const* window ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_transient( window );
-  return ret || uiAaHolder_.clap_set_transient( window );
+  SDL_RaiseWindow( guiWindow_.get() );
+  return true;
 }
 
 void AudioAnalysis::gui_suggest_title( std::string const& title ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
-  _base_::gui_suggest_title( title );
-  uiAaHolder_.clap_suggest_title( title );
+  SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
 }
 
 bool AudioAnalysis::gui_show( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_show();
-  return ret || uiAaHolder_.clap_show();
+  SDL_ShowWindow( guiWindow_.get() );
+  return true;
 }
 
 bool AudioAnalysis::gui_hide( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_hide();
-  return ret || uiAaHolder_.clap_hide();
+  SDL_HideWindow( guiWindow_.get() );
+  return true;
 }
 
 // uint32_t AudioAnalysis::params_count( void ) {
@@ -580,6 +657,42 @@ bool AudioAnalysis::supports_gui() const {
 
 bool AudioAnalysis::supports_state() const {
   return true;
+}
+
+#pragma endregion
+
+#pragma region GUI CALLBACK
+
+void AudioAnalysis::guiTimerCallback() {
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  SDL_Event event;
+  while( SDL_PollEvent( &event ) != 0 ) {
+    if( event.type == SDL_EVENT_QUIT ) {
+      // shouldn't happen since we're inside a DAW
+      break;
+    } else if( event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_HIDDEN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_SHOWN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( ( event.type == SDL_EVENT_KEY_DOWN ) || ( event.type == SDL_EVENT_KEY_UP ) ) {
+      // todo: fixme: handle this
+    } else if( event.type == SDL_EVENT_MOUSE_MOTION ) {
+      // todo: fixme: handle this
+    } else if( ( event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( event.type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
+      // todo: fixme: handle this
+    } else if( event.type == SDL_EVENT_MOUSE_WHEEL ) {
+      // todo: fixme: handle this
+    }
+  }
+
+  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  SDL_RenderClear( guiWindowRenderer_.get() );
+
+  // actually draw stuff here
+
+  SDL_RenderPresent( guiWindowRenderer_.get() );
 }
 
 #pragma endregion

@@ -1,11 +1,12 @@
 #pragma once
 
 // Project includes
+#include "common/Timer.hpp"
 #include "common/_clap.hpp"
 #include "common/_fmt.hpp"
+#include "common/_sdl.hpp"
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
-#include "ui-holders/UiAaHolder.hpp"
 
 // C++ std includes
 #include <cstdint>
@@ -68,7 +69,14 @@ class AudioAnalysis : BasePlugin {
   bool supports_state() const override;
 
   protected:
-  UiAaHolder uiAaHolder_;
+  std::string tmpGuiApi_;
+  bool tmpGuiFloating_;
+  bool initializedSdl_ = false;
+  clap_window_t guiParentWindow_ = { .api = "", .ptr = nullptr };
+  std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
+  std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
+  std::unique_ptr< Timer > guiTimer_ = nullptr;
+  void guiTimerCallback();
 
   // members to save and load
   protected:

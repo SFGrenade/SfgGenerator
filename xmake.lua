@@ -48,23 +48,30 @@ end
 
 add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { system = false } )
 --add_requireconfs( "*", "**", "*.**", "**.*", "**.**", { configs = { shared = get_config( "kind" ) == "shared" } } )
-add_requireconfs( "*", { configs = { shared = get_config( "kind" ) == "shared" } } )
+add_requireconfs( "*", { configs = { shared = false } } )
 
 add_requires( "boost" )
 add_requires( "fmt" )
 add_requires( "hedley" )
+add_requires( "libsdl3" )
+add_requires( "libsdl3_ttf" )
 add_requires( "protoc", "protobuf-cpp" )
 add_requires( "qt5core", "qt5gui", "qt5widgets" )
 add_requires( "spdlog" )
+add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 add_requires( "vcpkg::fftw3", { alias = "vcpkg-fftw3" } )
 add_requires( "vcpkg::iir1", { alias = "vcpkg-iir1" } )
-add_requires( "vcpkg::clap-cleveraudio", { alias = "vcpkg-clap" } )
 
 add_requireconfs( "boost", { configs = { header_only = true } } )
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
+add_requireconfs( "libsdl3", { configs = { sdlmain = false, shared = true } } )
+add_requireconfs( "libsdl3_ttf", { configs = { shared = true } } )
 add_requireconfs( "spdlog", { configs = { header_only = true, fmt_external_ho = true } } )
 add_requireconfs( "vcpkg-fftw3", { configs = { features = { "threads" } } } )
 add_requireconfs( "**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
+
+-- for sdl main to not exist
+add_defines( "SDL_MAIN_HANDLED" )
 
 target( "SfgGeneratorMain" )
   add_rules( "qt.shared", { public = false } )
@@ -76,22 +83,24 @@ target( "SfgGeneratorMain" )
   add_packages( "boost", { public = false } )
   add_packages( "fmt", { public = false } )
   add_packages( "hedley", { public = false } )
+  add_packages( "libsdl3", { public = false } )
+  add_packages( "libsdl3_ttf", { public = false } )
   add_packages( "protoc", "protobuf-cpp", { public = false } )
   add_packages( "qt5core", "qt5gui", "qt5widgets", { public = false } )
   add_packages( "spdlog", { public = false } )
+  add_packages( "vcpkg-clap", { public = false } )
   add_packages( "vcpkg-fftw3", { public = false } )
   add_packages( "vcpkg-iir1", { public = false } )
-  add_packages( "vcpkg-clap", { public = false } )
 
   if is_plat( "linux" ) then
     add_defines( "SFG_GEN_IS_LINUX", { public = true } )
-    add_ldflags( "rt" ) -- for the timer
+    add_ldflags( "rt", { public = false } ) -- for the timer
   elseif is_plat( "macosx" ) then
     add_defines( "SFG_GEN_IS_MACOS", { public = true } )
-    add_frameworks( "CoreFoundation" ) -- for the timer
+    add_frameworks( "CoreFoundation", { public = false } ) -- for the timer
   elseif is_plat( "windows" ) then
     add_defines( "SFG_GEN_IS_WINDOWS", { public = true } )
-    add_ldflags( "User32" ) -- for the timer
+    add_ldflags( "User32", { public = false } ) -- for the timer
   end
 
   add_defines( "SFG_GEN_EXPORT_CLAP_INIT", { public = false } )

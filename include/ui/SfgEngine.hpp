@@ -1,8 +1,8 @@
 #pragma once
 
 // Project includes
-#include "common/_fmt.hpp"
 #include "common/Timer.hpp"
+#include "common/_fmt.hpp"
 
 // Other lib includes
 #include <QApplication>
