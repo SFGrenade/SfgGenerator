@@ -15,7 +15,7 @@ void HorizontalDbfsDisplay::InitUi( std::shared_ptr< Widget > parent ) {
     tmp->InitUi( self );
     tmp->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
     tmp->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
-    tmp->SetFontSize( 10 );
+    tmp->SetFontSize( 12 );
     tmp->SetFontColourActive( SDL_Color{ 0x40, 0xC0, 0xff, 0xff } );
     tmp->SetFontColourInactive( SDL_Color{ 0x40, 0xC0, 0xff, 0x80 } );
     tmp->SetPadding( 0.0f );

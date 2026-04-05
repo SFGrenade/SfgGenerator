@@ -13,8 +13,10 @@
 // Other lib includes
 #include <Iir.h>
 #include <boost/circular_buffer.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 
 // C++ std includes
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -83,12 +85,13 @@ class AudioAnalysis : BasePlugin {
   std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
   std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
   std::unique_ptr< Timer > guiTimer_ = nullptr;
+  boost::lockfree::spsc_queue< float > sampleQueue_;
   Iir::Butterworth::HighShelf< 2 > kWeightingFilterHighShelf_;  // for LUFS: 4 dB highshelf at 2 kHz
   Iir::Butterworth::HighPass< 2 > kWeightingFilterHighPass_;    // for LUFS: 12 dB/oct highpass at 100 Hz
   boost::circular_buffer< float > rmsMomentaryValueBuffer_;     // stores the last 400 ms of samples (1 new value every 0.1 seconds)
   boost::circular_buffer< float > lufsMomentaryValueBuffer_;    // stores the last 400 ms of samples (1 new value every 0.1 seconds)
-  uint32_t rmsSamplesReceived_;
-  uint32_t lufsSamplesReceived_;
+  std::atomic_uint32_t rmsSamplesReceived_;
+  std::atomic_uint32_t lufsSamplesReceived_;
   boost::circular_buffer< float > rmsShortTermValueBuffer_;   // stores the last 3 seconds of momentary values (1 value every 0.1 seconds => 30 values)
   boost::circular_buffer< float > lufsShortTermValueBuffer_;  // stores the last 3 seconds of momentary values (1 value every 0.1 seconds => 30 values)
 

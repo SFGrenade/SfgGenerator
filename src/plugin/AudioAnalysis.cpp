@@ -15,10 +15,13 @@
 namespace SfPb = SfgGenerator::Proto;
 
 AudioAnalysis::AudioAnalysis()
-    : _base_(), guiWindow_( nullptr, []( SDL_Window* ptr ) {
-        SDL_HideWindow( ptr );
-        SDL_DestroyWindow( ptr );
-      } ) {
+    : _base_(),
+      guiWindow_( nullptr,
+                  []( SDL_Window* ptr ) {
+                    SDL_HideWindow( ptr );
+                    SDL_DestroyWindow( ptr );
+                  } ),
+      sampleQueue_( 4096 ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
@@ -300,29 +303,7 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
         else if( process->audio_outputs[0].data64 )
           process->audio_outputs[0].data64[c][i] = out;
       }
-      monoOut = monoOut / float( process->audio_outputs[0].channel_count );
-      // todo: fixme: probably don't want this here
-      rmsMomentaryValueBuffer_.push_back( monoOut );
-      rmsSamplesReceived_++;
-      lufsMomentaryValueBuffer_.push_back( kWeightingFilterHighPass_.filter( kWeightingFilterHighShelf_.filter( monoOut ) ) );
-      lufsSamplesReceived_++;
-
-      if( rmsSamplesReceived_ >= ( rmsMomentaryValueBuffer_.capacity() / 4 ) ) {
-        rmsSamplesReceived_ = 0;
-        rmsShortTermValueBuffer_.push_back( averageOf( rmsMomentaryValueBuffer_ ) );
-        if( guiWidgetMomentaryRms_ )
-          guiWidgetMomentaryRms_->SetValue( rmsShortTermValueBuffer_.back() );
-        if( guiWidgetShortTermRms_ )
-          guiWidgetShortTermRms_->SetValue( averageOf( rmsShortTermValueBuffer_ ) );
-      }
-      if( lufsSamplesReceived_ >= ( lufsMomentaryValueBuffer_.capacity() / 4 ) ) {
-        lufsSamplesReceived_ = 0;
-        lufsShortTermValueBuffer_.push_back( averageOf( lufsMomentaryValueBuffer_ ) );
-        if( guiWidgetMomentaryLufs_ )
-          guiWidgetMomentaryLufs_->SetValue( lufsShortTermValueBuffer_.back() );
-        if( guiWidgetShortTermLufs_ )
-          guiWidgetShortTermLufs_->SetValue( averageOf( lufsShortTermValueBuffer_ ) );
-      }
+      sampleQueue_.push( monoOut / float( process->audio_outputs[0].channel_count ) );
     }
   }
 
@@ -778,7 +759,29 @@ void AudioAnalysis::guiTimerCallback() {
     guiRootWidget_->SetW( static_cast< float >( winW ) );
     guiRootWidget_->SetH( static_cast< float >( winH ) );
   }
-  // other logic
+  sampleQueue_.consume_all( [this]( float monoOut ) {
+    rmsMomentaryValueBuffer_.push_back( monoOut );
+    rmsSamplesReceived_++;
+    lufsMomentaryValueBuffer_.push_back( kWeightingFilterHighPass_.filter( kWeightingFilterHighShelf_.filter( monoOut ) ) );
+    lufsSamplesReceived_++;
+
+    if( rmsSamplesReceived_ >= ( rmsMomentaryValueBuffer_.capacity() / 4 ) ) {
+      rmsSamplesReceived_ = 0;
+      rmsShortTermValueBuffer_.push_back( averageOf( rmsMomentaryValueBuffer_ ) );
+      if( guiWidgetMomentaryRms_ )
+        guiWidgetMomentaryRms_->SetValue( rmsShortTermValueBuffer_.back() );
+      if( guiWidgetShortTermRms_ )
+        guiWidgetShortTermRms_->SetValue( averageOf( rmsShortTermValueBuffer_ ) );
+    }
+    if( lufsSamplesReceived_ >= ( lufsMomentaryValueBuffer_.capacity() / 4 ) ) {
+      lufsSamplesReceived_ = 0;
+      lufsShortTermValueBuffer_.push_back( averageOf( lufsMomentaryValueBuffer_ ) );
+      if( guiWidgetMomentaryLufs_ )
+        guiWidgetMomentaryLufs_->SetValue( lufsShortTermValueBuffer_.back() );
+      if( guiWidgetShortTermLufs_ )
+        guiWidgetShortTermLufs_->SetValue( averageOf( lufsShortTermValueBuffer_ ) );
+    }
+  } );
   guiRootWidget_->OnLogic();
 
   InputManager::OnLogicUpdate_Late();
