@@ -16,7 +16,9 @@ if is_plat( "windows" ) then
 end
 
 -- Set MSVC runtime
-if is_plat( "windows" ) and is_mode( "release" ) then
+if is_plat( "windows" ) and is_mode( "debug" ) then
+  set_runtimes( "MDd" ) -- MultiThreadedDLL (MD or MDd)
+elseif is_plat( "windows" ) then
   set_runtimes( "MD" ) -- MultiThreadedDLL (MD or MDd)
 end
 -- Set macOS deployment target
@@ -64,7 +66,7 @@ add_requires( "vcpkg::iir1", { alias = "vcpkg-iir1" } )
 
 add_requireconfs( "boost", { configs = { header_only = true } } )
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
-add_requireconfs( "libsdl3", { configs = { sdlmain = false, shared = true } } )
+add_requireconfs( "libsdl3", { debug = true, configs = { sdlmain = false, shared = true } } )
 add_requireconfs( "libsdl3_ttf", { configs = { shared = true } } )
 add_requireconfs( "spdlog", { configs = { header_only = true, fmt_external_ho = true } } )
 add_requireconfs( "vcpkg-fftw3", { configs = { features = { "threads" } } } )
@@ -114,14 +116,32 @@ target( "SfgGeneratorMain" )
   add_headerfiles( "include/plugin/*.hpp" )
   add_headerfiles( "include/ui/*.hpp" )
   add_headerfiles( "include/ui-holders/*.hpp" )
+  add_headerfiles( "include/widgets/*.hpp" )
   add_files( "include/ui/*.hpp" )
   add_files( "include/ui-holders/*.hpp" )
   add_files( "src/common/*.cpp" )
   add_files( "src/plugin/*.cpp" )
   add_files( "src/ui/*.cpp" )
   add_files( "src/ui-holders/*.cpp" )
+  add_files( "src/widgets/*.cpp" )
 
   add_frameworks( "QtCore", "QtGui", "QtWidgets", { public = false } )
+
+  after_build( function ( target )
+    import( "core.project.config" )
+    os.mkdir( path.join( path.join( "$(projectdir)", target.targetdir( target ) ), "resources" ) )
+    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( path.join( "$(projectdir)", target.targetdir( target ) ) ) )
+  end )
+  after_install( function ( target )
+    import( "core.project.config" )
+    os.mkdir( path.join( target.installdir( target ), "resources" ) )
+    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( target.installdir( target ) ) )
+  end )
+  after_installcmd( function ( target )
+    import( "core.project.config" )
+    os.mkdir( path.join( target.installdir( target ), "resources" ) )
+    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( target.installdir( target ) ) )
+  end )
 target_end()
 
 target( "SfgGenerator" )

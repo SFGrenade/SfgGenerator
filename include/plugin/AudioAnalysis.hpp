@@ -7,6 +7,7 @@
 #include "common/_sdl.hpp"
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
+#include "widgets/widget.hpp"
 
 // C++ std includes
 #include <cstdint>
@@ -73,6 +74,7 @@ class AudioAnalysis : BasePlugin {
   bool tmpGuiFloating_;
   bool initializedSdl_ = false;
   clap_window_t guiParentWindow_ = { .api = "", .ptr = nullptr };
+  std::shared_ptr< Widget > guiRootWidget_ = nullptr;
   std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
   std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
   std::unique_ptr< Timer > guiTimer_ = nullptr;

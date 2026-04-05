@@ -1,6 +1,9 @@
 // Header assigned to this source
 #include "plugin/AudioAnalysis.hpp"
 
+// Project includes
+#include "widgets/Label.hpp"
+
 // C++ std includes
 #include <algorithm>
 #include <array>
@@ -345,18 +348,37 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
     if( !SDL_Init( SDL_INIT_VIDEO ) ) {
       SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     }
+    if( !TTF_Init() ) {
+      SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL_TTF: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    }
     initializedSdl_ = true;
   }
 
+  InputManager::init();
+
+  guiRootWidget_ = std::make_shared< Widget >();
+  {
+    std::shared_ptr< Label > tmp = std::make_shared< Label >( "Big-ass Title", SDL_FRect{ 0.0f, 0.0f, 1.0f, 1.0f } );
+    tmp->SetParent( guiRootWidget_ );
+    tmp->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
+    tmp->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    tmp->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    tmp->SetFontSize( 72 );
+    tmp->SetFontColourActive( SDL_Color{ 0x40, 0xC0, 0xff, 0xff } );
+    tmp->SetFontColourInactive( SDL_Color{ 0x40, 0xC0, 0xff, 0x80 } );
+    tmp->SetPadding( 5.0f );
+  }
+
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, true );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
-  SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  // SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  // SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
   if( guiParentWindow_.ptr ) {
+    // SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+    // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_EXTERNAL | SDL_WINDOW_UTILITY );
     if( guiParentWindow_.api == CLAP_WINDOW_API_WIN32 ) {
       SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, guiParentWindow_.win32 );
       SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIN32_PIXEL_FORMAT_HWND_POINTER, guiParentWindow_.win32 );
@@ -369,6 +391,9 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
     } else {
       SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, guiParentWindow_.ptr );
     }
+  } else {
+    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
   }
   guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
     if( ptr ) {
@@ -376,19 +401,37 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
       SDL_DestroyWindow( ptr );
     }
   } );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window created at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindow_.get() ) );
 
-  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
-    if( ptr ) {
-      SDL_DestroyRenderer( ptr );
-    }
-  } );
+  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_GetRenderer( guiWindow_.get() ) );
+  if( !guiWindowRenderer_ ) {
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] window has no renderer, creating new one", __FUNCTION__, static_cast< void* >( this ) );
+    guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), SDL_SOFTWARE_RENDERER ), []( SDL_Renderer* ptr ) {
+      if( ptr ) {
+        SDL_DestroyRenderer( ptr );
+      }
+    } );
+  }
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window renderer at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindowRenderer_.get() ) );
   SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
   guiTimer_ = Timer::createNative( 10, std::bind( &AudioAnalysis::guiTimerCallback, this ) );
+  guiTimer_->start();
   return true;
 }
 
 void AudioAnalysis::gui_destroy( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  guiTimer_->stop();
   guiTimer_.reset();
   guiWindowRenderer_.reset();
   guiWindow_.reset();
@@ -396,6 +439,7 @@ void AudioAnalysis::gui_destroy( void ) {
 
   if( initializedSdl_ ) {
     SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
+    TTF_Quit();
     SDL_Quit();
     initializedSdl_ = false;
   }
@@ -664,7 +708,9 @@ bool AudioAnalysis::supports_state() const {
 #pragma region GUI CALLBACK
 
 void AudioAnalysis::guiTimerCallback() {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+
+#pragma region Inputs
   SDL_Event event;
   while( SDL_PollEvent( &event ) != 0 ) {
     if( event.type == SDL_EVENT_QUIT ) {
@@ -677,22 +723,42 @@ void AudioAnalysis::guiTimerCallback() {
     } else if( event.type == SDL_EVENT_WINDOW_SHOWN ) {
       // shouldn't happen since we're inside a DAW
     } else if( ( event.type == SDL_EVENT_KEY_DOWN ) || ( event.type == SDL_EVENT_KEY_UP ) ) {
-      // todo: fixme: handle this
+      InputManager::ProcessKeyEvent( event.key, event.type == SDL_EVENT_KEY_DOWN );
     } else if( event.type == SDL_EVENT_MOUSE_MOTION ) {
-      // todo: fixme: handle this
+      InputManager::ProcessMouseMoveEvent( event.motion );
     } else if( ( event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( event.type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
-      // todo: fixme: handle this
+      InputManager::ProcessMouseButtonEvent( event.button, event.type == SDL_EVENT_MOUSE_BUTTON_DOWN );
     } else if( event.type == SDL_EVENT_MOUSE_WHEEL ) {
-      // todo: fixme: handle this
+      InputManager::ProcessMouseWheelEvent( event.wheel );
     }
   }
+#pragma endregion Inputs
 
+#pragma region Logic
+  InputManager::OnLogicUpdate_Early();
+
+  {
+    int winW;
+    int winH;
+    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    guiRootWidget_->SetW( static_cast< float >( winW ) );
+    guiRootWidget_->SetH( static_cast< float >( winH ) );
+  }
+  // other logic
+  guiRootWidget_->OnLogic();
+
+  InputManager::OnLogicUpdate_Late();
+#pragma endregion Logic
+
+#pragma region Rendering
   SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
   SDL_RenderClear( guiWindowRenderer_.get() );
 
   // actually draw stuff here
+  guiRootWidget_->OnRender( guiWindowRenderer_ );
 
   SDL_RenderPresent( guiWindowRenderer_.get() );
+#pragma endregion Rendering
 }
 
 #pragma endregion
