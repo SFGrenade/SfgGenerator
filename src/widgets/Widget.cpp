@@ -1,7 +1,7 @@
 // Header assigned to this source
 #include "widgets/Widget.hpp"
 
-Widget::Widget( SDL_FRect position ) {
+Widget::Widget( SDL_FRect position ) : _base_() {
   position_.x = position.x;
   position_.y = position.y;
   position_.w = position.w;
@@ -15,6 +15,26 @@ Widget::~Widget() {
     }
   }
   children_.clear();
+}
+
+void Widget::InitUi( std::shared_ptr< Widget > parent ) {
+  // remove from old parent
+  if( parent_ ) {
+    for( decltype( parent_->children_ )::iterator iter = parent_->children_.begin(); iter != parent_->children_.end(); ) {
+      if( iter->get() == this ) {
+        iter = parent_->children_.erase( iter );
+      } else {
+        iter++;
+      }
+    }
+  }
+
+  parent_ = parent;
+
+  // add to new parent
+  if( parent_ ) {
+    parent_->children_.push_back( shared_from_this() );
+  }
 }
 
 void Widget::OnLogic() {
@@ -67,26 +87,6 @@ void Widget::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   // then render children
   for( auto& child : children_ ) {
     child->OnRender( renderer );
-  }
-}
-
-void Widget::SetParent( std::shared_ptr< Widget > parent ) {
-  // remove from old parent
-  if( parent_ ) {
-    for( decltype( parent_->children_ )::iterator iter = parent_->children_.begin(); iter != parent_->children_.end(); ) {
-      if( iter->get() == this ) {
-        iter = parent_->children_.erase( iter );
-      } else {
-        iter++;
-      }
-    }
-  }
-
-  parent_ = parent;
-
-  // add to new parent
-  if( parent_ ) {
-    parent_->children_.push_back( shared_from_this() );
   }
 }
 

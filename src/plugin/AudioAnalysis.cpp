@@ -2,7 +2,7 @@
 #include "plugin/AudioAnalysis.hpp"
 
 // Project includes
-#include "widgets/Label.hpp"
+#include "widgets/HorizontalDbfsDisplay.hpp"
 
 // C++ std includes
 #include <algorithm>
@@ -63,6 +63,25 @@ bool AudioAnalysis::activate( double sample_rate, uint32_t min_frames_count, uin
   bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
 
   // uiAaHolder_.set_sample_rate( sample_rate );
+  rmsMomentaryValueBuffer_.set_capacity( sample_rate * 0.4 );
+  lufsMomentaryValueBuffer_.set_capacity( sample_rate * 0.4 );
+  kWeightingFilterHighShelf_.setup( sample_rate, 2000.0, 4.0 );
+  kWeightingFilterHighPass_.setup( sample_rate, 100.0 );
+  rmsMomentaryValueBuffer_.resize( rmsMomentaryValueBuffer_.capacity(), 0.0 );
+  lufsMomentaryValueBuffer_.resize( lufsMomentaryValueBuffer_.capacity(), 0.0 );
+
+  rmsShortTermValueBuffer_.set_capacity( 30 );
+  lufsShortTermValueBuffer_.set_capacity( 30 );
+  rmsShortTermValueBuffer_.resize( rmsShortTermValueBuffer_.capacity(), 0.0 );
+  lufsShortTermValueBuffer_.resize( lufsShortTermValueBuffer_.capacity(), 0.0 );
+
+  std::fill( rmsMomentaryValueBuffer_.begin(), rmsMomentaryValueBuffer_.end(), 0.0f );
+  std::fill( lufsMomentaryValueBuffer_.begin(), lufsMomentaryValueBuffer_.end(), 0.0f );
+  std::fill( rmsShortTermValueBuffer_.begin(), rmsShortTermValueBuffer_.end(), 0.0f );
+  std::fill( lufsShortTermValueBuffer_.begin(), lufsShortTermValueBuffer_.end(), 0.0f );
+
+  rmsSamplesReceived_ = 0;
+  lufsSamplesReceived_ = 0;
 
   ret = ret && true;
   return ret;
@@ -88,6 +107,11 @@ void AudioAnalysis::reset( void ) {
   state_.set_gui_width( 300 );
   state_.set_gui_height( 200 );
   // state_.set_time_window( 0.1 );
+
+  std::fill( rmsMomentaryValueBuffer_.begin(), rmsMomentaryValueBuffer_.end(), 0.0f );
+  std::fill( lufsMomentaryValueBuffer_.begin(), lufsMomentaryValueBuffer_.end(), 0.0f );
+  std::fill( rmsShortTermValueBuffer_.begin(), rmsShortTermValueBuffer_.end(), 0.0f );
+  std::fill( lufsShortTermValueBuffer_.begin(), lufsShortTermValueBuffer_.end(), 0.0f );
 }
 
 void AudioAnalysis::process_event( clap_event_header_t const* hdr, clap_output_events_t const* /*out_events*/ ) {
@@ -257,22 +281,47 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
 
     /* process every samples until the next event */
     for( ; i < next_ev_frame; ++i ) {
+      float monoOut = 0.0;
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
-        double out = 0.0;
+        float out = 0.0;
         if( active_ && process_ ) {
           if( process->audio_inputs[0].data32 )
             out = process->audio_inputs[0].data32[c][i];
           else if( process->audio_inputs[0].data64 )
-            out = process->audio_inputs[0].data64[c][i];
+            out = float( process->audio_inputs[0].data64[c][i] );
         }
 
         // uiAaHolder_.push_sample( out, c );
+        monoOut += out;
 
         // store output
         if( process->audio_outputs[0].data32 )
-          process->audio_outputs[0].data32[c][i] = static_cast< float >( out );
+          process->audio_outputs[0].data32[c][i] = out;
         else if( process->audio_outputs[0].data64 )
           process->audio_outputs[0].data64[c][i] = out;
+      }
+      monoOut = monoOut / float( process->audio_outputs[0].channel_count );
+      // todo: fixme: probably don't want this here
+      rmsMomentaryValueBuffer_.push_back( monoOut );
+      rmsSamplesReceived_++;
+      lufsMomentaryValueBuffer_.push_back( kWeightingFilterHighPass_.filter( kWeightingFilterHighShelf_.filter( monoOut ) ) );
+      lufsSamplesReceived_++;
+
+      if( rmsSamplesReceived_ >= ( rmsMomentaryValueBuffer_.capacity() / 4 ) ) {
+        rmsSamplesReceived_ = 0;
+        rmsShortTermValueBuffer_.push_back( averageOf( rmsMomentaryValueBuffer_ ) );
+        if( guiWidgetMomentaryRms_ )
+          guiWidgetMomentaryRms_->SetValue( rmsShortTermValueBuffer_.back() );
+        if( guiWidgetShortTermRms_ )
+          guiWidgetShortTermRms_->SetValue( averageOf( rmsShortTermValueBuffer_ ) );
+      }
+      if( lufsSamplesReceived_ >= ( lufsMomentaryValueBuffer_.capacity() / 4 ) ) {
+        lufsSamplesReceived_ = 0;
+        lufsShortTermValueBuffer_.push_back( averageOf( lufsMomentaryValueBuffer_ ) );
+        if( guiWidgetMomentaryLufs_ )
+          guiWidgetMomentaryLufs_->SetValue( lufsShortTermValueBuffer_.back() );
+        if( guiWidgetShortTermLufs_ )
+          guiWidgetShortTermLufs_->SetValue( averageOf( lufsShortTermValueBuffer_ ) );
       }
     }
   }
@@ -353,15 +402,28 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
 
   guiRootWidget_ = std::make_shared< Widget >();
   {
-    std::shared_ptr< Label > tmp = std::make_shared< Label >( "Big-ass Title", SDL_FRect{ 0.0f, 0.0f, 1.0f, 1.0f } );
-    tmp->SetParent( guiRootWidget_ );
-    tmp->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
-    tmp->SetVerticalAlignment( Label::VerticalAlignment::Centered );
-    tmp->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
-    tmp->SetFontSize( 72 );
-    tmp->SetFontColourActive( SDL_Color{ 0x40, 0xC0, 0xff, 0xff } );
-    tmp->SetFontColourInactive( SDL_Color{ 0x40, 0xC0, 0xff, 0x80 } );
-    tmp->SetPadding( 5.0f );
+    guiWidgetMomentaryRms_ = std::make_shared< HorizontalDbfsDisplay >( "Momentary RMS", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.125f } );
+    guiWidgetMomentaryRms_->InitUi( guiRootWidget_ );
+    guiWidgetMomentaryRms_->SetPadding( 2.0f );
+    guiWidgetMomentaryRms_->SetUnit( "dBFS" );
+  }
+  {
+    guiWidgetShortTermRms_ = std::make_shared< HorizontalDbfsDisplay >( "Short-Term RMS", SDL_FRect{ 0.0f, 0.125f, 1.0f, 0.125f } );
+    guiWidgetShortTermRms_->InitUi( guiRootWidget_ );
+    guiWidgetShortTermRms_->SetPadding( 2.0f );
+    guiWidgetShortTermRms_->SetUnit( "dBFS" );
+  }
+  {
+    guiWidgetMomentaryLufs_ = std::make_shared< HorizontalDbfsDisplay >( "Momentary LUFS", SDL_FRect{ 0.0f, 0.25f, 1.0f, 0.125f } );
+    guiWidgetMomentaryLufs_->InitUi( guiRootWidget_ );
+    guiWidgetMomentaryLufs_->SetPadding( 2.0f );
+    guiWidgetMomentaryLufs_->SetUnit( "LUFS" );
+  }
+  {
+    guiWidgetShortTermLufs_ = std::make_shared< HorizontalDbfsDisplay >( "Short-Term LUFS", SDL_FRect{ 0.0f, 0.375f, 1.0f, 0.125f } );
+    guiWidgetShortTermLufs_->InitUi( guiRootWidget_ );
+    guiWidgetShortTermLufs_->SetPadding( 2.0f );
+    guiWidgetShortTermLufs_->SetUnit( "LUFS" );
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
@@ -731,6 +793,10 @@ void AudioAnalysis::guiTimerCallback() {
 
   SDL_RenderPresent( guiWindowRenderer_.get() );
 #pragma endregion Rendering
+}
+
+float AudioAnalysis::averageOf( boost::circular_buffer< float > const& buffer ) const {
+  return std::accumulate( buffer.begin(), buffer.end(), 0.0f, []( float a, float b ) { return std::abs( a ) + std::abs( b ); } ) / float( buffer.size() );
 }
 
 #pragma endregion

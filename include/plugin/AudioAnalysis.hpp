@@ -7,7 +7,12 @@
 #include "common/_gui.hpp"
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
+#include "widgets/HorizontalDbfsDisplay.hpp"
 #include "widgets/widget.hpp"
+
+// Other lib includes
+#include <Iir.h>
+#include <boost/circular_buffer.hpp>
 
 // C++ std includes
 #include <cstdint>
@@ -71,10 +76,24 @@ class AudioAnalysis : BasePlugin {
 
   protected:
   std::shared_ptr< Widget > guiRootWidget_ = nullptr;
+  std::shared_ptr< HorizontalDbfsDisplay > guiWidgetMomentaryRms_ = nullptr;
+  std::shared_ptr< HorizontalDbfsDisplay > guiWidgetShortTermRms_ = nullptr;
+  std::shared_ptr< HorizontalDbfsDisplay > guiWidgetMomentaryLufs_ = nullptr;
+  std::shared_ptr< HorizontalDbfsDisplay > guiWidgetShortTermLufs_ = nullptr;
   std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
   std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
   std::unique_ptr< Timer > guiTimer_ = nullptr;
+  Iir::Butterworth::HighShelf< 2 > kWeightingFilterHighShelf_;  // for LUFS: 4 dB highshelf at 2 kHz
+  Iir::Butterworth::HighPass< 2 > kWeightingFilterHighPass_;    // for LUFS: 12 dB/oct highpass at 100 Hz
+  boost::circular_buffer< float > rmsMomentaryValueBuffer_;     // stores the last 400 ms of samples (1 new value every 0.1 seconds)
+  boost::circular_buffer< float > lufsMomentaryValueBuffer_;    // stores the last 400 ms of samples (1 new value every 0.1 seconds)
+  uint32_t rmsSamplesReceived_;
+  uint32_t lufsSamplesReceived_;
+  boost::circular_buffer< float > rmsShortTermValueBuffer_;   // stores the last 3 seconds of momentary values (1 value every 0.1 seconds => 30 values)
+  boost::circular_buffer< float > lufsShortTermValueBuffer_;  // stores the last 3 seconds of momentary values (1 value every 0.1 seconds => 30 values)
+
   void guiTimerCallback();
+  float averageOf( boost::circular_buffer< float > const& buffer ) const;
 
   // members to save and load
   protected:

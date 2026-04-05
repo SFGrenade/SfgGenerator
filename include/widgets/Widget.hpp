@@ -9,15 +9,17 @@
 #include <vector>
 
 class Widget : public std::enable_shared_from_this< Widget > {
+  using _base_ = std::enable_shared_from_this< Widget >;
+  using _base_::_base_;
+
   public:
   Widget( SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~Widget();
 
   public:
+  virtual void InitUi( std::shared_ptr< Widget > parent );
   virtual void OnLogic();
   virtual void OnRender( std::shared_ptr< SDL_Renderer > renderer );
-
-  void SetParent( std::shared_ptr< Widget > parent );
 
   bool IsDebug();
   void SetDebug( bool value );
