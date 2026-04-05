@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "common/_sdl.hpp"
+#include "common/_gui.hpp"
 
 std::unordered_map< SDL_Keycode, InputManager::KeyData > InputManager::keys_;
 InputManager::MouseData InputManager::mouse_;
@@ -141,3 +141,35 @@ SDL_FPoint* InputManager::GetMouseWheel() {
 SDL_FPoint* InputManager::GetMouseWheelPrecise() {
   return &InputManager::mouse_.wheel_precise;
 }
+
+#if defined( SFG_GEN_IS_LINUX )
+// System includes
+#include <signal.h>
+#include <time.h>
+
+void setParentWindow( std::shared_ptr< SDL_Window > window, sf::WindowHandle parent ) {}
+#endif
+
+#if defined( SFG_GEN_IS_MACOS )
+// System includes
+#include <CoreFoundation/CoreFoundation.h>
+
+void setParentWindow( std::shared_ptr< SDL_Window > window, sf::WindowHandle parent ) {}
+#endif
+
+#if defined( SFG_GEN_IS_WINDOWS )
+// System includes
+#if !defined( WIN32_LEAN_AND_MEAN )
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Windows.h>
+
+void setParentWindow( std::shared_ptr< SDL_Window > window, clap_window_t const* parent ) {
+  SDL_PropertiesID windowProps = SDL_GetWindowProperties( window.get() );
+  HWND hwnd = reinterpret_cast< HWND >( SDL_GetPointerProperty( windowProps, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr ) );
+  if( hwnd && parent ) {
+    SetParent( hwnd, reinterpret_cast< HWND >( parent->win32 ) );
+    SetWindowLongPtr( hwnd, GWL_STYLE, WS_CHILD );
+  }
+}
+#endif

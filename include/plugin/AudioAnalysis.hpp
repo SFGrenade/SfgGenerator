@@ -4,7 +4,7 @@
 #include "common/Timer.hpp"
 #include "common/_clap.hpp"
 #include "common/_fmt.hpp"
-#include "common/_sdl.hpp"
+#include "common/_gui.hpp"
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
 #include "widgets/widget.hpp"
@@ -70,10 +70,6 @@ class AudioAnalysis : BasePlugin {
   bool supports_state() const override;
 
   protected:
-  std::string tmpGuiApi_;
-  bool tmpGuiFloating_;
-  bool initializedSdl_ = false;
-  clap_window_t guiParentWindow_ = { .api = "", .ptr = nullptr };
   std::shared_ptr< Widget > guiRootWidget_ = nullptr;
   std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
   std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;

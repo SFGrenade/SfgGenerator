@@ -340,18 +340,13 @@ bool AudioAnalysis::gui_get_preferred_api( std::string& out_api, bool* out_is_fl
 
 bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
-  tmpGuiApi_ = api;
-  tmpGuiFloating_ = is_floating;
 
-  if( !initializedSdl_ ) {
-    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
-    if( !SDL_Init( SDL_INIT_VIDEO ) ) {
-      SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
-    }
-    if( !TTF_Init() ) {
-      SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL_TTF: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
-    }
-    initializedSdl_ = true;
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
+  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+  if( !TTF_Init() ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL_TTF: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
 
   InputManager::init();
@@ -370,27 +365,14 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
-  // SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
-  // SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
-  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
-  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
-  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
-  // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
-  if( guiParentWindow_.ptr ) {
-    // SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
-    // SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_EXTERNAL | SDL_WINDOW_UTILITY );
-    if( guiParentWindow_.api == CLAP_WINDOW_API_WIN32 ) {
-      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, guiParentWindow_.win32 );
-      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIN32_PIXEL_FORMAT_HWND_POINTER, guiParentWindow_.win32 );
-    } else if( guiParentWindow_.api == CLAP_WINDOW_API_COCOA ) {
-      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, guiParentWindow_.cocoa );
-    } else if( guiParentWindow_.api == CLAP_WINDOW_API_X11 ) {
-      SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X11_WINDOW_NUMBER, guiParentWindow_.x11 );
-    } else if( guiParentWindow_.api == CLAP_WINDOW_API_WAYLAND ) {
-      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER, guiParentWindow_.ptr );
-    } else {
-      SDL_SetPointerProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, guiParentWindow_.ptr );
-    }
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
+  if( !is_floating ) {
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
   } else {
     SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
     SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
@@ -424,6 +406,7 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
                  static_cast< void* >( this ),
                  static_cast< void* >( guiWindowRenderer_.get() ) );
   SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+
   guiTimer_ = Timer::createNative( 10, std::bind( &AudioAnalysis::guiTimerCallback, this ) );
   guiTimer_->start();
   return true;
@@ -435,14 +418,10 @@ void AudioAnalysis::gui_destroy( void ) {
   guiTimer_.reset();
   guiWindowRenderer_.reset();
   guiWindow_.reset();
-  guiParentWindow_ = { .api = "", .ptr = nullptr };
 
-  if( initializedSdl_ ) {
-    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
-    TTF_Quit();
-    SDL_Quit();
-    initializedSdl_ = false;
-  }
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
+  TTF_Quit();
+  SDL_Quit();
 }
 
 bool AudioAnalysis::gui_set_scale( double scale ) {
@@ -486,7 +465,7 @@ bool AudioAnalysis::gui_adjust_size( uint32_t* out_width, uint32_t* out_height )
                  static_cast< void* >( this ),
                  *out_width,
                  *out_height );
-  SDL_SetWindowSize( guiWindow_.get(), *out_width, *out_height );
+  gui_set_size( *out_width, *out_height );
   gui_get_size( out_width, out_height );
   state_.set_gui_width( *out_width );
   state_.set_gui_height( *out_height );
@@ -504,24 +483,18 @@ bool AudioAnalysis::gui_set_size( uint32_t width, uint32_t height ) {
 bool AudioAnalysis::gui_set_parent( clap_window_t const* window ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
 
-  guiParentWindow_.api = window->api;
   if( window->api == CLAP_WINDOW_API_WIN32 ) {
-    guiParentWindow_.win32 = window->win32;
+    setParentWindow( guiWindow_, window );
   } else if( window->api == CLAP_WINDOW_API_COCOA ) {
-    guiParentWindow_.cocoa = window->cocoa;
+    setParentWindow( guiWindow_, window );
   } else if( window->api == CLAP_WINDOW_API_X11 ) {
-    guiParentWindow_.x11 = window->x11;
+    setParentWindow( guiWindow_, window );
   } else if( window->api == CLAP_WINDOW_API_WAYLAND ) {
-    guiParentWindow_.ptr = window->ptr;
+    setParentWindow( guiWindow_, window );
   } else {
-    guiParentWindow_.ptr = window->ptr;
+    setParentWindow( guiWindow_, window );
   }
-
-  if( !guiWindow_ ) {
-    return true;
-  }
-  gui_destroy();
-  gui_create( tmpGuiApi_, tmpGuiFloating_ );
+  SDL_SetWindowPosition( guiWindow_.get(), 0, 0 );
   return true;
 }
 
@@ -711,8 +684,7 @@ void AudioAnalysis::guiTimerCallback() {
   // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 
 #pragma region Inputs
-  SDL_Event event;
-  while( SDL_PollEvent( &event ) != 0 ) {
+  for( SDL_Event event; SDL_PollEvent( &event ) != 0; ) {
     if( event.type == SDL_EVENT_QUIT ) {
       // shouldn't happen since we're inside a DAW
       break;

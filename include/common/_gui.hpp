@@ -1,10 +1,14 @@
 #pragma once
 
+// Project includes
+#include "common/_clap.hpp"
+
 // Other lib includes
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
 // C++ std includes
+#include <cstdint>
 #include <unordered_map>
 
 class InputManager {
@@ -54,3 +58,5 @@ class InputManager {
   static std::unordered_map< SDL_Keycode, InputManager::KeyData > keys_;
   static InputManager::MouseData mouse_;
 };
+
+void setParentWindow( std::shared_ptr< SDL_Window > window, clap_window_t const* parent );

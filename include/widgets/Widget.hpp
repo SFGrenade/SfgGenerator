@@ -2,7 +2,7 @@
 
 // Project includes
 #include "common/_fmt.hpp"
-#include "common/_sdl.hpp"
+#include "common/_gui.hpp"
 
 // C++ std includes
 #include <memory>
