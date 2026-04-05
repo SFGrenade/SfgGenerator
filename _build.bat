@@ -50,7 +50,8 @@ CALL :doCommand "07_xmake_install" "xmake install -a -vD -o %ORIGINAL_DIR%\_dest
 
 REM CALL :doCommand "10_xmake_test" "xmake test -vD SfgGenerator/*" && cd>NUL || Goto :END
 
-CALL :doCommand "90_copy_deps" "xcopy %ORIGINAL_DIR%\_dest\bin\* C:\VstPlugins\hard_clapx64\qt\ /S /I /F /R /Y /EXCLUDE:_copyExcludes.txt" && cd>NUL || Goto :END
+CALL :doCommand "90_copy_deps" "xcopy %ORIGINAL_DIR%\_dest\bin\* C:\VstPlugins\hard_clapx64\SfgGenerator\ /S /I /F /R /Y /EXCLUDE:_copyExcludes.txt" && cd>NUL || Goto :END
+CALL :doCommand "95_copy_resources" "xcopy %ORIGINAL_DIR%\_dest\resources\* C:\VstPlugins\hard_clapx64\SfgGenerator\ /S /I /F /R /Y /EXCLUDE:_copyExcludes.txt" && cd>NUL || Goto :END
 CALL :doCommand "99_copy_built_clap" "xcopy %ORIGINAL_DIR%\_dest\bin\SfgGenerator.clap C:\VstPlugins\hard_clapx64\ /S /I /F /R /Y" && cd>NUL || Goto :END
 
 echo Success

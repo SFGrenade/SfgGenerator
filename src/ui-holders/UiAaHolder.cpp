@@ -46,11 +46,11 @@ bool UiAaHolder::clap_create( std::string const& api, bool is_floating ) {
     return false;
   }
   QApplication::setLibraryPaths( {
-      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" ).string() ),
-      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "iconengines" ).string() ),
-      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "imageformats" ).string() ),
-      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "platforms" ).string() ),
-      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "qt" / "styles" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "iconengines" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "imageformats" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "platforms" ).string() ),
+      QString::fromStdString( ( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "styles" ).string() ),
   } );
   QApplication::setAttribute( Qt::AA_PluginApplication );
   impl_->qtApp = new QApplication( impl_->argc, impl_->argv );

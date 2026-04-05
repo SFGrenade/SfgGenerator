@@ -58,10 +58,10 @@ void* sfg_load_symbol( LoadedDllHandle library, const char* name ) {
 
 void load_additional_libraries( std::filesystem::path const& base_path ) {
 #if defined( _WIN32 ) || defined( _WIN64 )
-  SetDllDirectoryW( ( base_path / "qt" ).wstring().c_str() );
+  SetDllDirectoryW( ( base_path / "SfgGenerator" ).wstring().c_str() );
 #endif
 
-  g_sfgGeneratorMainHandle = sfg_load_library( base_path / "qt", "SfgGeneratorMain" );
+  g_sfgGeneratorMainHandle = sfg_load_library( base_path / "SfgGenerator", "SfgGeneratorMain" );
 
   entry_init = reinterpret_cast< ClapEntryInitFunc >( sfg_load_symbol( g_sfgGeneratorMainHandle, "entry_init" ) );
   entry_deinit = reinterpret_cast< ClapEntryDeinitFunc >( sfg_load_symbol( g_sfgGeneratorMainHandle, "entry_deinit" ) );
