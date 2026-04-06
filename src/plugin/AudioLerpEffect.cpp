@@ -11,7 +11,7 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
-AudioLerpEffect::AudioLerpEffect() : _base_() {
+AudioLerpEffect::AudioLerpEffect() : _base_(), sampleQueueIn1_( 4096 ), sampleQueueIn2_( 4096 ), sampleQueueOut_( 4096 ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
@@ -230,25 +230,39 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
 
     /* process every samples until the next event */
     for( ; i < next_ev_frame; ++i ) {
+      float in1Mono = 0.0f;
+      float in2Mono = 0.0f;
+      float outMono = 0.0f;
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
-        double out = 0.0;
+        float in1 = 0.0f;
+        float in2 = 0.0f;
+        float out = 0.0f;
         if( active_ && process_ ) {
-          if( process->audio_inputs[0].data32 )
-            out += ( 1.0 - state_.a_b() ) * process->audio_inputs[0].data32[c][i];
-          else if( process->audio_inputs[0].data64 )
-            out += ( 1.0 - state_.a_b() ) * process->audio_inputs[0].data64[c][i];
-
-          if( process->audio_inputs[1].data32 )
-            out += state_.a_b() * process->audio_inputs[1].data32[c][i];
-          else if( process->audio_inputs[1].data64 )
-            out += state_.a_b() * process->audio_inputs[1].data64[c][i];
+          if( process->audio_inputs[0].data32 ) {
+            in1 = ( 1.0 - state_.a_b() ) * process->audio_inputs[0].data32[c][i];
+          } else if( process->audio_inputs[0].data64 ) {
+            in1 = ( 1.0 - state_.a_b() ) * process->audio_inputs[0].data64[c][i];
+          }
+          if( process->audio_inputs[1].data32 ) {
+            in2 = state_.a_b() * process->audio_inputs[1].data32[c][i];
+          } else if( process->audio_inputs[1].data64 ) {
+            in2 = state_.a_b() * process->audio_inputs[1].data64[c][i];
+          }
+          out = ( ( 1.0 - state_.a_b() ) * in1 ) + ( state_.a_b() * in2 );
         }
+        in1Mono += in1;
+        in2Mono += in2;
+        outMono += out;
         // store output
-        if( process->audio_outputs[0].data32 )
-          process->audio_outputs[0].data32[c][i] = static_cast< float >( out );
-        else if( process->audio_outputs[0].data64 )
+        if( process->audio_outputs[0].data32 ) {
+          process->audio_outputs[0].data32[c][i] = out;
+        } else if( process->audio_outputs[0].data64 ) {
           process->audio_outputs[0].data64[c][i] = out;
+        }
       }
+      sampleQueueIn1_.push( in1Mono / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueIn2_.push( in2Mono / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueOut_.push( outMono / float( process->audio_outputs[0].channel_count ) );
     }
   }
 
@@ -335,7 +349,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
   guiRootWidget_ = std::make_shared< Widget >();
   guiRootWidget_->SetPadding( 1.0f );
   {
-    guiWidgetMainLabel_ = std::make_shared< Label >( "Audio A<=>B Interpolation", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.5f } );
+    guiWidgetMainLabel_ = std::make_shared< Label >( "Audio A<=>B Interpolation", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.33f } );
     guiWidgetMainLabel_->InitUi( guiRootWidget_ );
     guiWidgetMainLabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
     guiWidgetMainLabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
@@ -346,7 +360,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetMainLabel_->SetPadding( 1.0f );
   }
   {
-    guiWidgetALabel_ = std::make_shared< Label >( "A", SDL_FRect{ 0.0f, 0.5f, 0.125f, 0.5f } );
+    guiWidgetALabel_ = std::make_shared< Label >( "A", SDL_FRect{ 0.0f, 0.33f, 0.125f, 0.33f } );
     guiWidgetALabel_->InitUi( guiRootWidget_ );
     guiWidgetALabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Right );
     guiWidgetALabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
@@ -357,7 +371,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetALabel_->SetPadding( 1.0f );
   }
   {
-    guiWidgetBLabel_ = std::make_shared< Label >( "B", SDL_FRect{ 0.875f, 0.5f, 0.125f, 0.5f } );
+    guiWidgetBLabel_ = std::make_shared< Label >( "B", SDL_FRect{ 0.875f, 0.33f, 0.125f, 0.33f } );
     guiWidgetBLabel_->InitUi( guiRootWidget_ );
     guiWidgetBLabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Left );
     guiWidgetBLabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
@@ -368,7 +382,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetBLabel_->SetPadding( 1.0f );
   }
   {
-    guiWidgetAbSlider_ = std::make_shared< Slider >( Slider::Orientation::Horizontal, SDL_FRect{ 0.125f, 0.5f, 0.75f, 0.5f } );
+    guiWidgetAbSlider_ = std::make_shared< Slider >( Slider::Orientation::Horizontal, SDL_FRect{ 0.125f, 0.33f, 0.75f, 0.33f } );
     guiWidgetAbSlider_->InitUi( guiRootWidget_ );
     guiWidgetAbSlider_->SetMinValue( 0.0f );
     guiWidgetAbSlider_->SetMaxValue( 1.0f );
@@ -376,6 +390,17 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetAbSlider_->SetCurrentValue( state_.a_b() );
     guiWidgetAbSlider_->SetPadding( 1.0f );
     guiWidgetAbSlider_->OnValueChanged( [this]( float value ) { state_.set_a_b( value ); } );
+  }
+  {
+    guiWidgetAInput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.0f, 0.67f, 0.25f, 0.33f } );
+    guiWidgetAInput_->InitUi( guiRootWidget_ );
+    guiWidgetAInput_->SetPadding( 1.0f );
+    guiWidgetOutput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.375f, 0.67f, 0.25f, 0.33f } );
+    guiWidgetOutput_->InitUi( guiRootWidget_ );
+    guiWidgetOutput_->SetPadding( 1.0f );
+    guiWidgetBInput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.75f, 0.67f, 0.25f, 0.33f } );
+    guiWidgetBInput_->InitUi( guiRootWidget_ );
+    guiWidgetBInput_->SetPadding( 1.0f );
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
@@ -727,6 +752,9 @@ void AudioLerpEffect::guiTimerCallback() {
     guiRootWidget_->SetW( static_cast< float >( winW ) );
     guiRootWidget_->SetH( static_cast< float >( winH ) );
   }
+  sampleQueueIn1_.consume_all( [this]( float sample ) { guiWidgetAInput_->PushSample( sample ); } );
+  sampleQueueIn2_.consume_all( [this]( float sample ) { guiWidgetBInput_->PushSample( sample ); } );
+  sampleQueueOut_.consume_all( [this]( float sample ) { guiWidgetOutput_->PushSample( sample ); } );
   {
     if( state_.a_b() != guiWidgetAbSlider_->GetCurrentValue() ) {
       guiWidgetAbSlider_->SetCurrentValue( state_.a_b() );
