@@ -201,14 +201,18 @@ void DrawHelper::drawFillCircle( std::shared_ptr< SDL_Renderer > renderer, SDL_C
 #include <signal.h>
 #include <time.h>
 
-void setParentWindow( std::shared_ptr< SDL_Window > window, sf::WindowHandle parent ) {}
+void setParentWindow( std::shared_ptr< SDL_Window > window, clap_window_t const* parent ) {
+  // todo: fixme: missing implementation
+}
 #endif
 
 #if defined( SFG_GEN_IS_MACOS )
 // System includes
 #include <CoreFoundation/CoreFoundation.h>
 
-void setParentWindow( std::shared_ptr< SDL_Window > window, sf::WindowHandle parent ) {}
+void setParentWindow( std::shared_ptr< SDL_Window > window, clap_window_t const* parent ) {
+  // todo: fixme: missing implementation
+}
 #endif
 
 #if defined( SFG_GEN_IS_WINDOWS )
