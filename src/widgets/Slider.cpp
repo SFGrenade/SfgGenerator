@@ -1,9 +1,6 @@
 // Header assigned to this source
 #include "widgets/Slider.hpp"
 
-#include "SDL3/SDL_rect.h"
-
-
 Slider::Slider( Slider::Orientation orientation, SDL_FRect position ) : _base_( position ), orientation_( orientation ) {}
 
 Slider::~Slider() {}

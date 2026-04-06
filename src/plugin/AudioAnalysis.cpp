@@ -426,15 +426,11 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
                  static_cast< void* >( this ),
                  static_cast< void* >( guiWindow_.get() ) );
 
-  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_GetRenderer( guiWindow_.get() ) );
-  if( !guiWindowRenderer_ ) {
-    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] window has no renderer, creating new one", __FUNCTION__, static_cast< void* >( this ) );
-    guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
-      if( ptr ) {
-        SDL_DestroyRenderer( ptr );
-      }
-    } );
-  }
+  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
+    if( ptr ) {
+      SDL_DestroyRenderer( ptr );
+    }
+  } );
   SFG_LOG_TRACE( host_,
                  host_log_,
                  "[{:s}] [{:p}] window renderer at {:p}",
