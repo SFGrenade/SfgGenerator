@@ -10,6 +10,9 @@ void Button::OnLogic() {
   if( !IsVisibleHierarchy() ) {
     return;
   }
+  if( !IsActiveHierarchy() ) {
+    return;
+  }
 
   if( mbPressed_ ) {
     callback_();

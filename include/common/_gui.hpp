@@ -59,4 +59,15 @@ class InputManager {
   static InputManager::MouseData mouse_;
 };
 
+class DrawHelper {
+  public:
+  static SDL_Point centerOf( SDL_Rect const& rect );
+  static SDL_FPoint centerOf( SDL_FRect const& rect );
+  static void drawCircle( std::shared_ptr< SDL_Renderer > renderer, SDL_Color const& colour, SDL_FPoint const& center, float radius, int numSegments = 8 );
+  static void drawFillCircle( std::shared_ptr< SDL_Renderer > renderer, SDL_Color const& colour, SDL_FPoint const& center, float radius, int numSegments = 8 );
+
+  private:
+  static std::map< int, std::vector< int > > indicesCache_;
+};
+
 void setParentWindow( std::shared_ptr< SDL_Window > window, clap_window_t const* parent );

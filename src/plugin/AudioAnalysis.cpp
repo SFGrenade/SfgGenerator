@@ -3,6 +3,7 @@
 
 // Project includes
 #include "widgets/HorizontalDbfsDisplay.hpp"
+#include "widgets/Slider.hpp"
 
 // C++ std includes
 #include <algorithm>
@@ -382,29 +383,39 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   InputManager::init();
 
   guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_->SetPadding( 1.0f );
   {
     guiWidgetMomentaryRms_ = std::make_shared< HorizontalDbfsDisplay >( "Momentary RMS", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.125f } );
     guiWidgetMomentaryRms_->InitUi( guiRootWidget_ );
-    guiWidgetMomentaryRms_->SetPadding( 2.0f );
+    guiWidgetMomentaryRms_->SetPadding( 1.0f );
     guiWidgetMomentaryRms_->SetUnit( "dBFS" );
   }
   {
     guiWidgetShortTermRms_ = std::make_shared< HorizontalDbfsDisplay >( "Short-Term RMS", SDL_FRect{ 0.0f, 0.125f, 1.0f, 0.125f } );
     guiWidgetShortTermRms_->InitUi( guiRootWidget_ );
-    guiWidgetShortTermRms_->SetPadding( 2.0f );
+    guiWidgetShortTermRms_->SetPadding( 1.0f );
     guiWidgetShortTermRms_->SetUnit( "dBFS" );
   }
   {
     guiWidgetMomentaryLufs_ = std::make_shared< HorizontalDbfsDisplay >( "Momentary LUFS", SDL_FRect{ 0.0f, 0.25f, 1.0f, 0.125f } );
     guiWidgetMomentaryLufs_->InitUi( guiRootWidget_ );
-    guiWidgetMomentaryLufs_->SetPadding( 2.0f );
+    guiWidgetMomentaryLufs_->SetPadding( 1.0f );
     guiWidgetMomentaryLufs_->SetUnit( "LUFS" );
   }
   {
     guiWidgetShortTermLufs_ = std::make_shared< HorizontalDbfsDisplay >( "Short-Term LUFS", SDL_FRect{ 0.0f, 0.375f, 1.0f, 0.125f } );
     guiWidgetShortTermLufs_->InitUi( guiRootWidget_ );
-    guiWidgetShortTermLufs_->SetPadding( 2.0f );
+    guiWidgetShortTermLufs_->SetPadding( 1.0f );
     guiWidgetShortTermLufs_->SetUnit( "LUFS" );
+  }
+  {
+    std::shared_ptr< Slider > tmp = std::make_shared< Slider >( Slider::Orientation::Horizontal, SDL_FRect{ 0.0f, 0.5f, 1.0f, 0.5f } );
+    tmp->InitUi( guiRootWidget_ );
+    tmp->SetMinValue( 0.0f );
+    tmp->SetMaxValue( 1.0f );
+    tmp->SetDefaultValue( 0.5f );
+    tmp->SetCurrentValue( 0.25f );
+    tmp->SetPadding( 1.0f );
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
@@ -436,7 +447,7 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_GetRenderer( guiWindow_.get() ) );
   if( !guiWindowRenderer_ ) {
     SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] window has no renderer, creating new one", __FUNCTION__, static_cast< void* >( this ) );
-    guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), SDL_SOFTWARE_RENDERER ), []( SDL_Renderer* ptr ) {
+    guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
       if( ptr ) {
         SDL_DestroyRenderer( ptr );
       }

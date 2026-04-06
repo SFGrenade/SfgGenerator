@@ -1,6 +1,9 @@
 // Header assigned to this source
 #include "common/_gui.hpp"
 
+// C++ std includes
+#include <numbers>
+
 std::unordered_map< SDL_Keycode, InputManager::KeyData > InputManager::keys_;
 InputManager::MouseData InputManager::mouse_;
 
@@ -140,6 +143,57 @@ SDL_FPoint* InputManager::GetMouseWheel() {
 
 SDL_FPoint* InputManager::GetMouseWheelPrecise() {
   return &InputManager::mouse_.wheel_precise;
+}
+
+std::map< int, std::vector< int > > DrawHelper::indicesCache_;
+
+SDL_Point DrawHelper::centerOf( SDL_Rect const& rect ) {
+  return { rect.x + rect.w / 2, rect.y + rect.h / 2 };
+}
+
+SDL_FPoint DrawHelper::centerOf( SDL_FRect const& rect ) {
+  return { rect.x + rect.w / 2.0f, rect.y + rect.h / 2.0f };
+}
+
+void DrawHelper::drawCircle( std::shared_ptr< SDL_Renderer > renderer, SDL_Color const& colour, SDL_FPoint const& center, float radius, int numSegments ) {
+  std::vector< SDL_FPoint > points( numSegments + 1 );
+  for( int i = 0; i < points.size(); i++ ) {
+    float angle = 2.0f * std::numbers::pi_v< float > * float( i ) / float( numSegments );
+    points[i].x = center.x + radius * std::cos( angle );
+    points[i].y = center.y + radius * std::sin( angle );
+  }
+  SDL_SetRenderDrawColor( renderer.get(), colour.r, colour.g, colour.b, colour.a );
+  SDL_RenderLines( renderer.get(), points.data(), points.size() );
+}
+
+void DrawHelper::drawFillCircle( std::shared_ptr< SDL_Renderer > renderer, SDL_Color const& colour, SDL_FPoint const& center, float radius, int numSegments ) {
+  std::vector< SDL_Vertex > points( numSegments );
+  for( int i = 0; i < points.size(); i++ ) {
+    float angle = 2.0f * std::numbers::pi_v< float > * float( i ) / float( points.size() );
+    points[i].position.x = center.x + radius * std::cos( angle );
+    points[i].position.y = center.y + radius * std::sin( angle );
+    points[i].color.r = float( colour.r ) / float( 0xff );
+    points[i].color.g = float( colour.g ) / float( 0xff );
+    points[i].color.b = float( colour.b ) / float( 0xff );
+    points[i].color.a = float( colour.a ) / float( 0xff );
+  }
+  decltype( indicesCache_ )::iterator iter = indicesCache_.find( numSegments );
+  if( iter == indicesCache_.end() ) {
+    std::vector< int > indices;
+    for( int i = 1; i <= points.size(); i++ ) {
+      indices.push_back( 0 );
+      indices.push_back( ( i ) % points.size() );
+      indices.push_back( ( i + 1 ) % points.size() );
+      if( int( i + 1 ) == int( points.size() - 1 ) ) {
+        break;
+      }
+    }
+    auto tmp = indicesCache_.insert( { numSegments, indices } );
+    if( tmp.second ) {
+      iter = tmp.first;
+    }
+  }
+  SDL_RenderGeometry( renderer.get(), nullptr, points.data(), points.size(), iter->second.data(), iter->second.size() );
 }
 
 #if defined( SFG_GEN_IS_LINUX )

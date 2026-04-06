@@ -53,7 +53,7 @@ void Widget::OnLogic() {
     return;
   }
 
-  if( !( justSwitchedVisible_ || justSwitchedActive_ ) ) {
+  if( IsActiveHierarchy() && !( justSwitchedVisible_ || justSwitchedActive_ ) ) {
     cursorHovering_ = SDL_PointInRectFloat( InputManager::GetMouse(), &global_position_ );
     mbPressed_ = cursorHovering_ && InputManager::IsMouseButtonPressed( 1 );
     mbDown_ = cursorHovering_ && InputManager::IsMouseButtonDown( 1 );

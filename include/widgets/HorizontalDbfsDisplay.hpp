@@ -31,6 +31,8 @@ class HorizontalDbfsDisplay : public Widget {
   void SetUnit( std::string const& value );
 
   private:
+  static constexpr float const MIN_DBFS_ = -70.0f;
+  static constexpr float const MAX_DBFS_ = 10.0f;
   std::string textDisplay_ = "";
   float dBFS_ = -70.0f;
   std::string unit_ = "dBFS";

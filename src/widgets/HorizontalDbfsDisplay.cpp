@@ -48,12 +48,13 @@ float HorizontalDbfsDisplay::GetDbfs() {
 }
 
 void HorizontalDbfsDisplay::SetDbfs( float dBFS ) {
-  dBFS_ = std::clamp( dBFS, -70.0f, 10.0f );
-  valueLabel_->SetText( fmt::format( "{:.2f} {:s}", dBFS_, unit_ ) );
-
-  float const minDbfs = -70.0f;
-  float const maxDbfs = 10.0f;
-  barDisplay_->SetValue( ( dBFS_ - minDbfs ) / ( maxDbfs - minDbfs ) );
+  dBFS_ = std::clamp( dBFS, MIN_DBFS_, MAX_DBFS_ );
+  if( dBFS_ <= MIN_DBFS_ ) {
+    valueLabel_->SetText( "Silence" );
+  } else {
+    valueLabel_->SetText( fmt::format( "{:.2f} {:s}", dBFS_, unit_ ) );
+  }
+  barDisplay_->SetValue( ( dBFS_ - MIN_DBFS_ ) / ( MAX_DBFS_ - MIN_DBFS_ ) );
 }
 
 std::string HorizontalDbfsDisplay::GetUnit() {
@@ -62,5 +63,9 @@ std::string HorizontalDbfsDisplay::GetUnit() {
 
 void HorizontalDbfsDisplay::SetUnit( std::string const& value ) {
   unit_ = value;
-  valueLabel_->SetText( fmt::format( "{:.2f} {:s}", dBFS_, unit_ ) );
+  if( dBFS_ <= MIN_DBFS_ ) {
+    valueLabel_->SetText( "Silence" );
+  } else {
+    valueLabel_->SetText( fmt::format( "{:.2f} {:s}", dBFS_, unit_ ) );
+  }
 }
