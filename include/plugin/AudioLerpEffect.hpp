@@ -1,11 +1,14 @@
 #pragma once
 
 // Project includes
+#include "common/Timer.hpp"
 #include "common/_clap.hpp"
 #include "common/_fmt.hpp"
 #include "plugin/AudioLerpEffect.pb.h"
 #include "plugin/BasePlugin.hpp"
-#include "ui-holders/UiAleHolder.hpp"
+#include "widgets/Label.hpp"
+#include "widgets/Slider.hpp"
+#include "widgets/Widget.hpp"
 
 // C++ std includes
 #include <cstdint>
@@ -67,7 +70,16 @@ class AudioLerpEffect : BasePlugin {
   bool supports_state() const override;
 
   protected:
-  UiAleHolder uiAleHolder_;
+  std::shared_ptr< Widget > guiRootWidget_ = nullptr;
+  std::shared_ptr< Label > guiWidgetMainLabel_ = nullptr;
+  std::shared_ptr< Label > guiWidgetALabel_ = nullptr;
+  std::shared_ptr< Label > guiWidgetBLabel_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetAbSlider_ = nullptr;
+  std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
+  std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
+  std::unique_ptr< Timer > guiTimer_ = nullptr;
+
+  void guiTimerCallback();
 
   // members to save and load
   protected:

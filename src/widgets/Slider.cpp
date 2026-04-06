@@ -17,7 +17,15 @@ void Slider::OnLogic() {
     return;
   }
 
-  // todo: do slider things here
+  if( !isDragging_ && ( InputManager::GetMouseButtonClicks( 1 ) >= 2 ) ) {
+    // user double-clicked (or more clicks, idc tbh)
+    currentValue_ = defaultValue_;
+    if( valueChangedCallback_ ) {
+      valueChangedCallback_( currentValue_ );
+    }
+    return;
+  }
+
   if( isDragging_ ) {
     float offset = 0.0f;
     SDL_FPoint* mousePos = InputManager::GetMouse();

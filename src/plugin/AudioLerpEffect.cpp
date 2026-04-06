@@ -31,9 +31,6 @@ bool AudioLerpEffect::init( void ) {
   bool ret = _base_::init();
 
   logger_ = logger_->clone( "AudioLerpEffect" );
-  uiAleHolder_.set_logger( logger_->clone( "UiAleHolder" ) );
-  uiAleHolder_.set_host( host_ );
-  uiAleHolder_.set_state( &state_ );
 
   state_.Clear();
   state_.set_gui_width( 300 );
@@ -324,20 +321,126 @@ bool AudioLerpEffect::gui_get_preferred_api( std::string& out_api, bool* out_is_
 
 bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
-  bool ret = _base_::gui_create( api, is_floating );
-  return ret || uiAleHolder_.clap_create( api, is_floating );
+
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
+  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+  if( !TTF_Init() ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL_TTF: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+
+  InputManager::init();
+
+  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_->SetPadding( 1.0f );
+  {
+    guiWidgetMainLabel_ = std::make_shared< Label >( "Audio A<=>B Interpolation", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.5f } );
+    guiWidgetMainLabel_->InitUi( guiRootWidget_ );
+    guiWidgetMainLabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
+    guiWidgetMainLabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    guiWidgetMainLabel_->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    guiWidgetMainLabel_->SetFontSize( 20 );
+    guiWidgetMainLabel_->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    guiWidgetMainLabel_->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    guiWidgetMainLabel_->SetPadding( 1.0f );
+  }
+  {
+    guiWidgetALabel_ = std::make_shared< Label >( "A", SDL_FRect{ 0.0f, 0.5f, 0.125f, 0.5f } );
+    guiWidgetALabel_->InitUi( guiRootWidget_ );
+    guiWidgetALabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Right );
+    guiWidgetALabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    guiWidgetALabel_->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    guiWidgetALabel_->SetFontSize( 20 );
+    guiWidgetALabel_->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    guiWidgetALabel_->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    guiWidgetALabel_->SetPadding( 1.0f );
+  }
+  {
+    guiWidgetBLabel_ = std::make_shared< Label >( "B", SDL_FRect{ 0.875f, 0.5f, 0.125f, 0.5f } );
+    guiWidgetBLabel_->InitUi( guiRootWidget_ );
+    guiWidgetBLabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Left );
+    guiWidgetBLabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    guiWidgetBLabel_->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    guiWidgetBLabel_->SetFontSize( 20 );
+    guiWidgetBLabel_->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    guiWidgetBLabel_->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    guiWidgetBLabel_->SetPadding( 1.0f );
+  }
+  {
+    guiWidgetAbSlider_ = std::make_shared< Slider >( Slider::Orientation::Horizontal, SDL_FRect{ 0.125f, 0.5f, 0.75f, 0.5f } );
+    guiWidgetAbSlider_->InitUi( guiRootWidget_ );
+    guiWidgetAbSlider_->SetMinValue( 0.0f );
+    guiWidgetAbSlider_->SetMaxValue( 1.0f );
+    guiWidgetAbSlider_->SetDefaultValue( 0.5f );
+    guiWidgetAbSlider_->SetCurrentValue( state_.a_b() );
+    guiWidgetAbSlider_->SetPadding( 1.0f );
+    guiWidgetAbSlider_->OnValueChanged( [this]( float value ) { state_.set_a_b( value ); } );
+  }
+
+  SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
+  if( !is_floating ) {
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+  } else {
+    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
+  }
+  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
+    if( ptr ) {
+      SDL_HideWindow( ptr );
+      SDL_DestroyWindow( ptr );
+    }
+  } );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window created at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindow_.get() ) );
+
+  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_GetRenderer( guiWindow_.get() ) );
+  if( !guiWindowRenderer_ ) {
+    SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] window has no renderer, creating new one", __FUNCTION__, static_cast< void* >( this ) );
+    guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
+      if( ptr ) {
+        SDL_DestroyRenderer( ptr );
+      }
+    } );
+  }
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window renderer at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindowRenderer_.get() ) );
+  SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+
+  guiTimer_ = Timer::createNative( 10, std::bind( &AudioLerpEffect::guiTimerCallback, this ) );
+  guiTimer_->start();
+  return true;
 }
 
 void AudioLerpEffect::gui_destroy( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  uiAleHolder_.clap_destroy();
-  _base_::gui_destroy();
+  guiTimer_->stop();
+  guiTimer_.reset();
+  guiWindowRenderer_.reset();
+  guiWindow_.reset();
+
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
+  TTF_Quit();
+  SDL_Quit();
 }
 
 bool AudioLerpEffect::gui_set_scale( double scale ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
-  bool ret = _base_::gui_set_scale( scale );
-  return ret || uiAleHolder_.clap_set_scale( scale );
+  return false;
 }
 
 bool AudioLerpEffect::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
@@ -348,14 +451,13 @@ bool AudioLerpEffect::gui_get_size( uint32_t* out_width, uint32_t* out_height ) 
                  static_cast< void* >( this ),
                  static_cast< void* >( out_width ),
                  static_cast< void* >( out_height ) );
-  bool ret = _base_::gui_get_size( out_width, out_height );
-  return ret || uiAleHolder_.clap_get_size( out_width, out_height );
+  SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
+  return true;
 }
 
 bool AudioLerpEffect::gui_can_resize( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_can_resize();
-  return ret || uiAleHolder_.clap_can_resize();
+  return ( SDL_GetWindowFlags( guiWindow_.get() ) & SDL_WINDOW_RESIZABLE );
 }
 
 bool AudioLerpEffect::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
@@ -366,8 +468,7 @@ bool AudioLerpEffect::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints )
                  static_cast< void* >( this ),
                  __FUNCTION__,
                  static_cast< void* >( out_hints ) );
-  bool ret = _base_::gui_get_resize_hints( out_hints );
-  return ret || uiAleHolder_.clap_get_resize_hints( out_hints );
+  return false;
 }
 
 bool AudioLerpEffect::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
@@ -378,44 +479,60 @@ bool AudioLerpEffect::gui_adjust_size( uint32_t* out_width, uint32_t* out_height
                  static_cast< void* >( this ),
                  *out_width,
                  *out_height );
-  bool ret = _base_::gui_adjust_size( out_width, out_height );
-  return ret || uiAleHolder_.clap_adjust_size( out_width, out_height );
+  gui_set_size( *out_width, *out_height );
+  gui_get_size( out_width, out_height );
+  state_.set_gui_width( *out_width );
+  state_.set_gui_height( *out_height );
+  return true;
 }
 
 bool AudioLerpEffect::gui_set_size( uint32_t width, uint32_t height ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
-  bool ret = _base_::gui_set_size( width, height );
-  return ret || uiAleHolder_.clap_set_size( width, height );
+  SDL_SetWindowSize( guiWindow_.get(), width, height );
+  state_.set_gui_width( width );
+  state_.set_gui_height( height );
+  return true;
 }
 
 bool AudioLerpEffect::gui_set_parent( clap_window_t const* window ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_parent( window );
-  return ret || uiAleHolder_.clap_set_parent( window );
+
+  if( window->api == CLAP_WINDOW_API_WIN32 ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_COCOA ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_X11 ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_WAYLAND ) {
+    setParentWindow( guiWindow_, window );
+  } else {
+    setParentWindow( guiWindow_, window );
+  }
+  SDL_SetWindowPosition( guiWindow_.get(), 0, 0 );
+  return true;
 }
 
 bool AudioLerpEffect::gui_set_transient( clap_window_t const* window ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_transient( window );
-  return ret || uiAleHolder_.clap_set_transient( window );
+  SDL_RaiseWindow( guiWindow_.get() );
+  return true;
 }
 
 void AudioLerpEffect::gui_suggest_title( std::string const& title ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
-  _base_::gui_suggest_title( title );
-  uiAleHolder_.clap_suggest_title( title );
+  SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
 }
 
 bool AudioLerpEffect::gui_show( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_show();
-  return ret || uiAleHolder_.clap_show();
+  SDL_ShowWindow( guiWindow_.get() );
+  return true;
 }
 
 bool AudioLerpEffect::gui_hide( void ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_hide();
-  return ret || uiAleHolder_.clap_hide();
+  SDL_HideWindow( guiWindow_.get() );
+  return true;
 }
 
 uint32_t AudioLerpEffect::params_count( void ) {
@@ -572,6 +689,67 @@ bool AudioLerpEffect::supports_params() const {
 
 bool AudioLerpEffect::supports_state() const {
   return true;
+}
+
+#pragma endregion
+
+#pragma region GUI CALLBACK
+
+void AudioLerpEffect::guiTimerCallback() {
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+
+#pragma region Inputs
+  for( SDL_Event event; SDL_PollEvent( &event ) != 0; ) {
+    if( event.type == SDL_EVENT_QUIT ) {
+      // shouldn't happen since we're inside a DAW
+      break;
+    } else if( event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_HIDDEN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_SHOWN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( ( event.type == SDL_EVENT_KEY_DOWN ) || ( event.type == SDL_EVENT_KEY_UP ) ) {
+      InputManager::ProcessKeyEvent( event.key, event.type == SDL_EVENT_KEY_DOWN );
+    } else if( event.type == SDL_EVENT_MOUSE_MOTION ) {
+      InputManager::ProcessMouseMoveEvent( event.motion );
+    } else if( ( event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( event.type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
+      InputManager::ProcessMouseButtonEvent( event.button, event.type == SDL_EVENT_MOUSE_BUTTON_DOWN );
+    } else if( event.type == SDL_EVENT_MOUSE_WHEEL ) {
+      InputManager::ProcessMouseWheelEvent( event.wheel );
+    }
+  }
+#pragma endregion Inputs
+
+#pragma region Logic
+  InputManager::OnLogicUpdate_Early();
+
+  {
+    int winW;
+    int winH;
+    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    guiRootWidget_->SetW( static_cast< float >( winW ) );
+    guiRootWidget_->SetH( static_cast< float >( winH ) );
+  }
+  {
+    if( state_.a_b() != guiWidgetAbSlider_->GetCurrentValue() ) {
+      guiWidgetAbSlider_->SetCurrentValue( state_.a_b() );
+    }
+  }
+  guiRootWidget_->OnLogic();
+
+  InputManager::OnLogicUpdate_Late();
+#pragma endregion Logic
+
+#pragma region Rendering
+  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  SDL_RenderClear( guiWindowRenderer_.get() );
+
+  // actually draw stuff here
+  guiRootWidget_->OnRender( guiWindowRenderer_ );
+
+  SDL_RenderPresent( guiWindowRenderer_.get() );
+#pragma endregion Rendering
 }
 
 #pragma endregion

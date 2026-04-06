@@ -216,6 +216,9 @@ void setParentWindow( std::shared_ptr< SDL_Window > window, sf::WindowHandle par
 #if !defined( WIN32_LEAN_AND_MEAN )
 #define WIN32_LEAN_AND_MEAN
 #endif
+#if !defined( NOMINMAX )
+#define NOMINMAX
+#endif
 #include <Windows.h>
 
 void setParentWindow( std::shared_ptr< SDL_Window > window, clap_window_t const* parent ) {

@@ -8,7 +8,7 @@
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
 #include "widgets/HorizontalDbfsDisplay.hpp"
-#include "widgets/widget.hpp"
+#include "widgets/Widget.hpp"
 
 // Other lib includes
 #include <Iir.h>

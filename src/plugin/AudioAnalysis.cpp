@@ -1,10 +1,6 @@
 // Header assigned to this source
 #include "plugin/AudioAnalysis.hpp"
 
-// Project includes
-#include "widgets/HorizontalDbfsDisplay.hpp"
-#include "widgets/Slider.hpp"
-
 // C++ std includes
 #include <algorithm>
 #include <array>
@@ -42,9 +38,6 @@ bool AudioAnalysis::init( void ) {
   bool ret = _base_::init();
 
   logger_ = logger_->clone( "AudioAnalysis" );
-  // uiAaHolder_.set_logger( logger_->clone( "UiAaHolder" ) );
-  // uiAaHolder_.set_host( host_ );
-  // uiAaHolder_.set_state( &state_ );
 
   state_.Clear();
   state_.set_gui_width( 300 );
@@ -66,7 +59,6 @@ bool AudioAnalysis::activate( double sample_rate, uint32_t min_frames_count, uin
                  max_frames_count );
   bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
 
-  // uiAaHolder_.set_sample_rate( sample_rate );
   rmsMomentaryValueBuffer_.set_capacity( sample_rate * 0.4 );
   lufsMomentaryValueBuffer_.set_capacity( sample_rate * 0.4 );
   kWeightingFilterHighShelf_.setup( sample_rate, 2000.0, 4.0 );
@@ -295,7 +287,6 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
             out = float( process->audio_inputs[0].data64[c][i] );
         }
 
-        // uiAaHolder_.push_sample( out, c );
         monoOut += out;
 
         // store output
@@ -407,15 +398,6 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetShortTermLufs_->InitUi( guiRootWidget_ );
     guiWidgetShortTermLufs_->SetPadding( 1.0f );
     guiWidgetShortTermLufs_->SetUnit( "LUFS" );
-  }
-  {
-    std::shared_ptr< Slider > tmp = std::make_shared< Slider >( Slider::Orientation::Horizontal, SDL_FRect{ 0.0f, 0.5f, 1.0f, 0.5f } );
-    tmp->InitUi( guiRootWidget_ );
-    tmp->SetMinValue( 0.0f );
-    tmp->SetMaxValue( 1.0f );
-    tmp->SetDefaultValue( 0.5f );
-    tmp->SetCurrentValue( 0.25f );
-    tmp->SetPadding( 1.0f );
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
