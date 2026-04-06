@@ -3,7 +3,7 @@
 // Project includes
 #include "common/_fmt.hpp"
 #include "common/_gui.hpp"
-#include "widgets/label.hpp"
+#include "widgets/Label.hpp"
 
 // C++ std includes
 #include <functional>
