@@ -3,7 +3,7 @@
 // Project includes
 #include "common/_fmt.hpp"
 #include "common/_gui.hpp"
-#include "widgets/widget.hpp"
+#include "widgets/Widget.hpp"
 
 // C++ std includes
 #include <cstdint>
