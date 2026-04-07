@@ -316,26 +316,16 @@ bool AudioLerpEffect::audio_ports_get( uint32_t index, bool is_input, clap_audio
 }
 
 bool AudioLerpEffect::gui_is_api_supported( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
   bool ret = _base_::gui_is_api_supported( api, is_floating );
   return ret || true;
 }
 
 bool AudioLerpEffect::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_api={:?}, out_is_floating={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 out_api,
-                 static_cast< void* >( out_is_floating ) );
   bool ret = _base_::gui_get_preferred_api( out_api, out_is_floating );
   return ret && false;
 }
 
 bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
-
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
   if( !SDL_Init( SDL_INIT_VIDEO ) ) {
     SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
@@ -413,7 +403,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
   if( !is_floating ) {
     SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
   } else {
-    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
+    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioLerpEffect" );
     SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
   }
   guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
@@ -448,7 +438,6 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
 }
 
 void AudioLerpEffect::gui_destroy( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   guiTimer_->stop();
   guiTimer_.reset();
   guiWindowRenderer_.reset();
@@ -460,46 +449,23 @@ void AudioLerpEffect::gui_destroy( void ) {
 }
 
 bool AudioLerpEffect::gui_set_scale( double scale ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
   return false;
 }
 
 bool AudioLerpEffect::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 static_cast< void* >( out_width ),
-                 static_cast< void* >( out_height ) );
   SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
   return true;
 }
 
 bool AudioLerpEffect::gui_can_resize( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   return ( SDL_GetWindowFlags( guiWindow_.get() ) & SDL_WINDOW_RESIZABLE );
 }
 
 bool AudioLerpEffect::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_hints={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 __FUNCTION__,
-                 static_cast< void* >( out_hints ) );
   return false;
 }
 
 bool AudioLerpEffect::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_width={:d}, out_height={:d} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 *out_width,
-                 *out_height );
   gui_set_size( *out_width, *out_height );
   gui_get_size( out_width, out_height );
   state_.set_gui_width( *out_width );
@@ -508,7 +474,6 @@ bool AudioLerpEffect::gui_adjust_size( uint32_t* out_width, uint32_t* out_height
 }
 
 bool AudioLerpEffect::gui_set_size( uint32_t width, uint32_t height ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
   SDL_SetWindowSize( guiWindow_.get(), width, height );
   state_.set_gui_width( width );
   state_.set_gui_height( height );
@@ -516,8 +481,6 @@ bool AudioLerpEffect::gui_set_size( uint32_t width, uint32_t height ) {
 }
 
 bool AudioLerpEffect::gui_set_parent( clap_window_t const* window ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-
   if( window->api == CLAP_WINDOW_API_WIN32 ) {
     setParentWindow( guiWindow_, window );
   } else if( window->api == CLAP_WINDOW_API_COCOA ) {
@@ -534,24 +497,20 @@ bool AudioLerpEffect::gui_set_parent( clap_window_t const* window ) {
 }
 
 bool AudioLerpEffect::gui_set_transient( clap_window_t const* window ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
   SDL_RaiseWindow( guiWindow_.get() );
   return true;
 }
 
 void AudioLerpEffect::gui_suggest_title( std::string const& title ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
   SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
 }
 
 bool AudioLerpEffect::gui_show( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   SDL_ShowWindow( guiWindow_.get() );
   return true;
 }
 
 bool AudioLerpEffect::gui_hide( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   SDL_HideWindow( guiWindow_.get() );
   return true;
 }

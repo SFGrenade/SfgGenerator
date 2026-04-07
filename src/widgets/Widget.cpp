@@ -75,11 +75,19 @@ void Widget::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     return;
   }
   // do rendering
-  if( IsDebug() ) {
+  if( debug_ ) {
     if( IsActiveHierarchy() ) {
       SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0xff );
     } else {
       SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0x80 );
+    }
+    SDL_RenderRect( renderer.get(), &global_position_ );
+  }
+  if( frame_ ) {
+    if( IsActiveHierarchy() ) {
+      SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff );
+    } else {
+      SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 );
     }
     SDL_RenderRect( renderer.get(), &global_position_ );
   }
@@ -96,6 +104,14 @@ bool Widget::IsDebug() {
 
 void Widget::SetDebug( bool value ) {
   debug_ = value;
+}
+
+bool Widget::IsFrame() {
+  return frame_;
+}
+
+void Widget::SetFrame( bool value ) {
+  frame_ = value;
 }
 
 bool Widget::IsVisibleHierarchy() {

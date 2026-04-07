@@ -15,7 +15,47 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
-NoiseGenerator::NoiseGenerator() : _base_() {
+// todo: fixme: adjust to NoiseGenerator::*Type
+std::array< std::string, NoiseGenerator::_pb_::SineWaveType_ARRAYSIZE > const NoiseGenerator::SINEWAVE_OPTIONS{ "StdSin", "CSin" };
+std::array< std::string, NoiseGenerator::_pb_::SquareWaveType_ARRAYSIZE > const NoiseGenerator::SQUAREWAVE_OPTIONS{ "PhaseWidth", "InversePhaseWidth" };
+std::array< std::string, NoiseGenerator::_pb_::SawWaveType_ARRAYSIZE > const NoiseGenerator::SAWWAVE_OPTIONS{ "Phase", "InversePhase" };
+std::array< std::string, NoiseGenerator::_pb_::TriangleWaveType_ARRAYSIZE > const NoiseGenerator::TRIANGLEWAVE_OPTIONS{ "ChunkLerp" };
+std::array< std::string, NoiseGenerator::_pb_::WhiteNoiseType_ARRAYSIZE > const NoiseGenerator::WHITENOISE_OPTIONS{ "StdRandom", "RandMaxRand" };
+std::array< std::string, NoiseGenerator::_pb_::PinkNoiseType_ARRAYSIZE > const NoiseGenerator::PINKNOISE_OPTIONS{ "PaulKellettRefined",
+                                                                                                                  "PaulKellettEconomy",
+                                                                                                                  "VossMcCartney",
+                                                                                                                  "IirFilterApproximation" };
+std::array< std::string, NoiseGenerator::_pb_::RedNoiseType_ARRAYSIZE > const NoiseGenerator::REDNOISE_OPTIONS{ "BasicIntegration",
+                                                                                                                "LeakyIntegration",
+                                                                                                                "IntegerWalk",
+                                                                                                                "OnePoleIirFilter",
+                                                                                                                "CumulativeWithClamp" };
+std::array< std::string, NoiseGenerator::_pb_::BlueNoiseType_ARRAYSIZE > const NoiseGenerator::BLUENOISE_OPTIONS{ "VoidAndCluster",
+                                                                                                                  "PoissonDiskSampling",
+                                                                                                                  "SimpleSpectralShaping",
+                                                                                                                  "R2JitteredSampling",
+                                                                                                                  "PermutedGradientNoise" };
+std::array< std::string, NoiseGenerator::_pb_::VioletNoiseType_ARRAYSIZE > const NoiseGenerator::VIOLETNOISE_OPTIONS{ "FirstOrderDifference",
+                                                                                                                      "FirstOrderIirFilter" };
+std::array< std::string, NoiseGenerator::_pb_::GreyNoiseType_ARRAYSIZE > const NoiseGenerator::GREYNOISE_OPTIONS{ "PsychoacousticFilter",
+                                                                                                                  "AweightingInversion",
+                                                                                                                  "MultiBandpass",
+                                                                                                                  "EqualLoudnessApproximation" };
+std::array< std::string, NoiseGenerator::_pb_::VelvetNoiseType_ARRAYSIZE > const NoiseGenerator::VELVETNOISE_OPTIONS{ "SporadicImpulse" };
+
+NoiseGenerator::NoiseGenerator()
+    : _base_(),
+      sampleQueueSineWave_( 4096 ),
+      sampleQueueSquareWave_( 4096 ),
+      sampleQueueSawWave_( 4096 ),
+      sampleQueueTriangleWave_( 4096 ),
+      sampleQueueWhiteNoise_( 4096 ),
+      sampleQueuePinkNoise_( 4096 ),
+      sampleQueueRedNoise_( 4096 ),
+      sampleQueueBlueNoise_( 4096 ),
+      sampleQueueVioletNoise_( 4096 ),
+      sampleQueueGreyNoise_( 4096 ),
+      sampleQueueVelvetNoise_( 4096 ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
@@ -397,9 +437,6 @@ bool NoiseGenerator::init( void ) {
   bool ret = _base_::init();
 
   logger_ = logger_->clone( "NoiseGenerator" );
-  uiNgHolder_.set_logger( logger_->clone( "UiNgHolder" ) );
-  uiNgHolder_.set_host( host_ );
-  uiNgHolder_.set_state( &state_ );
 
   eng_ = std::mt19937_64( std::random_device{}() );
   dist_ = std::uniform_real_distribution< double >( -1.0, 1.0 );
@@ -1058,40 +1095,88 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
 
     /* process every samples until the next event */
     for( ; i < next_ev_frame; ++i ) {
+      float out_sine_wave = 0.0f;
+      float out_square_wave = 0.0f;
+      float out_saw_wave = 0.0f;
+      float out_triangle_wave = 0.0f;
+      float out_white_noise = 0.0f;
+      float out_pink_noise = 0.0f;
+      float out_red_noise = 0.0f;
+      float out_blue_noise = 0.0f;
+      float out_violet_noise = 0.0f;
+      float out_grey_noise = 0.0f;
+      float out_velvet_noise = 0.0f;
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
-        double out = 0.0;
+        float out = 0.0f;
         if( active_ && process_ ) {
-          noteMap_.foreach( [this, &out]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+          noteMap_.foreach( [this,
+                             &out,
+                             &out_sine_wave,
+                             &out_square_wave,
+                             &out_saw_wave,
+                             &out_triangle_wave,
+                             &out_white_noise,
+                             &out_pink_noise,
+                             &out_red_noise,
+                             &out_blue_noise,
+                             &out_violet_noise,
+                             &out_grey_noise,
+                             &out_velvet_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
             // A4 (note id 69) is 440.0 Hz
-            double freq = 440.0 * std::pow( 2.0, ( double( entry.first.key ) - 69.0 ) / 12.0 );
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
 
-            double sample = 0.0;
             // phase is 0.0 .. 1.0
-            sample += get_sample_sine_wave( entry.second.phase );
-            sample += get_sample_square_wave( entry.second.phase );
-            sample += get_sample_saw_wave( entry.second.phase );
-            sample += get_sample_triangle_wave( entry.second.phase );
-            sample += get_sample_white_noise( entry.second.phase );
-            sample += get_sample_pink_noise( entry.second.phase );
-            sample += get_sample_red_noise( entry.second.phase );
-            sample += get_sample_blue_noise( entry.second.phase );
-            sample += get_sample_violet_noise( entry.second.phase );
-            sample += get_sample_grey_noise( entry.second.phase );
-            sample += get_sample_velvet_noise( entry.second.phase );
+            float sample_sine_wave = get_sample_sine_wave( entry.second.phase );
+            float sample_square_wave = get_sample_square_wave( entry.second.phase );
+            float sample_saw_wave = get_sample_saw_wave( entry.second.phase );
+            float sample_triangle_wave = get_sample_triangle_wave( entry.second.phase );
+            float sample_white_noise = get_sample_white_noise( entry.second.phase );
+            float sample_pink_noise = get_sample_pink_noise( entry.second.phase );
+            float sample_red_noise = get_sample_red_noise( entry.second.phase );
+            float sample_blue_noise = get_sample_blue_noise( entry.second.phase );
+            float sample_violet_noise = get_sample_violet_noise( entry.second.phase );
+            float sample_grey_noise = get_sample_grey_noise( entry.second.phase );
+            float sample_velvet_noise = get_sample_velvet_noise( entry.second.phase );
+
+            out_sine_wave += sample_sine_wave;
+            out_square_wave += sample_square_wave;
+            out_saw_wave += sample_saw_wave;
+            out_triangle_wave += sample_triangle_wave;
+            out_white_noise += sample_white_noise;
+            out_pink_noise += sample_pink_noise;
+            out_red_noise += sample_red_noise;
+            out_blue_noise += sample_blue_noise;
+            out_violet_noise += sample_violet_noise;
+            out_grey_noise += sample_grey_noise;
+            out_velvet_noise += sample_velvet_noise;
+
+            float sample = sample_sine_wave + sample_square_wave + sample_saw_wave + sample_triangle_wave + sample_white_noise + sample_pink_noise
+                           + sample_red_noise + sample_blue_noise + sample_violet_noise + sample_grey_noise + sample_velvet_noise;
 
             entry.second.phase += freq / sample_rate_;
-            if( entry.second.phase >= 1.0 )
-              entry.second.phase -= 1.0;
+            if( entry.second.phase >= 1.0f )
+              entry.second.phase -= 1.0f;
 
             out += sample * entry.second.velocity;
           } );
         }
         // store output
         if( process->audio_outputs[0].data32 )
-          process->audio_outputs[0].data32[c][i] = static_cast< float >( out );
+          process->audio_outputs[0].data32[c][i] = out;
         else if( process->audio_outputs[0].data64 )
           process->audio_outputs[0].data64[c][i] = out;
       }
+      sampleQueueSineWave_.push( out_sine_wave / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueSquareWave_.push( out_square_wave / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueSawWave_.push( out_saw_wave / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueTriangleWave_.push( out_triangle_wave / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueWhiteNoise_.push( out_white_noise / float( process->audio_outputs[0].channel_count ) );
+      sampleQueuePinkNoise_.push( out_pink_noise / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueRedNoise_.push( out_red_noise / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueBlueNoise_.push( out_blue_noise / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueVioletNoise_.push( out_violet_noise / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueGreyNoise_.push( out_grey_noise / float( process->audio_outputs[0].channel_count ) );
+      sampleQueueVelvetNoise_.push( out_velvet_noise / float( process->audio_outputs[0].channel_count ) );
     }
   }
 
@@ -1136,143 +1221,549 @@ bool NoiseGenerator::audio_ports_get( uint32_t index, bool is_input, clap_audio_
 }
 
 bool NoiseGenerator::gui_is_api_supported( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
   bool ret = _base_::gui_is_api_supported( api, is_floating );
-  ret = ret || true;
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  return ret || true;
 }
 
 bool NoiseGenerator::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_api={:?}, out_is_floating={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 out_api,
-                 static_cast< void* >( out_is_floating ) );
   bool ret = _base_::gui_get_preferred_api( out_api, out_is_floating );
-  ret = ret && false;
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  return ret && false;
 }
 
 bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
-  bool ret = _base_::gui_create( api, is_floating );
-  ret = ret || uiNgHolder_.clap_create( api, is_floating );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
+  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+  if( !TTF_Init() ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL_TTF: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+
+  std::function< int( int, int ) > customMod = []( int val, int max ) {
+    while( val >= max )
+      val -= max;
+    while( val < 0 )
+      val += max;
+    return val;
+  };
+
+  InputManager::init();
+
+  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_->SetPadding( 5.0f );
+
+  guiWidgetSineWave_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetSquareWave_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetSawWave_ = std::make_shared< Widget >( SDL_FRect{ 2.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetTriangleWave_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetWhiteNoise_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetPinkNoise_ = std::make_shared< Widget >( SDL_FRect{ 2.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetRedNoise_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetBlueNoise_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetVioletNoise_ = std::make_shared< Widget >( SDL_FRect{ 2.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetGreyNoise_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 2.0f, 3.0f / 4.0f, 1.0f / 2.0f, 1.0f / 4.0f } );
+  guiWidgetVelvetNoise_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 2.0f, 3.0f / 4.0f, 1.0f / 2.0f, 1.0f / 4.0f } );
+
+  guiWidgetSineWavePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_sine_wave_type( _pb_::SineWaveType( customMod( int( state_.synth_sine_wave_type() ) - 1, _pb_::SineWaveType_ARRAYSIZE ) ) );
+        guiWidgetSineWaveCurrentType_->SetText( fmt::format( "Sine Wave: {:s}", _pb_::SineWaveType_Name( state_.synth_sine_wave_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetSquareWavePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_square_wave_type( _pb_::SquareWaveType( customMod( int( state_.synth_square_wave_type() ) - 1, _pb_::SquareWaveType_ARRAYSIZE ) ) );
+        guiWidgetSquareWaveCurrentType_->SetText( fmt::format( "Square Wave: {:s}", _pb_::SquareWaveType_Name( state_.synth_square_wave_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetSawWavePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_saw_wave_type( _pb_::SawWaveType( customMod( int( state_.synth_saw_wave_type() ) - 1, _pb_::SawWaveType_ARRAYSIZE ) ) );
+        guiWidgetSawWaveCurrentType_->SetText( fmt::format( "Saw Wave: {:s}", _pb_::SawWaveType_Name( state_.synth_saw_wave_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetTriangleWavePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_triangle_wave_type(
+            _pb_::TriangleWaveType( customMod( int( state_.synth_triangle_wave_type() ) - 1, _pb_::TriangleWaveType_ARRAYSIZE ) ) );
+        guiWidgetTriangleWaveCurrentType_->SetText( fmt::format( "Triangle Wave: {:s}", _pb_::TriangleWaveType_Name( state_.synth_triangle_wave_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetWhiteNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_white_noise_type( _pb_::WhiteNoiseType( customMod( int( state_.synth_white_noise_type() ) - 1, _pb_::WhiteNoiseType_ARRAYSIZE ) ) );
+        guiWidgetWhiteNoiseCurrentType_->SetText( fmt::format( "White Noise: {:s}", _pb_::WhiteNoiseType_Name( state_.synth_white_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetPinkNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_pink_noise_type( _pb_::PinkNoiseType( customMod( int( state_.synth_pink_noise_type() ) - 1, _pb_::PinkNoiseType_ARRAYSIZE ) ) );
+        guiWidgetPinkNoiseCurrentType_->SetText( fmt::format( "Pink Noise: {:s}", _pb_::PinkNoiseType_Name( state_.synth_pink_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetRedNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_red_noise_type( _pb_::RedNoiseType( customMod( int( state_.synth_red_noise_type() ) - 1, _pb_::RedNoiseType_ARRAYSIZE ) ) );
+        guiWidgetRedNoiseCurrentType_->SetText( fmt::format( "Red Noise: {:s}", _pb_::RedNoiseType_Name( state_.synth_red_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetBlueNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_blue_noise_type( _pb_::BlueNoiseType( customMod( int( state_.synth_blue_noise_type() ) - 1, _pb_::BlueNoiseType_ARRAYSIZE ) ) );
+        guiWidgetBlueNoiseCurrentType_->SetText( fmt::format( "Blue Noise: {:s}", _pb_::BlueNoiseType_Name( state_.synth_blue_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetVioletNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_violet_noise_type(
+            _pb_::VioletNoiseType( customMod( int( state_.synth_violet_noise_type() ) - 1, _pb_::VioletNoiseType_ARRAYSIZE ) ) );
+        guiWidgetVioletNoiseCurrentType_->SetText( fmt::format( "Violet Noise: {:s}", _pb_::VioletNoiseType_Name( state_.synth_violet_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetGreyNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_grey_noise_type( _pb_::GreyNoiseType( customMod( int( state_.synth_grey_noise_type() ) - 1, _pb_::GreyNoiseType_ARRAYSIZE ) ) );
+        guiWidgetGreyNoiseCurrentType_->SetText( fmt::format( "Grey Noise: {:s}", _pb_::GreyNoiseType_Name( state_.synth_grey_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetVelvetNoisePreviousType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_velvet_noise_type(
+            _pb_::VelvetNoiseType( customMod( int( state_.synth_velvet_noise_type() ) - 1, _pb_::VelvetNoiseType_ARRAYSIZE ) ) );
+        guiWidgetVelvetNoiseCurrentType_->SetText( fmt::format( "Velvet Noise: {:s}", _pb_::VelvetNoiseType_Name( state_.synth_velvet_noise_type() ) ) );
+      },
+      "<",
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+
+  guiWidgetSineWaveCurrentType_ = std::make_shared< Label >( "Sine Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetSquareWaveCurrentType_ = std::make_shared< Label >( "Square Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetSawWaveCurrentType_ = std::make_shared< Label >( "Saw Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetTriangleWaveCurrentType_ = std::make_shared< Label >( "Triangle Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetWhiteNoiseCurrentType_ = std::make_shared< Label >( "White Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetPinkNoiseCurrentType_ = std::make_shared< Label >( "Pink Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetRedNoiseCurrentType_ = std::make_shared< Label >( "Red Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetBlueNoiseCurrentType_ = std::make_shared< Label >( "Blue Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetVioletNoiseCurrentType_ = std::make_shared< Label >( "Violet Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetGreyNoiseCurrentType_ = std::make_shared< Label >( "Grey Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetVelvetNoiseCurrentType_ = std::make_shared< Label >( "Velvet Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+
+  guiWidgetSineWaveNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_sine_wave_type( _pb_::SineWaveType( customMod( int( state_.synth_sine_wave_type() ) + 1, _pb_::SineWaveType_ARRAYSIZE ) ) );
+        guiWidgetSineWaveCurrentType_->SetText( fmt::format( "Sine Wave: {:s}", _pb_::SineWaveType_Name( state_.synth_sine_wave_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetSquareWaveNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_square_wave_type( _pb_::SquareWaveType( customMod( int( state_.synth_square_wave_type() ) + 1, _pb_::SquareWaveType_ARRAYSIZE ) ) );
+        guiWidgetSquareWaveCurrentType_->SetText( fmt::format( "Square Wave: {:s}", _pb_::SquareWaveType_Name( state_.synth_square_wave_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetSawWaveNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_saw_wave_type( _pb_::SawWaveType( customMod( int( state_.synth_saw_wave_type() ) + 1, _pb_::SawWaveType_ARRAYSIZE ) ) );
+        guiWidgetSawWaveCurrentType_->SetText( fmt::format( "Saw Wave: {:s}", _pb_::SawWaveType_Name( state_.synth_saw_wave_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetTriangleWaveNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_triangle_wave_type(
+            _pb_::TriangleWaveType( customMod( int( state_.synth_triangle_wave_type() ) + 1, _pb_::TriangleWaveType_ARRAYSIZE ) ) );
+        guiWidgetTriangleWaveCurrentType_->SetText( fmt::format( "Triangle Wave: {:s}", _pb_::TriangleWaveType_Name( state_.synth_triangle_wave_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetWhiteNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_white_noise_type( _pb_::WhiteNoiseType( customMod( int( state_.synth_white_noise_type() ) + 1, _pb_::WhiteNoiseType_ARRAYSIZE ) ) );
+        guiWidgetWhiteNoiseCurrentType_->SetText( fmt::format( "White Noise: {:s}", _pb_::WhiteNoiseType_Name( state_.synth_white_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetPinkNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_pink_noise_type( _pb_::PinkNoiseType( customMod( int( state_.synth_pink_noise_type() ) + 1, _pb_::PinkNoiseType_ARRAYSIZE ) ) );
+        guiWidgetPinkNoiseCurrentType_->SetText( fmt::format( "Pink Noise: {:s}", _pb_::PinkNoiseType_Name( state_.synth_pink_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetRedNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_red_noise_type( _pb_::RedNoiseType( customMod( int( state_.synth_red_noise_type() ) + 1, _pb_::RedNoiseType_ARRAYSIZE ) ) );
+        guiWidgetRedNoiseCurrentType_->SetText( fmt::format( "Red Noise: {:s}", _pb_::RedNoiseType_Name( state_.synth_red_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetBlueNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_blue_noise_type( _pb_::BlueNoiseType( customMod( int( state_.synth_blue_noise_type() ) + 1, _pb_::BlueNoiseType_ARRAYSIZE ) ) );
+        guiWidgetBlueNoiseCurrentType_->SetText( fmt::format( "Blue Noise: {:s}", _pb_::BlueNoiseType_Name( state_.synth_blue_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetVioletNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_violet_noise_type(
+            _pb_::VioletNoiseType( customMod( int( state_.synth_violet_noise_type() ) + 1, _pb_::VioletNoiseType_ARRAYSIZE ) ) );
+        guiWidgetVioletNoiseCurrentType_->SetText( fmt::format( "Violet Noise: {:s}", _pb_::VioletNoiseType_Name( state_.synth_violet_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetGreyNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_grey_noise_type( _pb_::GreyNoiseType( customMod( int( state_.synth_grey_noise_type() ) + 1, _pb_::GreyNoiseType_ARRAYSIZE ) ) );
+        guiWidgetGreyNoiseCurrentType_->SetText( fmt::format( "Grey Noise: {:s}", _pb_::GreyNoiseType_Name( state_.synth_grey_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+  guiWidgetVelvetNoiseNextType_ = std::make_shared< Button >(
+      [this, customMod]() {
+        state_.set_synth_velvet_noise_type(
+            _pb_::VelvetNoiseType( customMod( int( state_.synth_velvet_noise_type() ) + 1, _pb_::VelvetNoiseType_ARRAYSIZE ) ) );
+        guiWidgetVelvetNoiseCurrentType_->SetText( fmt::format( "Velvet Noise: {:s}", _pb_::VelvetNoiseType_Name( state_.synth_velvet_noise_type() ) ) );
+      },
+      ">",
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+
+  guiWidgetSineWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSquareWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSawWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetTriangleWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetWhiteNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetPinkNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetRedNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetBlueNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetVioletNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetGreyNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetVelvetNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+
+  guiWidgetSquareWavePwm_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.00f, 0.25f, 0.125f, 0.75f } );
+
+  guiWidgetSineWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetSquareWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetSawWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetTriangleWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetWhiteNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetPinkNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetRedNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetBlueNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetVioletNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetGreyNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetVelvetNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+
+  guiWidgetSineWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_mix( value ); } );
+  guiWidgetSquareWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_mix( value ); } );
+  guiWidgetSawWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_saw_wave_mix( value ); } );
+  guiWidgetTriangleWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_triangle_wave_mix( value ); } );
+  guiWidgetWhiteNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_white_noise_mix( value ); } );
+  guiWidgetPinkNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_pink_noise_mix( value ); } );
+  guiWidgetRedNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_red_noise_mix( value ); } );
+  guiWidgetBlueNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_blue_noise_mix( value ); } );
+  guiWidgetVioletNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_violet_noise_mix( value ); } );
+  guiWidgetGreyNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_grey_noise_mix( value ); } );
+  guiWidgetVelvetNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_velvet_noise_mix( value ); } );
+
+  guiWidgetSquareWavePwm_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_pwm( value ); } );
+
+  std::vector< std::shared_ptr< Widget > > frames{ guiWidgetSineWave_,
+                                                   guiWidgetSquareWave_,
+                                                   guiWidgetSawWave_,
+                                                   guiWidgetTriangleWave_,
+                                                   guiWidgetWhiteNoise_,
+                                                   guiWidgetPinkNoise_,
+                                                   guiWidgetRedNoise_,
+                                                   guiWidgetBlueNoise_,
+                                                   guiWidgetVioletNoise_,
+                                                   guiWidgetGreyNoise_,
+                                                   guiWidgetVelvetNoise_ };
+  std::vector< std::shared_ptr< Button > > previousTypeButtons{ guiWidgetSineWavePreviousType_,
+                                                                guiWidgetSquareWavePreviousType_,
+                                                                guiWidgetSawWavePreviousType_,
+                                                                guiWidgetTriangleWavePreviousType_,
+                                                                guiWidgetWhiteNoisePreviousType_,
+                                                                guiWidgetPinkNoisePreviousType_,
+                                                                guiWidgetRedNoisePreviousType_,
+                                                                guiWidgetBlueNoisePreviousType_,
+                                                                guiWidgetVioletNoisePreviousType_,
+                                                                guiWidgetGreyNoisePreviousType_,
+                                                                guiWidgetVelvetNoisePreviousType_ };
+  std::vector< std::shared_ptr< Label > > currentTypeLabels{ guiWidgetSineWaveCurrentType_,
+                                                             guiWidgetSquareWaveCurrentType_,
+                                                             guiWidgetSawWaveCurrentType_,
+                                                             guiWidgetTriangleWaveCurrentType_,
+                                                             guiWidgetWhiteNoiseCurrentType_,
+                                                             guiWidgetPinkNoiseCurrentType_,
+                                                             guiWidgetRedNoiseCurrentType_,
+                                                             guiWidgetBlueNoiseCurrentType_,
+                                                             guiWidgetVioletNoiseCurrentType_,
+                                                             guiWidgetGreyNoiseCurrentType_,
+                                                             guiWidgetVelvetNoiseCurrentType_ };
+  std::vector< std::shared_ptr< Button > > nextTypeButtons{ guiWidgetSineWaveNextType_,
+                                                            guiWidgetSquareWaveNextType_,
+                                                            guiWidgetSawWaveNextType_,
+                                                            guiWidgetTriangleWaveNextType_,
+                                                            guiWidgetWhiteNoiseNextType_,
+                                                            guiWidgetPinkNoiseNextType_,
+                                                            guiWidgetRedNoiseNextType_,
+                                                            guiWidgetBlueNoiseNextType_,
+                                                            guiWidgetVioletNoiseNextType_,
+                                                            guiWidgetGreyNoiseNextType_,
+                                                            guiWidgetVelvetNoiseNextType_ };
+  std::vector< std::shared_ptr< Slider > > mixSliders{ guiWidgetSineWaveMix_,
+                                                       guiWidgetSquareWaveMix_,
+                                                       guiWidgetSawWaveMix_,
+                                                       guiWidgetTriangleWaveMix_,
+                                                       guiWidgetWhiteNoiseMix_,
+                                                       guiWidgetPinkNoiseMix_,
+                                                       guiWidgetRedNoiseMix_,
+                                                       guiWidgetBlueNoiseMix_,
+                                                       guiWidgetVioletNoiseMix_,
+                                                       guiWidgetGreyNoiseMix_,
+                                                       guiWidgetVelvetNoiseMix_ };
+  std::vector< std::shared_ptr< AudioSampleDisplay > > sampleDisplays{ guiWidgetSineWaveSamples_,
+                                                                       guiWidgetSquareWaveSamples_,
+                                                                       guiWidgetSawWaveSamples_,
+                                                                       guiWidgetTriangleWaveSamples_,
+                                                                       guiWidgetWhiteNoiseSamples_,
+                                                                       guiWidgetPinkNoiseSamples_,
+                                                                       guiWidgetRedNoiseSamples_,
+                                                                       guiWidgetBlueNoiseSamples_,
+                                                                       guiWidgetVioletNoiseSamples_,
+                                                                       guiWidgetGreyNoiseSamples_,
+                                                                       guiWidgetVelvetNoiseSamples_ };
+
+  for( auto frames : frames ) {
+    frames->InitUi( guiRootWidget_ );
+    frames->SetFrame( true );
+    frames->SetPadding( 5.0f );
+  }
+
+  for( size_t i = 0; i < previousTypeButtons.size(); i++ ) {
+    auto& button = previousTypeButtons.at( i );
+    button->InitUi( frames.at( i ) );
+    button->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
+    button->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    button->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    button->SetFontSize( 18 );
+    button->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    button->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    button->SetPadding( 5.0f );
+
+    // THIS IS TO RESET THE SELECTION AND UPDATE THE LABELS!!!
+    button->GetCallback()();
+  }
+
+  for( size_t i = 0; i < currentTypeLabels.size(); i++ ) {
+    auto& label = currentTypeLabels.at( i );
+    label->InitUi( frames.at( i ) );
+    label->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
+    label->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    label->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    label->SetFontSize( 18 );
+    label->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    label->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    label->SetPadding( 5.0f );
+  }
+
+  for( size_t i = 0; i < nextTypeButtons.size(); i++ ) {
+    auto& button = nextTypeButtons.at( i );
+    button->InitUi( frames.at( i ) );
+    button->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
+    button->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    button->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    button->SetFontSize( 18 );
+    button->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    button->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    button->SetPadding( 5.0f );
+
+    // THIS IS TO RESET THE SELECTION AND UPDATE THE LABELS!!!
+    button->GetCallback()();
+  }
+
+  for( size_t i = 0; i < mixSliders.size(); i++ ) {
+    auto& slider = mixSliders.at( i );
+    slider->InitUi( frames.at( i ) );
+    slider->SetMinValue( 0.0f );
+    slider->SetMaxValue( 1.0f );
+    slider->SetDefaultValue( 0.0f );
+    slider->SetPadding( 5.0f );
+  }
+  {
+    guiWidgetSquareWavePwm_->InitUi( guiWidgetSquareWave_ );
+    guiWidgetSquareWavePwm_->SetMinValue( 0.0f );
+    guiWidgetSquareWavePwm_->SetMaxValue( 1.0f );
+    guiWidgetSquareWavePwm_->SetDefaultValue( 0.5f );
+    guiWidgetSquareWavePwm_->SetPadding( 5.0f );
+  }
+
+  for( size_t i = 0; i < nextTypeButtons.size(); i++ ) {
+    auto& button = nextTypeButtons.at( i );
+    button->InitUi( frames.at( i ) );
+    button->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
+    button->SetVerticalAlignment( Label::VerticalAlignment::Centered );
+    button->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
+    button->SetFontSize( 18 );
+    button->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
+    button->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
+    button->SetPadding( 5.0f );
+
+    // THIS IS TO RESET THE SELECTION AND UPDATE THE LABELS!!!
+    button->GetCallback()();
+  }
+
+  guiWidgetSineWaveMix_->SetCurrentValue( state_.synth_sine_wave_mix() );
+  guiWidgetSquareWaveMix_->SetCurrentValue( state_.synth_square_wave_mix() );
+  guiWidgetSawWaveMix_->SetCurrentValue( state_.synth_saw_wave_mix() );
+  guiWidgetTriangleWaveMix_->SetCurrentValue( state_.synth_triangle_wave_mix() );
+  guiWidgetWhiteNoiseMix_->SetCurrentValue( state_.synth_white_noise_mix() );
+  guiWidgetPinkNoiseMix_->SetCurrentValue( state_.synth_pink_noise_mix() );
+  guiWidgetRedNoiseMix_->SetCurrentValue( state_.synth_red_noise_mix() );
+  guiWidgetBlueNoiseMix_->SetCurrentValue( state_.synth_blue_noise_mix() );
+  guiWidgetVioletNoiseMix_->SetCurrentValue( state_.synth_violet_noise_mix() );
+  guiWidgetGreyNoiseMix_->SetCurrentValue( state_.synth_grey_noise_mix() );
+  guiWidgetVelvetNoiseMix_->SetCurrentValue( state_.synth_velvet_noise_mix() );
+
+  guiWidgetSquareWavePwm_->SetCurrentValue( state_.synth_square_wave_pwm() );
+
+  for( size_t i = 0; i < sampleDisplays.size(); i++ ) {
+    auto& display = sampleDisplays.at( i );
+    display->InitUi( frames.at( i ) );
+    display->SetPadding( 5.0f );
+  }
+
+  SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
+  if( !is_floating ) {
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+  } else {
+    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.NoiseGenerator" );
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
+  }
+  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
+    if( ptr ) {
+      SDL_HideWindow( ptr );
+      SDL_DestroyWindow( ptr );
+    }
+  } );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window created at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindow_.get() ) );
+
+  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
+    if( ptr ) {
+      SDL_DestroyRenderer( ptr );
+    }
+  } );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window renderer at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindowRenderer_.get() ) );
+  SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+
+  guiTimer_ = Timer::createNative( 10, std::bind( &NoiseGenerator::guiTimerCallback, this ) );
+  guiTimer_->start();
+  return true;
 }
 
 void NoiseGenerator::gui_destroy( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  uiNgHolder_.clap_destroy();
-  _base_::gui_destroy();
+  guiTimer_->stop();
+  guiTimer_.reset();
+  guiWindowRenderer_.reset();
+  guiWindow_.reset();
+
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
+  TTF_Quit();
+  SDL_Quit();
 }
 
 bool NoiseGenerator::gui_set_scale( double scale ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
-  bool ret = _base_::gui_set_scale( scale );
-  ret = ret || uiNgHolder_.clap_set_scale( scale );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  return false;
 }
 
 bool NoiseGenerator::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 static_cast< void* >( out_width ),
-                 static_cast< void* >( out_height ) );
-  bool ret = _base_::gui_get_size( out_width, out_height );
-  ret = ret || uiNgHolder_.clap_get_size( out_width, out_height );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
+  return true;
 }
 
 bool NoiseGenerator::gui_can_resize( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_can_resize();
-  ret = ret || uiNgHolder_.clap_can_resize();
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  return ( SDL_GetWindowFlags( guiWindow_.get() ) & SDL_WINDOW_RESIZABLE );
 }
 
 bool NoiseGenerator::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_hints={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 __FUNCTION__,
-                 static_cast< void* >( out_hints ) );
-  bool ret = _base_::gui_get_resize_hints( out_hints );
-  ret = ret || uiNgHolder_.clap_get_resize_hints( out_hints );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  return false;
 }
 
 bool NoiseGenerator::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_width={:d}, out_height={:d} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 *out_width,
-                 *out_height );
-  bool ret = _base_::gui_adjust_size( out_width, out_height );
-  ret = ret || uiNgHolder_.clap_adjust_size( out_width, out_height );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  gui_set_size( *out_width, *out_height );
+  gui_get_size( out_width, out_height );
+  state_.set_gui_width( *out_width );
+  state_.set_gui_height( *out_height );
+  return true;
 }
 
 bool NoiseGenerator::gui_set_size( uint32_t width, uint32_t height ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
-  bool ret = _base_::gui_set_size( width, height );
-  ret = ret || uiNgHolder_.clap_set_size( width, height );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  SDL_SetWindowSize( guiWindow_.get(), width, height );
+  state_.set_gui_width( width );
+  state_.set_gui_height( height );
+  return true;
 }
 
 bool NoiseGenerator::gui_set_parent( clap_window_t const* window ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_parent( window );
-  ret = ret || uiNgHolder_.clap_set_parent( window );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  if( window->api == CLAP_WINDOW_API_WIN32 ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_COCOA ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_X11 ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_WAYLAND ) {
+    setParentWindow( guiWindow_, window );
+  } else {
+    setParentWindow( guiWindow_, window );
+  }
+  SDL_SetWindowPosition( guiWindow_.get(), 0, 0 );
+  return true;
 }
 
 bool NoiseGenerator::gui_set_transient( clap_window_t const* window ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_transient( window );
-  ret = ret || uiNgHolder_.clap_set_transient( window );
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  SDL_RaiseWindow( guiWindow_.get() );
+  return true;
 }
 
 void NoiseGenerator::gui_suggest_title( std::string const& title ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
-  _base_::gui_suggest_title( title );
-  uiNgHolder_.clap_suggest_title( title );
+  SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
 }
 
 bool NoiseGenerator::gui_show( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_show();
-  ret = ret || uiNgHolder_.clap_show();
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  SDL_ShowWindow( guiWindow_.get() );
+  return true;
 }
 
 bool NoiseGenerator::gui_hide( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_hide();
-  ret = ret || uiNgHolder_.clap_hide();
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] exit( ret={} )", __FUNCTION__, static_cast< void* >( this ), ret );
-  return ret;
+  SDL_HideWindow( guiWindow_.get() );
+  return true;
 }
 
 uint32_t NoiseGenerator::note_ports_count( bool is_input ) {
@@ -1969,6 +2460,111 @@ bool NoiseGenerator::supports_params() const {
 
 bool NoiseGenerator::supports_state() const {
   return true;
+}
+
+#pragma endregion
+
+#pragma region GUI CALLBACK
+
+void NoiseGenerator::guiTimerCallback() {
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+
+#pragma region Inputs
+  for( SDL_Event event; SDL_PollEvent( &event ) != 0; ) {
+    if( event.type == SDL_EVENT_QUIT ) {
+      // shouldn't happen since we're inside a DAW
+      break;
+    } else if( event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_HIDDEN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_SHOWN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( ( event.type == SDL_EVENT_KEY_DOWN ) || ( event.type == SDL_EVENT_KEY_UP ) ) {
+      InputManager::ProcessKeyEvent( event.key, event.type == SDL_EVENT_KEY_DOWN );
+    } else if( event.type == SDL_EVENT_MOUSE_MOTION ) {
+      InputManager::ProcessMouseMoveEvent( event.motion );
+    } else if( ( event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( event.type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
+      InputManager::ProcessMouseButtonEvent( event.button, event.type == SDL_EVENT_MOUSE_BUTTON_DOWN );
+    } else if( event.type == SDL_EVENT_MOUSE_WHEEL ) {
+      InputManager::ProcessMouseWheelEvent( event.wheel );
+    }
+  }
+#pragma endregion Inputs
+
+#pragma region Logic
+  InputManager::OnLogicUpdate_Early();
+
+  {
+    int winW;
+    int winH;
+    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    guiRootWidget_->SetW( static_cast< float >( winW ) );
+    guiRootWidget_->SetH( static_cast< float >( winH ) );
+  }
+  sampleQueueSineWave_.consume_all( [this]( float sample ) { guiWidgetSineWaveSamples_->PushSample( sample ); } );
+  sampleQueueSquareWave_.consume_all( [this]( float sample ) { guiWidgetSquareWaveSamples_->PushSample( sample ); } );
+  sampleQueueSawWave_.consume_all( [this]( float sample ) { guiWidgetSawWaveSamples_->PushSample( sample ); } );
+  sampleQueueTriangleWave_.consume_all( [this]( float sample ) { guiWidgetTriangleWaveSamples_->PushSample( sample ); } );
+  sampleQueueWhiteNoise_.consume_all( [this]( float sample ) { guiWidgetWhiteNoiseSamples_->PushSample( sample ); } );
+  sampleQueuePinkNoise_.consume_all( [this]( float sample ) { guiWidgetPinkNoiseSamples_->PushSample( sample ); } );
+  sampleQueueRedNoise_.consume_all( [this]( float sample ) { guiWidgetRedNoiseSamples_->PushSample( sample ); } );
+  sampleQueueBlueNoise_.consume_all( [this]( float sample ) { guiWidgetBlueNoiseSamples_->PushSample( sample ); } );
+  sampleQueueVioletNoise_.consume_all( [this]( float sample ) { guiWidgetVioletNoiseSamples_->PushSample( sample ); } );
+  sampleQueueGreyNoise_.consume_all( [this]( float sample ) { guiWidgetGreyNoiseSamples_->PushSample( sample ); } );
+  sampleQueueVelvetNoise_.consume_all( [this]( float sample ) { guiWidgetVelvetNoiseSamples_->PushSample( sample ); } );
+  {
+    if( state_.synth_sine_wave_mix() != guiWidgetSineWaveMix_->GetCurrentValue() ) {
+      guiWidgetSineWaveMix_->SetCurrentValue( state_.synth_sine_wave_mix() );
+    }
+    if( state_.synth_square_wave_mix() != guiWidgetSquareWaveMix_->GetCurrentValue() ) {
+      guiWidgetSquareWaveMix_->SetCurrentValue( state_.synth_square_wave_mix() );
+    }
+    if( state_.synth_saw_wave_mix() != guiWidgetSawWaveMix_->GetCurrentValue() ) {
+      guiWidgetSawWaveMix_->SetCurrentValue( state_.synth_saw_wave_mix() );
+    }
+    if( state_.synth_triangle_wave_mix() != guiWidgetTriangleWaveMix_->GetCurrentValue() ) {
+      guiWidgetTriangleWaveMix_->SetCurrentValue( state_.synth_triangle_wave_mix() );
+    }
+    if( state_.synth_white_noise_mix() != guiWidgetWhiteNoiseMix_->GetCurrentValue() ) {
+      guiWidgetWhiteNoiseMix_->SetCurrentValue( state_.synth_white_noise_mix() );
+    }
+    if( state_.synth_pink_noise_mix() != guiWidgetPinkNoiseMix_->GetCurrentValue() ) {
+      guiWidgetPinkNoiseMix_->SetCurrentValue( state_.synth_pink_noise_mix() );
+    }
+    if( state_.synth_red_noise_mix() != guiWidgetRedNoiseMix_->GetCurrentValue() ) {
+      guiWidgetRedNoiseMix_->SetCurrentValue( state_.synth_red_noise_mix() );
+    }
+    if( state_.synth_blue_noise_mix() != guiWidgetBlueNoiseMix_->GetCurrentValue() ) {
+      guiWidgetBlueNoiseMix_->SetCurrentValue( state_.synth_blue_noise_mix() );
+    }
+    if( state_.synth_violet_noise_mix() != guiWidgetVioletNoiseMix_->GetCurrentValue() ) {
+      guiWidgetVioletNoiseMix_->SetCurrentValue( state_.synth_violet_noise_mix() );
+    }
+    if( state_.synth_grey_noise_mix() != guiWidgetGreyNoiseMix_->GetCurrentValue() ) {
+      guiWidgetGreyNoiseMix_->SetCurrentValue( state_.synth_grey_noise_mix() );
+    }
+    if( state_.synth_velvet_noise_mix() != guiWidgetVelvetNoiseMix_->GetCurrentValue() ) {
+      guiWidgetVelvetNoiseMix_->SetCurrentValue( state_.synth_velvet_noise_mix() );
+    }
+    if( state_.synth_square_wave_pwm() != guiWidgetSquareWavePwm_->GetCurrentValue() ) {
+      guiWidgetSquareWavePwm_->SetCurrentValue( state_.synth_square_wave_pwm() );
+    }
+  }
+  guiRootWidget_->OnLogic();
+
+  InputManager::OnLogicUpdate_Late();
+#pragma endregion Logic
+
+#pragma region Rendering
+  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  SDL_RenderClear( guiWindowRenderer_.get() );
+
+  // actually draw stuff here
+  guiRootWidget_->OnRender( guiWindowRenderer_ );
+
+  SDL_RenderPresent( guiWindowRenderer_.get() );
+#pragma endregion Rendering
 }
 
 #pragma endregion

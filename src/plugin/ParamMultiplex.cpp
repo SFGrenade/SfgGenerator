@@ -32,9 +32,6 @@ bool ParamMultiplex::init( void ) {
   bool ret = _base_::init();
 
   logger_ = logger_->clone( "ParamMultiplex" );
-  uiPmHolder_.set_logger( logger_->clone( "UiPmHolder" ) );
-  uiPmHolder_.set_host( host_ );
-  uiPmHolder_.set_state( &state_ );
 
   state_.Clear();
   state_.set_gui_width( 300 );
@@ -446,117 +443,152 @@ bool ParamMultiplex::audio_ports_get( uint32_t index, bool is_input, clap_audio_
 }
 
 bool ParamMultiplex::gui_is_api_supported( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
   bool ret = _base_::gui_is_api_supported( api, is_floating );
   return ret || true;
 }
 
 bool ParamMultiplex::gui_get_preferred_api( std::string& out_api, bool* out_is_floating ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_api={:?}, out_is_floating={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 out_api,
-                 static_cast< void* >( out_is_floating ) );
   bool ret = _base_::gui_get_preferred_api( out_api, out_is_floating );
   return ret && false;
 }
 
 bool ParamMultiplex::gui_create( std::string const& api, bool is_floating ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( api={:?}, is_floating={} )", __FUNCTION__, static_cast< void* >( this ), api, is_floating );
-  bool ret = _base_::gui_create( api, is_floating );
-  return ret || uiPmHolder_.clap_create( api, is_floating );
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
+  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+  if( !TTF_Init() ) {
+    SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL_TTF: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  }
+
+  InputManager::init();
+
+  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_->SetPadding( 1.0f );
+  {
+    // window contents
+  }
+
+  SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
+  if( !is_floating ) {
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+  } else {
+    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.ParamMultiplex" );
+    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
+  }
+  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
+    if( ptr ) {
+      SDL_HideWindow( ptr );
+      SDL_DestroyWindow( ptr );
+    }
+  } );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window created at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindow_.get() ) );
+
+  guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
+    if( ptr ) {
+      SDL_DestroyRenderer( ptr );
+    }
+  } );
+  SFG_LOG_TRACE( host_,
+                 host_log_,
+                 "[{:s}] [{:p}] window renderer at {:p}",
+                 __FUNCTION__,
+                 static_cast< void* >( this ),
+                 static_cast< void* >( guiWindowRenderer_.get() ) );
+  SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+
+  guiTimer_ = Timer::createNative( 10, std::bind( &ParamMultiplex::guiTimerCallback, this ) );
+  guiTimer_->start();
+  return true;
 }
 
 void ParamMultiplex::gui_destroy( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  uiPmHolder_.clap_destroy();
-  _base_::gui_destroy();
+  guiTimer_->stop();
+  guiTimer_.reset();
+  guiWindowRenderer_.reset();
+  guiWindow_.reset();
+
+  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
+  TTF_Quit();
+  SDL_Quit();
 }
 
 bool ParamMultiplex::gui_set_scale( double scale ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( scale={:f} )", __FUNCTION__, static_cast< void* >( this ), scale );
-  bool ret = _base_::gui_set_scale( scale );
-  return ret || uiPmHolder_.clap_set_scale( scale );
+  return false;
 }
 
 bool ParamMultiplex::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_width={:p}, out_height={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 static_cast< void* >( out_width ),
-                 static_cast< void* >( out_height ) );
-  bool ret = _base_::gui_get_size( out_width, out_height );
-  return ret || uiPmHolder_.clap_get_size( out_width, out_height );
+  SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
+  return true;
 }
 
 bool ParamMultiplex::gui_can_resize( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_can_resize();
-  return ret || uiPmHolder_.clap_can_resize();
+  return ( SDL_GetWindowFlags( guiWindow_.get() ) & SDL_WINDOW_RESIZABLE );
 }
 
 bool ParamMultiplex::gui_get_resize_hints( clap_gui_resize_hints_t* out_hints ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_hints={:p} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 __FUNCTION__,
-                 static_cast< void* >( out_hints ) );
-  bool ret = _base_::gui_get_resize_hints( out_hints );
-  return ret || uiPmHolder_.clap_get_resize_hints( out_hints );
+  return false;
 }
 
 bool ParamMultiplex::gui_adjust_size( uint32_t* out_width, uint32_t* out_height ) {
-  SFG_LOG_TRACE( host_,
-                 host_log_,
-                 "[{:s}] [{:p}] enter( out_width={:d}, out_height={:d} )",
-                 __FUNCTION__,
-                 static_cast< void* >( this ),
-                 *out_width,
-                 *out_height );
-  bool ret = _base_::gui_adjust_size( out_width, out_height );
-  return ret || uiPmHolder_.clap_adjust_size( out_width, out_height );
+  gui_set_size( *out_width, *out_height );
+  gui_get_size( out_width, out_height );
+  state_.set_gui_width( *out_width );
+  state_.set_gui_height( *out_height );
+  return true;
 }
 
 bool ParamMultiplex::gui_set_size( uint32_t width, uint32_t height ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( width={:d}, height={:d} )", __FUNCTION__, static_cast< void* >( this ), width, height );
-  bool ret = _base_::gui_set_size( width, height );
-  return ret || uiPmHolder_.clap_set_size( width, height );
+  SDL_SetWindowSize( guiWindow_.get(), width, height );
+  state_.set_gui_width( width );
+  state_.set_gui_height( height );
+  return true;
 }
 
 bool ParamMultiplex::gui_set_parent( clap_window_t const* window ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_parent( window );
-  return ret || uiPmHolder_.clap_set_parent( window );
+  if( window->api == CLAP_WINDOW_API_WIN32 ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_COCOA ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_X11 ) {
+    setParentWindow( guiWindow_, window );
+  } else if( window->api == CLAP_WINDOW_API_WAYLAND ) {
+    setParentWindow( guiWindow_, window );
+  } else {
+    setParentWindow( guiWindow_, window );
+  }
+  SDL_SetWindowPosition( guiWindow_.get(), 0, 0 );
+  return true;
 }
 
 bool ParamMultiplex::gui_set_transient( clap_window_t const* window ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( window={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( window ) );
-  bool ret = _base_::gui_set_transient( window );
-  return ret || uiPmHolder_.clap_set_transient( window );
+  SDL_RaiseWindow( guiWindow_.get() );
+  return true;
 }
 
 void ParamMultiplex::gui_suggest_title( std::string const& title ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( title={:?} )", __FUNCTION__, static_cast< void* >( this ), title );
-  _base_::gui_suggest_title( title );
-  uiPmHolder_.clap_suggest_title( title );
+  SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
 }
 
 bool ParamMultiplex::gui_show( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_show();
-  return ret || uiPmHolder_.clap_show();
+  SDL_ShowWindow( guiWindow_.get() );
+  return true;
 }
 
 bool ParamMultiplex::gui_hide( void ) {
-  SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
-  bool ret = _base_::gui_hide();
-  return ret || uiPmHolder_.clap_hide();
+  SDL_HideWindow( guiWindow_.get() );
+  return true;
 }
 
 uint32_t ParamMultiplex::params_count( void ) {
@@ -829,6 +861,70 @@ bool ParamMultiplex::supports_remote_controls() const {
 
 bool ParamMultiplex::supports_state() const {
   return true;
+}
+
+#pragma endregion
+
+#pragma region GUI CALLBACK
+
+void ParamMultiplex::guiTimerCallback() {
+  // SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
+
+#pragma region Inputs
+  for( SDL_Event event; SDL_PollEvent( &event ) != 0; ) {
+    if( event.type == SDL_EVENT_QUIT ) {
+      // shouldn't happen since we're inside a DAW
+      break;
+    } else if( event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_HIDDEN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( event.type == SDL_EVENT_WINDOW_SHOWN ) {
+      // shouldn't happen since we're inside a DAW
+    } else if( ( event.type == SDL_EVENT_KEY_DOWN ) || ( event.type == SDL_EVENT_KEY_UP ) ) {
+      InputManager::ProcessKeyEvent( event.key, event.type == SDL_EVENT_KEY_DOWN );
+    } else if( event.type == SDL_EVENT_MOUSE_MOTION ) {
+      InputManager::ProcessMouseMoveEvent( event.motion );
+    } else if( ( event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( event.type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
+      InputManager::ProcessMouseButtonEvent( event.button, event.type == SDL_EVENT_MOUSE_BUTTON_DOWN );
+    } else if( event.type == SDL_EVENT_MOUSE_WHEEL ) {
+      InputManager::ProcessMouseWheelEvent( event.wheel );
+    }
+  }
+#pragma endregion Inputs
+
+#pragma region Logic
+  InputManager::OnLogicUpdate_Early();
+
+  {
+    int winW;
+    int winH;
+    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    guiRootWidget_->SetW( static_cast< float >( winW ) );
+    guiRootWidget_->SetH( static_cast< float >( winH ) );
+  }
+  // sampleQueueIn1_.consume_all( [this]( float sample ) { guiWidgetAInput_->PushSample( sample ); } );
+  // sampleQueueIn2_.consume_all( [this]( float sample ) { guiWidgetBInput_->PushSample( sample ); } );
+  // sampleQueueOut_.consume_all( [this]( float sample ) { guiWidgetOutput_->PushSample( sample ); } );
+  // {
+  //   if( state_.a_b() != guiWidgetAbSlider_->GetCurrentValue() ) {
+  //     guiWidgetAbSlider_->SetCurrentValue( state_.a_b() );
+  //   }
+  // }
+  guiRootWidget_->OnLogic();
+
+  InputManager::OnLogicUpdate_Late();
+#pragma endregion Logic
+
+#pragma region Rendering
+  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  SDL_RenderClear( guiWindowRenderer_.get() );
+
+  // actually draw stuff here
+  guiRootWidget_->OnRender( guiWindowRenderer_ );
+
+  SDL_RenderPresent( guiWindowRenderer_.get() );
+#pragma endregion Rendering
 }
 
 #pragma endregion

@@ -14,7 +14,7 @@ void Slider::OnLogic() {
     return;
   }
 
-  if( !isDragging_ && ( InputManager::GetMouseButtonClicks( 1 ) >= 2 ) ) {
+  if( !isDragging_ && mbPressed_ && ( InputManager::GetMouseButtonClicks( 1 ) >= 2 ) ) {
     // user double-clicked (or more clicks, idc tbh)
     currentValue_ = defaultValue_;
     if( valueChangedCallback_ ) {
@@ -32,6 +32,9 @@ void Slider::OnLogic() {
       offset = ( mousePos->y - barRect_.y ) / ( barRect_.h );
     }
     offset = std::clamp( offset, 0.0f, 1.0f );
+    if( orientation_ == Slider::Orientation::Vertical ) {
+      offset = 1.0f - offset;
+    }
     currentValue_ = minValue_ + ( ( maxValue_ - minValue_ ) * offset );
     if( valueChangedCallback_ ) {
       valueChangedCallback_( currentValue_ );
@@ -56,11 +59,11 @@ void Slider::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   knobRect_.w = std::min( 20.0f, std::min( global_position_.w, global_position_.h ) );
   knobRect_.h = knobRect_.w;
   if( orientation_ == Slider::Orientation::Horizontal ) {
-    knobRect_.x = global_position_.x + ( ( global_position_.w - knobRect_.w ) * ( ( currentValue_ - minValue_ ) / ( maxValue_ - minValue_ ) ) );
+    knobRect_.x = global_position_.x + ( ( global_position_.w - knobRect_.w ) * ( 1.0f - ( ( currentValue_ - minValue_ ) / ( maxValue_ - minValue_ ) ) ) );
     knobRect_.y = global_position_.y + ( ( global_position_.h - knobRect_.h ) / 2.0f );
   } else if( orientation_ == Slider::Orientation::Vertical ) {
     knobRect_.x = global_position_.x + ( ( global_position_.w - knobRect_.w ) / 2.0f );
-    knobRect_.y = global_position_.y + ( ( global_position_.h - knobRect_.h ) * ( ( currentValue_ - minValue_ ) / ( maxValue_ - minValue_ ) ) );
+    knobRect_.y = global_position_.y + ( ( global_position_.h - knobRect_.h ) * ( 1.0f - ( ( currentValue_ - minValue_ ) / ( maxValue_ - minValue_ ) ) ) );
   }
 
   if( orientation_ == Slider::Orientation::Horizontal ) {

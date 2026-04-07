@@ -1,12 +1,21 @@
 #pragma once
 
 // Project includes
+#include "common/NoteMap.hpp"
+#include "common/Timer.hpp"
 #include "common/_clap.hpp"
 #include "common/_fmt.hpp"
-#include "common/NoteMap.hpp"
 #include "plugin/BasePlugin.hpp"
 #include "plugin/NoiseGenerator.pb.h"
-#include "ui-holders/UiNgHolder.hpp"
+#include "widgets/AudioSampleDisplay.hpp"
+#include "widgets/Button.hpp"
+#include "widgets/Label.hpp"
+#include "widgets/Slider.hpp"
+#include "widgets/Widget.hpp"
+
+
+// Other lib includes
+#include <boost/lockfree/spsc_queue.hpp>
 
 // C++ std includes
 #include <cstdint>
@@ -89,7 +98,117 @@ class NoiseGenerator : BasePlugin {
   protected:
   std::mt19937_64 eng_;
   std::uniform_real_distribution< double > dist_;
-  UiNgHolder uiNgHolder_;
+  std::shared_ptr< Widget > guiRootWidget_ = nullptr;
+  // sine wave
+  std::shared_ptr< Widget > guiWidgetSineWave_ = nullptr;
+  std::shared_ptr< Button > guiWidgetSineWavePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetSineWaveCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetSineWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSineWaveMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetSineWaveSamples_ = nullptr;
+  // square wave
+  std::shared_ptr< Widget > guiWidgetSquareWave_ = nullptr;
+  std::shared_ptr< Button > guiWidgetSquareWavePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetSquareWaveCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetSquareWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSquareWavePwm_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSquareWaveMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetSquareWaveSamples_ = nullptr;
+  // saw wave
+  std::shared_ptr< Widget > guiWidgetSawWave_ = nullptr;
+  std::shared_ptr< Button > guiWidgetSawWavePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetSawWaveCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetSawWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSawWaveMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetSawWaveSamples_ = nullptr;
+  // triangle wave
+  std::shared_ptr< Widget > guiWidgetTriangleWave_ = nullptr;
+  std::shared_ptr< Button > guiWidgetTriangleWavePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetTriangleWaveCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetTriangleWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetTriangleWaveMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetTriangleWaveSamples_ = nullptr;
+  // white noise
+  std::shared_ptr< Widget > guiWidgetWhiteNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetWhiteNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetWhiteNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetWhiteNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetWhiteNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetWhiteNoiseSamples_ = nullptr;
+  // pink noise
+  std::shared_ptr< Widget > guiWidgetPinkNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetPinkNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetPinkNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetPinkNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetPinkNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetPinkNoiseSamples_ = nullptr;
+  // red noise
+  std::shared_ptr< Widget > guiWidgetRedNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetRedNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetRedNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetRedNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetRedNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetRedNoiseSamples_ = nullptr;
+  // blue noise
+  std::shared_ptr< Widget > guiWidgetBlueNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetBlueNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetBlueNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetBlueNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetBlueNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetBlueNoiseSamples_ = nullptr;
+  // violet noise
+  std::shared_ptr< Widget > guiWidgetVioletNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetVioletNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetVioletNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetVioletNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVioletNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetVioletNoiseSamples_ = nullptr;
+  // grey noise
+  std::shared_ptr< Widget > guiWidgetGreyNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetGreyNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetGreyNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetGreyNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetGreyNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetGreyNoiseSamples_ = nullptr;
+  // velvet noise
+  std::shared_ptr< Widget > guiWidgetVelvetNoise_ = nullptr;
+  std::shared_ptr< Button > guiWidgetVelvetNoisePreviousType_ = nullptr;
+  std::shared_ptr< Label > guiWidgetVelvetNoiseCurrentType_ = nullptr;
+  std::shared_ptr< Button > guiWidgetVelvetNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVelvetNoiseMix_ = nullptr;
+  std::shared_ptr< AudioSampleDisplay > guiWidgetVelvetNoiseSamples_ = nullptr;
+  // gui
+  std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
+  std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
+  std::unique_ptr< Timer > guiTimer_ = nullptr;
+  // Display sample queues
+  boost::lockfree::spsc_queue< float > sampleQueueSineWave_;
+  boost::lockfree::spsc_queue< float > sampleQueueSquareWave_;
+  boost::lockfree::spsc_queue< float > sampleQueueSawWave_;
+  boost::lockfree::spsc_queue< float > sampleQueueTriangleWave_;
+  boost::lockfree::spsc_queue< float > sampleQueueWhiteNoise_;
+  boost::lockfree::spsc_queue< float > sampleQueuePinkNoise_;
+  boost::lockfree::spsc_queue< float > sampleQueueRedNoise_;
+  boost::lockfree::spsc_queue< float > sampleQueueBlueNoise_;
+  boost::lockfree::spsc_queue< float > sampleQueueVioletNoise_;
+  boost::lockfree::spsc_queue< float > sampleQueueGreyNoise_;
+  boost::lockfree::spsc_queue< float > sampleQueueVelvetNoise_;
+
+  void guiTimerCallback();
+
+  protected:
+  // todo: fixme: adjust to NoiseGenerator::*Type
+  static std::array< std::string, _pb_::SineWaveType_ARRAYSIZE > const SINEWAVE_OPTIONS;
+  static std::array< std::string, _pb_::SquareWaveType_ARRAYSIZE > const SQUAREWAVE_OPTIONS;
+  static std::array< std::string, _pb_::SawWaveType_ARRAYSIZE > const SAWWAVE_OPTIONS;
+  static std::array< std::string, _pb_::TriangleWaveType_ARRAYSIZE > const TRIANGLEWAVE_OPTIONS;
+  static std::array< std::string, _pb_::WhiteNoiseType_ARRAYSIZE > const WHITENOISE_OPTIONS;
+  static std::array< std::string, _pb_::PinkNoiseType_ARRAYSIZE > const PINKNOISE_OPTIONS;
+  static std::array< std::string, _pb_::RedNoiseType_ARRAYSIZE > const REDNOISE_OPTIONS;
+  static std::array< std::string, _pb_::BlueNoiseType_ARRAYSIZE > const BLUENOISE_OPTIONS;
+  static std::array< std::string, _pb_::VioletNoiseType_ARRAYSIZE > const VIOLETNOISE_OPTIONS;
+  static std::array< std::string, _pb_::GreyNoiseType_ARRAYSIZE > const GREYNOISE_OPTIONS;
+  static std::array< std::string, _pb_::VelvetNoiseType_ARRAYSIZE > const VELVETNOISE_OPTIONS;
 
   // members to save and load
   protected:

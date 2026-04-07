@@ -24,6 +24,9 @@ class Widget : public std::enable_shared_from_this< Widget > {
   bool IsDebug();
   void SetDebug( bool value );
 
+  bool IsFrame();
+  void SetFrame( bool value );
+
   bool IsVisibleHierarchy();
   bool IsVisible();
   void SetVisible( bool value );
@@ -60,6 +63,7 @@ class Widget : public std::enable_shared_from_this< Widget > {
   protected:
   // required protected for rendering
   SDL_FRect global_position_;
+  bool frame_ = false;
 
   private:
   std::shared_ptr< Widget > parent_ = nullptr;

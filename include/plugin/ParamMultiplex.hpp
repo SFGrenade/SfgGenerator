@@ -1,11 +1,17 @@
 #pragma once
 
 // Project includes
+#include "common/Timer.hpp"
 #include "common/_clap.hpp"
 #include "common/_fmt.hpp"
 #include "plugin/BasePlugin.hpp"
 #include "plugin/ParamMultiplex.pb.h"
-#include "ui-holders/UiPmHolder.hpp"
+#include "widgets/Label.hpp"
+#include "widgets/Slider.hpp"
+#include "widgets/Widget.hpp"
+
+// Other lib includes
+#include <boost/lockfree/spsc_queue.hpp>
 
 // C++ std includes
 #include <cstdint>
@@ -70,7 +76,13 @@ class ParamMultiplex : BasePlugin {
   bool supports_state() const override;
 
   protected:
-  UiPmHolder uiPmHolder_;
+  std::shared_ptr< Widget > guiRootWidget_ = nullptr;
+  std::shared_ptr< Label > guiWidgetMainLabel_ = nullptr;
+  std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
+  std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
+  std::unique_ptr< Timer > guiTimer_ = nullptr;
+
+  void guiTimerCallback();
 
   // members to save and load
   protected:

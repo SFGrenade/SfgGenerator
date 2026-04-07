@@ -14,7 +14,7 @@ void Button::OnLogic() {
     return;
   }
 
-  if( mbPressed_ ) {
+  if( mbPressed_ && callback_ ) {
     callback_();
   }
 }
