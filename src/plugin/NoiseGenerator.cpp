@@ -1609,21 +1609,6 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetSquareWavePwm_->SetPadding( 5.0f );
   }
 
-  for( size_t i = 0; i < nextTypeButtons.size(); i++ ) {
-    auto& button = nextTypeButtons.at( i );
-    button->InitUi( frames.at( i ) );
-    button->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
-    button->SetVerticalAlignment( Label::VerticalAlignment::Centered );
-    button->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
-    button->SetFontSize( 18 );
-    button->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
-    button->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
-    button->SetPadding( 5.0f );
-
-    // THIS IS TO RESET THE SELECTION AND UPDATE THE LABELS!!!
-    button->GetCallback()();
-  }
-
   guiWidgetSineWaveMix_->SetCurrentValue( state_.synth_sine_wave_mix() );
   guiWidgetSquareWaveMix_->SetCurrentValue( state_.synth_square_wave_mix() );
   guiWidgetSawWaveMix_->SetCurrentValue( state_.synth_saw_wave_mix() );
