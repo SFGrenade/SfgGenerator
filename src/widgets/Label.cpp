@@ -1,7 +1,16 @@
 // Header assigned to this source
 #include "widgets/Label.hpp"
 
-Label::Label( std::string const& text, SDL_FRect position ) : _base_( position ), text_( text ) {
+Label::Label( std::string const& text, std::shared_ptr< spdlog::logger > logger, SDL_FRect position )
+    : _base_( logger, position ), text_( text ), fontFile_( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" ) {
+  logger_->trace( "[{:s}] [{:p}] enter( text={:?}, position=({:f}, {:f}, {:f}, {:f}) )",
+                  __FUNCTION__,
+                  static_cast< void* >( this ),
+                  text,
+                  position.x,
+                  position.y,
+                  position.w,
+                  position.h );
   ReopenFont();
 }
 
@@ -18,6 +27,7 @@ Label::~Label() {
 
 void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   if( !IsVisibleHierarchy() ) {
+    _base_::OnRender( renderer );
     return;
   }
 
@@ -29,6 +39,8 @@ void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     } else {
       textSurface = TTF_RenderText_Blended_Wrapped( font_, text_.c_str(), text_.size(), fontColourInactive_, static_cast< uint32_t >( global_position_.w ) );
     }
+    if( !textSurface )
+      logger_->warn( "[{:s}] [{:p}] TTF_RenderText_Blended_Wrapped signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
 
     textTextureSize_.w = static_cast< float >( textSurface->w );
     textTextureSize_.h = static_cast< float >( textSurface->h );
@@ -36,8 +48,11 @@ void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     // destroy old texture
     if( textTexture_ ) {
       SDL_DestroyTexture( textTexture_ );
+      textTexture_ = nullptr;
     }
     textTexture_ = SDL_CreateTextureFromSurface( renderer.get(), textSurface );
+    if( !textTexture_ )
+      logger_->warn( "[{:s}] [{:p}] SDL_CreateTextureFromSurface signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     SDL_DestroySurface( textSurface );
   }
   // align texture inside bounding box
@@ -55,9 +70,18 @@ void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   } else if( verticalAlignment_ == Label::VerticalAlignment::Bottom ) {
     textTextureSize_.y = ( global_position_.y + global_position_.h ) - textTextureSize_.h;
   }
+  // safety, only have texture that's intersecting with the render size
+  int w, h;
+  if( !SDL_GetCurrentRenderOutputSize( renderer.get(), &w, &h ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_GetCurrentRenderOutputSize signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  SDL_FRect screen{ 0, 0, float( w ), float( h ) };
+  SDL_FRect result;
+  if( !SDL_GetRectIntersectionFloat( &textTextureSize_, &screen, &result ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_GetRectIntersectionFloat signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   // copy texture
   if( renderer && textTexture_ ) {
-    SDL_RenderTexture( renderer.get(), textTexture_, nullptr, &textTextureSize_ );
+    if( !SDL_RenderTexture( renderer.get(), textTexture_, nullptr, &result ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_RenderTexture signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
 
   _base_::OnRender( renderer );
@@ -130,9 +154,5 @@ void Label::SetFontColourInactive( SDL_Color const& value ) {
 }
 
 void Label::ReopenFont() {
-  if( font_ ) {
-    TTF_CloseFont( font_ );
-    font_ = nullptr;
-  }
-  font_ = TTF_OpenFont( fontFile_.string().c_str(), fontSize_ );
+  font_ = FontManager::getFont( fontFile_, fontSize_ );
 }

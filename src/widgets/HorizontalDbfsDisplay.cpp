@@ -1,16 +1,25 @@
 // Header assigned to this source
 #include "widgets/HorizontalDbfsDisplay.hpp"
 
-HorizontalDbfsDisplay::HorizontalDbfsDisplay( std::string const& text, SDL_FRect position ) : _base_( position ), textDisplay_( text ) {}
+HorizontalDbfsDisplay::HorizontalDbfsDisplay( std::string const& text, std::shared_ptr< spdlog::logger > logger, SDL_FRect position )
+    : _base_( logger, position ), textDisplay_( text ) {
+  logger_->trace( "[{:s}] [{:p}] enter( text={:?}, position=({:f}, {:f}, {:f}, {:f}) )",
+                  __FUNCTION__,
+                  static_cast< void* >( this ),
+                  text,
+                  position.x,
+                  position.y,
+                  position.w,
+                  position.h );
+}
 
 HorizontalDbfsDisplay::~HorizontalDbfsDisplay() {}
 
 void HorizontalDbfsDisplay::InitUi( std::shared_ptr< Widget > parent ) {
-  _base_::InitUi( parent );
   std::shared_ptr< Widget > self = shared_from_this();
 
-  textLabel_ = std::make_shared< Label >( textDisplay_, SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.5f } );
-  valueLabel_ = std::make_shared< Label >( "Silence", SDL_FRect{ 0.0f, 0.5f, 0.125f, 0.5f } );
+  textLabel_ = std::make_shared< Label >( textDisplay_, logger_->clone( "dBFSText" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.5f } );
+  valueLabel_ = std::make_shared< Label >( "Silence", logger_->clone( "dBFSValue" ), SDL_FRect{ 0.0f, 0.5f, 0.125f, 0.5f } );
   for( std::shared_ptr< Label > tmp : { textLabel_, valueLabel_ } ) {
     tmp->InitUi( self );
     tmp->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
@@ -23,16 +32,19 @@ void HorizontalDbfsDisplay::InitUi( std::shared_ptr< Widget > parent ) {
   textLabel_->SetVerticalAlignment( Label::VerticalAlignment::Bottom );
   valueLabel_->SetVerticalAlignment( Label::VerticalAlignment::Top );
 
-  barDisplay_ = std::make_shared< Bar >( SDL_FRect{ 0.125f, 0.0f, 0.875f, 1.0f } );
+  barDisplay_ = std::make_shared< Bar >( logger_->clone( "dBFSBar" ), SDL_FRect{ 0.125f, 0.0f, 0.875f, 1.0f } );
   barDisplay_->InitUi( self );
   barDisplay_->SetPadding( 0.0f );
+
+  _base_::InitUi( parent );
 }
 
 void HorizontalDbfsDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
-  _base_::OnRender( renderer );
   if( !IsVisibleHierarchy() ) {
+    _base_::OnRender( renderer );
     return;
   }
+  _base_::OnRender( renderer );
 }
 
 float HorizontalDbfsDisplay::GetValue() {

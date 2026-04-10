@@ -13,7 +13,7 @@ class Widget : public std::enable_shared_from_this< Widget > {
   using _base_::_base_;
 
   public:
-  Widget( SDL_FRect position = { 0, 0, 0, 0 } );
+  Widget( std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~Widget();
 
   public:
@@ -52,6 +52,7 @@ class Widget : public std::enable_shared_from_this< Widget > {
   void SetPadding( float value );
 
   protected:
+  void RenderChildren( std::shared_ptr< SDL_Renderer > renderer );
   void SetJustSwitchedVisible();
   void SetJustSwitchedActive();
 
@@ -61,6 +62,7 @@ class Widget : public std::enable_shared_from_this< Widget > {
   bool mbDown_ = false;
 
   protected:
+  std::shared_ptr< spdlog::logger > logger_ = nullptr;
   // required protected for rendering
   SDL_FRect global_position_;
   bool frame_ = false;

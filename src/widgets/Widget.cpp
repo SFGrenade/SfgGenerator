@@ -1,7 +1,14 @@
 // Header assigned to this source
 #include "widgets/Widget.hpp"
 
-Widget::Widget( SDL_FRect position ) : _base_() {
+Widget::Widget( std::shared_ptr< spdlog::logger > logger, SDL_FRect position ) : _base_(), logger_( logger ) {
+  logger_->trace( "[{:s}] [{:p}] enter( position=({:f}, {:f}, {:f}, {:f}) )",
+                  __FUNCTION__,
+                  static_cast< void* >( this ),
+                  position.x,
+                  position.y,
+                  position.w,
+                  position.h );
   position_.x = position.x;
   position_.y = position.y;
   position_.w = position.w;
@@ -72,30 +79,35 @@ void Widget::OnLogic() {
 
 void Widget::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   if( !IsVisibleHierarchy() ) {
+    RenderChildren( renderer );
     return;
   }
   // do rendering
   if( debug_ ) {
     if( IsActiveHierarchy() ) {
-      SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0xff );
+      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0xff ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     } else {
-      SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0x80 );
+      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0x80 ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     }
-    SDL_RenderRect( renderer.get(), &global_position_ );
+    if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
   if( frame_ ) {
     if( IsActiveHierarchy() ) {
-      SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff );
+      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     } else {
-      SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 );
+      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     }
-    SDL_RenderRect( renderer.get(), &global_position_ );
+    if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
 
   // then render children
-  for( auto& child : children_ ) {
-    child->OnRender( renderer );
-  }
+  RenderChildren( renderer );
 }
 
 bool Widget::IsDebug() {
@@ -219,6 +231,12 @@ float Widget::GetPadding() {
 
 void Widget::SetPadding( float value ) {
   padding_ = value;
+}
+
+void Widget::RenderChildren( std::shared_ptr< SDL_Renderer > renderer ) {
+  for( auto& child : children_ ) {
+    child->OnRender( renderer );
+  }
 }
 
 void Widget::SetJustSwitchedVisible() {

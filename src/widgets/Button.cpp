@@ -1,7 +1,17 @@
 // Header assigned to this source
 #include "widgets/Button.hpp"
 
-Button::Button( std::function< void() > const& callback, std::string const& text, SDL_FRect position ) : _base_( text, position ), callback_( callback ) {}
+Button::Button( std::function< void() > const& callback, std::string const& text, std::shared_ptr< spdlog::logger > logger, SDL_FRect position )
+    : _base_( text, logger, position ), callback_( callback ) {
+  logger_->trace( "[{:s}] [{:p}] enter( text={:?}, position=({:f}, {:f}, {:f}, {:f}) )",
+                  __FUNCTION__,
+                  static_cast< void* >( this ),
+                  text,
+                  position.x,
+                  position.y,
+                  position.w,
+                  position.h );
+}
 
 Button::~Button() {}
 
@@ -21,6 +31,7 @@ void Button::OnLogic() {
 
 void Button::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   if( !IsVisibleHierarchy() ) {
+    _base_::OnRender( renderer );
     return;
   }
 
@@ -28,25 +39,35 @@ void Button::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   bool drawBackground = IsActiveHierarchy() && ( mbDown_ || cursorHovering_ );
   if( drawBackground ) {
     if( mbDown_ ) {
-      SDL_SetRenderDrawColor( renderer.get(), backgroundColourPressed_.r, backgroundColourPressed_.g, backgroundColourPressed_.b, backgroundColourPressed_.a );
+      if( !SDL_SetRenderDrawColor( renderer.get(),
+                                   backgroundColourPressed_.r,
+                                   backgroundColourPressed_.g,
+                                   backgroundColourPressed_.b,
+                                   backgroundColourPressed_.a ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     } else if( cursorHovering_ ) {
-      SDL_SetRenderDrawColor( renderer.get(),
-                              backgroundColourHovering_.r,
-                              backgroundColourHovering_.g,
-                              backgroundColourHovering_.b,
-                              backgroundColourHovering_.a );
+      if( !SDL_SetRenderDrawColor( renderer.get(),
+                                   backgroundColourHovering_.r,
+                                   backgroundColourHovering_.g,
+                                   backgroundColourHovering_.b,
+                                   backgroundColourHovering_.a ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     }
-    SDL_RenderFillRect( renderer.get(), &global_position_ );
+    if( !SDL_RenderFillRect( renderer.get(), &global_position_ ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_RenderFillRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
 
   bool drawBorder = true;
   if( drawBorder ) {
     if( IsActiveHierarchy() ) {
-      SDL_SetRenderDrawColor( renderer.get(), borderColourActive_.r, borderColourActive_.g, borderColourActive_.b, borderColourActive_.a );
+      if( !SDL_SetRenderDrawColor( renderer.get(), borderColourActive_.r, borderColourActive_.g, borderColourActive_.b, borderColourActive_.a ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     } else {
-      SDL_SetRenderDrawColor( renderer.get(), borderColourInactive_.r, borderColourInactive_.g, borderColourInactive_.b, borderColourInactive_.a );
+      if( !SDL_SetRenderDrawColor( renderer.get(), borderColourInactive_.r, borderColourInactive_.g, borderColourInactive_.b, borderColourInactive_.a ) )
+        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     }
-    SDL_RenderRect( renderer.get(), &global_position_ );
+    if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
 
   _base_::OnRender( renderer );

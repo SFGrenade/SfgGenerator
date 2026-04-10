@@ -145,6 +145,29 @@ SDL_FPoint* InputManager::GetMouseWheelPrecise() {
   return &InputManager::mouse_.wheel_precise;
 }
 
+std::map< FontManager::FontIdentifier, TTF_Font* > FontManager::fonts_;
+
+void FontManager::Deinit() {
+  for( auto const& pair : fonts_ ) {
+    TTF_CloseFont( pair.second );
+  }
+  fonts_.clear();
+}
+
+TTF_Font* FontManager::getFont( std::filesystem::path const& path, float pointSize ) {
+  FontManager::FontIdentifier ident{ path, pointSize };
+  auto iter = fonts_.find( ident );
+  if( iter == fonts_.end() ) {
+    TTF_Font* font = TTF_OpenFont( path.string().c_str(), pointSize );
+    auto tmp = fonts_.emplace( ident, font );
+    if( tmp.second ) {
+      iter = tmp.first;
+    }
+  }
+
+  return iter->second;
+}
+
 std::map< int, std::vector< int > > DrawHelper::indicesCache_;
 
 SDL_Point DrawHelper::centerOf( SDL_Rect const& rect ) {

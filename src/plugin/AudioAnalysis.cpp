@@ -363,31 +363,40 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
 
   InputManager::init();
 
-  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_ = std::make_shared< Widget >( logger_->clone( "root" ) );
   guiRootWidget_->SetPadding( 1.0f );
   {
-    guiWidgetMomentaryRms_ = std::make_shared< HorizontalDbfsDisplay >( "Momentary RMS", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.125f } );
+    guiWidgetMomentaryRms_
+        = std::make_shared< HorizontalDbfsDisplay >( "Momentary RMS", logger_->clone( "MomentaryRms" ), SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.125f } );
     guiWidgetMomentaryRms_->InitUi( guiRootWidget_ );
     guiWidgetMomentaryRms_->SetPadding( 1.0f );
     guiWidgetMomentaryRms_->SetUnit( "dBFS" );
   }
   {
-    guiWidgetShortTermRms_ = std::make_shared< HorizontalDbfsDisplay >( "Short-Term RMS", SDL_FRect{ 0.0f, 0.125f, 1.0f, 0.125f } );
+    guiWidgetShortTermRms_
+        = std::make_shared< HorizontalDbfsDisplay >( "Short-Term RMS", logger_->clone( "ShortTermRms" ), SDL_FRect{ 0.0f, 0.125f, 1.0f, 0.125f } );
     guiWidgetShortTermRms_->InitUi( guiRootWidget_ );
     guiWidgetShortTermRms_->SetPadding( 1.0f );
     guiWidgetShortTermRms_->SetUnit( "dBFS" );
   }
   {
-    guiWidgetMomentaryLufs_ = std::make_shared< HorizontalDbfsDisplay >( "Momentary LUFS", SDL_FRect{ 0.0f, 0.25f, 1.0f, 0.125f } );
+    guiWidgetMomentaryLufs_
+        = std::make_shared< HorizontalDbfsDisplay >( "Momentary LUFS", logger_->clone( "MomentaryLufs" ), SDL_FRect{ 0.0f, 0.25f, 1.0f, 0.125f } );
     guiWidgetMomentaryLufs_->InitUi( guiRootWidget_ );
     guiWidgetMomentaryLufs_->SetPadding( 1.0f );
     guiWidgetMomentaryLufs_->SetUnit( "LUFS" );
   }
   {
-    guiWidgetShortTermLufs_ = std::make_shared< HorizontalDbfsDisplay >( "Short-Term LUFS", SDL_FRect{ 0.0f, 0.375f, 1.0f, 0.125f } );
+    guiWidgetShortTermLufs_
+        = std::make_shared< HorizontalDbfsDisplay >( "Short-Term LUFS", logger_->clone( "ShortTermLufs" ), SDL_FRect{ 0.0f, 0.375f, 1.0f, 0.125f } );
     guiWidgetShortTermLufs_->InitUi( guiRootWidget_ );
     guiWidgetShortTermLufs_->SetPadding( 1.0f );
     guiWidgetShortTermLufs_->SetUnit( "LUFS" );
+  }
+  {
+    guiWidgetFrequencies_ = std::make_shared< FrequencyDisplay >( sample_rate_, logger_->clone( "Frequencies" ), SDL_FRect{ 0.0f, 0.5f, 1.0f, 0.5f } );
+    guiWidgetFrequencies_->InitUi( guiRootWidget_ );
+    guiWidgetFrequencies_->SetPadding( 1.0f );
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
@@ -703,11 +712,13 @@ void AudioAnalysis::guiTimerCallback() {
   {
     int winW;
     int winH;
-    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    if( !SDL_GetWindowSize( guiWindow_.get(), &winW, &winH ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_GetWindowSize signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
     guiRootWidget_->SetW( static_cast< float >( winW ) );
     guiRootWidget_->SetH( static_cast< float >( winH ) );
   }
   sampleQueue_.consume_all( [this]( float monoOut ) {
+    guiWidgetFrequencies_->PushSample( monoOut );
     rmsMomentaryValueBuffer_.push_back( monoOut );
     rmsSamplesReceived_++;
     lufsMomentaryValueBuffer_.push_back( kWeightingFilterHighPass_.filter( kWeightingFilterHighShelf_.filter( monoOut ) ) );
@@ -736,13 +747,16 @@ void AudioAnalysis::guiTimerCallback() {
 #pragma endregion Logic
 
 #pragma region Rendering
-  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
-  SDL_RenderClear( guiWindowRenderer_.get() );
+  if( !SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  if( !SDL_RenderClear( guiWindowRenderer_.get() ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_RenderClear signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
 
   // actually draw stuff here
   guiRootWidget_->OnRender( guiWindowRenderer_ );
 
-  SDL_RenderPresent( guiWindowRenderer_.get() );
+  if( !SDL_RenderPresent( guiWindowRenderer_.get() ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_RenderPresent signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
 #pragma endregion Rendering
 }
 

@@ -17,7 +17,7 @@ class Slider : public Widget {
   enum class Orientation { Horizontal, Vertical };
 
   public:
-  Slider( Slider::Orientation orientation, SDL_FRect position = { 0, 0, 0, 0 } );
+  Slider( Slider::Orientation orientation, std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~Slider();
 
   public:

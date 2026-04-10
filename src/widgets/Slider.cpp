@@ -1,7 +1,17 @@
 // Header assigned to this source
 #include "widgets/Slider.hpp"
 
-Slider::Slider( Slider::Orientation orientation, SDL_FRect position ) : _base_( position ), orientation_( orientation ) {}
+Slider::Slider( Slider::Orientation orientation, std::shared_ptr< spdlog::logger > logger, SDL_FRect position )
+    : _base_( logger, position ), orientation_( orientation ) {
+  logger_->trace( "[{:s}] [{:p}] enter( orientation={:d}, position=({:f}, {:f}, {:f}, {:f}) )",
+                  __FUNCTION__,
+                  static_cast< void* >( this ),
+                  static_cast< int >( orientation ),
+                  position.x,
+                  position.y,
+                  position.w,
+                  position.h );
+}
 
 Slider::~Slider() {}
 
@@ -51,8 +61,8 @@ void Slider::OnLogic() {
 }
 
 void Slider::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
-  _base_::OnRender( renderer );
   if( !IsVisibleHierarchy() ) {
+    _base_::OnRender( renderer );
     return;
   }
 
@@ -79,17 +89,22 @@ void Slider::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   }
 
   if( IsActiveHierarchy() ) {
-    SDL_SetRenderDrawColor( renderer.get(), barColourActive_.r, barColourActive_.g, barColourActive_.b, barColourActive_.a );
+    if( !SDL_SetRenderDrawColor( renderer.get(), barColourActive_.r, barColourActive_.g, barColourActive_.b, barColourActive_.a ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   } else {
-    SDL_SetRenderDrawColor( renderer.get(), barColourInactive_.r, barColourInactive_.g, barColourInactive_.b, barColourInactive_.a );
+    if( !SDL_SetRenderDrawColor( renderer.get(), barColourInactive_.r, barColourInactive_.g, barColourInactive_.b, barColourInactive_.a ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
-  SDL_RenderFillRect( renderer.get(), &barRect_ );
+  if( !SDL_RenderFillRect( renderer.get(), &barRect_ ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_RenderFillRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
 
   DrawHelper::drawFillCircle( renderer,
                               IsActiveHierarchy() ? knobColourActive_ : knobColourInactive_,
                               DrawHelper::centerOf( knobRect_ ),
                               knobRect_.w / 2.0f,
                               8 );
+
+  _base_::OnRender( renderer );
 }
 
 Slider::Orientation Slider::GetOrientation() {

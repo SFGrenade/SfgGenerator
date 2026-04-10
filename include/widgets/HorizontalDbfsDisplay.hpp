@@ -16,7 +16,7 @@ class HorizontalDbfsDisplay : public Widget {
   using _base_::_base_;
 
   public:
-  HorizontalDbfsDisplay( std::string const& text, SDL_FRect position = { 0, 0, 0, 0 } );
+  HorizontalDbfsDisplay( std::string const& text, std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~HorizontalDbfsDisplay();
 
   public:

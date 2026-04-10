@@ -14,7 +14,7 @@ class Bar : public Widget {
   using _base_::_base_;
 
   public:
-  Bar( SDL_FRect position = { 0, 0, 0, 0 } );
+  Bar( std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~Bar();
 
   public:

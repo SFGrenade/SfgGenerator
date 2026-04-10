@@ -463,7 +463,7 @@ bool ParamMultiplex::gui_create( std::string const& api, bool is_floating ) {
 
   InputManager::init();
 
-  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_ = std::make_shared< Widget >( logger_->clone( "root" ) );
   guiRootWidget_->SetPadding( 1.0f );
   {
     // window contents

@@ -1249,20 +1249,20 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
 
   InputManager::init();
 
-  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_ = std::make_shared< Widget >( logger_->clone( "root" ) );
   guiRootWidget_->SetPadding( 5.0f );
 
-  guiWidgetSineWave_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetSquareWave_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetSawWave_ = std::make_shared< Widget >( SDL_FRect{ 2.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetTriangleWave_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetWhiteNoise_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetPinkNoise_ = std::make_shared< Widget >( SDL_FRect{ 2.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetRedNoise_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetBlueNoise_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetVioletNoise_ = std::make_shared< Widget >( SDL_FRect{ 2.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
-  guiWidgetGreyNoise_ = std::make_shared< Widget >( SDL_FRect{ 0.0f / 2.0f, 3.0f / 4.0f, 1.0f / 2.0f, 1.0f / 4.0f } );
-  guiWidgetVelvetNoise_ = std::make_shared< Widget >( SDL_FRect{ 1.0f / 2.0f, 3.0f / 4.0f, 1.0f / 2.0f, 1.0f / 4.0f } );
+  guiWidgetSineWave_ = std::make_shared< Widget >( logger_->clone( "SineWave" ), SDL_FRect{ 0.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetSquareWave_ = std::make_shared< Widget >( logger_->clone( "SquareWave" ), SDL_FRect{ 1.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetSawWave_ = std::make_shared< Widget >( logger_->clone( "SawWave" ), SDL_FRect{ 2.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetTriangleWave_ = std::make_shared< Widget >( logger_->clone( "TriangleWave" ), SDL_FRect{ 0.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetWhiteNoise_ = std::make_shared< Widget >( logger_->clone( "WhiteNoise" ), SDL_FRect{ 1.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetPinkNoise_ = std::make_shared< Widget >( logger_->clone( "PinkNoise" ), SDL_FRect{ 2.0f / 3.0f, 1.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetRedNoise_ = std::make_shared< Widget >( logger_->clone( "RedNoise" ), SDL_FRect{ 0.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetBlueNoise_ = std::make_shared< Widget >( logger_->clone( "BlueNoise" ), SDL_FRect{ 1.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetVioletNoise_ = std::make_shared< Widget >( logger_->clone( "VioletNoise" ), SDL_FRect{ 2.0f / 3.0f, 2.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
+  guiWidgetGreyNoise_ = std::make_shared< Widget >( logger_->clone( "GreyNoise" ), SDL_FRect{ 0.0f / 2.0f, 3.0f / 4.0f, 1.0f / 2.0f, 1.0f / 4.0f } );
+  guiWidgetVelvetNoise_ = std::make_shared< Widget >( logger_->clone( "VelvetNoise" ), SDL_FRect{ 1.0f / 2.0f, 3.0f / 4.0f, 1.0f / 2.0f, 1.0f / 4.0f } );
 
   guiWidgetSineWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
@@ -1270,21 +1270,21 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetSineWaveCurrentType_->SetText( fmt::format( "Sine Wave: {:s}", _pb_::SineWaveType_Name( state_.synth_sine_wave_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "SineWavePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetSquareWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_square_wave_type( _pb_::SquareWaveType( customMod( int( state_.synth_square_wave_type() ) - 1, _pb_::SquareWaveType_ARRAYSIZE ) ) );
         guiWidgetSquareWaveCurrentType_->SetText( fmt::format( "Square Wave: {:s}", _pb_::SquareWaveType_Name( state_.synth_square_wave_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "SquareWavePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetSawWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_saw_wave_type( _pb_::SawWaveType( customMod( int( state_.synth_saw_wave_type() ) - 1, _pb_::SawWaveType_ARRAYSIZE ) ) );
         guiWidgetSawWaveCurrentType_->SetText( fmt::format( "Saw Wave: {:s}", _pb_::SawWaveType_Name( state_.synth_saw_wave_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "SawWavePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetTriangleWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_triangle_wave_type(
@@ -1292,35 +1292,35 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetTriangleWaveCurrentType_->SetText( fmt::format( "Triangle Wave: {:s}", _pb_::TriangleWaveType_Name( state_.synth_triangle_wave_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "TriangleWavePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetWhiteNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_white_noise_type( _pb_::WhiteNoiseType( customMod( int( state_.synth_white_noise_type() ) - 1, _pb_::WhiteNoiseType_ARRAYSIZE ) ) );
         guiWidgetWhiteNoiseCurrentType_->SetText( fmt::format( "White Noise: {:s}", _pb_::WhiteNoiseType_Name( state_.synth_white_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "WhiteNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetPinkNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_pink_noise_type( _pb_::PinkNoiseType( customMod( int( state_.synth_pink_noise_type() ) - 1, _pb_::PinkNoiseType_ARRAYSIZE ) ) );
         guiWidgetPinkNoiseCurrentType_->SetText( fmt::format( "Pink Noise: {:s}", _pb_::PinkNoiseType_Name( state_.synth_pink_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "PinkNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetRedNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_red_noise_type( _pb_::RedNoiseType( customMod( int( state_.synth_red_noise_type() ) - 1, _pb_::RedNoiseType_ARRAYSIZE ) ) );
         guiWidgetRedNoiseCurrentType_->SetText( fmt::format( "Red Noise: {:s}", _pb_::RedNoiseType_Name( state_.synth_red_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "RedNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetBlueNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_blue_noise_type( _pb_::BlueNoiseType( customMod( int( state_.synth_blue_noise_type() ) - 1, _pb_::BlueNoiseType_ARRAYSIZE ) ) );
         guiWidgetBlueNoiseCurrentType_->SetText( fmt::format( "Blue Noise: {:s}", _pb_::BlueNoiseType_Name( state_.synth_blue_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "BlueNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetVioletNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_violet_noise_type(
@@ -1328,14 +1328,14 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetVioletNoiseCurrentType_->SetText( fmt::format( "Violet Noise: {:s}", _pb_::VioletNoiseType_Name( state_.synth_violet_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "VioletNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetGreyNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_grey_noise_type( _pb_::GreyNoiseType( customMod( int( state_.synth_grey_noise_type() ) - 1, _pb_::GreyNoiseType_ARRAYSIZE ) ) );
         guiWidgetGreyNoiseCurrentType_->SetText( fmt::format( "Grey Noise: {:s}", _pb_::GreyNoiseType_Name( state_.synth_grey_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "GreyNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
   guiWidgetVelvetNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_velvet_noise_type(
@@ -1343,19 +1343,19 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetVelvetNoiseCurrentType_->SetText( fmt::format( "Velvet Noise: {:s}", _pb_::VelvetNoiseType_Name( state_.synth_velvet_noise_type() ) ) );
       },
       "<",
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "VelvetNoisePreviousType" ), SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
 
-  guiWidgetSineWaveCurrentType_ = std::make_shared< Label >( "Sine Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetSquareWaveCurrentType_ = std::make_shared< Label >( "Square Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetSawWaveCurrentType_ = std::make_shared< Label >( "Saw Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetTriangleWaveCurrentType_ = std::make_shared< Label >( "Triangle Wave", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetWhiteNoiseCurrentType_ = std::make_shared< Label >( "White Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetPinkNoiseCurrentType_ = std::make_shared< Label >( "Pink Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetRedNoiseCurrentType_ = std::make_shared< Label >( "Red Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetBlueNoiseCurrentType_ = std::make_shared< Label >( "Blue Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetVioletNoiseCurrentType_ = std::make_shared< Label >( "Violet Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetGreyNoiseCurrentType_ = std::make_shared< Label >( "Grey Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetVelvetNoiseCurrentType_ = std::make_shared< Label >( "Velvet Noise", SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetSineWaveCurrentType_ = std::make_shared< Label >( "Sine Wave", logger_->clone( "SineWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetSquareWaveCurrentType_ = std::make_shared< Label >( "Square Wave", logger_->clone( "SquareWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetSawWaveCurrentType_ = std::make_shared< Label >( "Saw Wave", logger_->clone( "SawWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetTriangleWaveCurrentType_ = std::make_shared< Label >( "Triangle Wave", logger_->clone( "TriangleWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetWhiteNoiseCurrentType_ = std::make_shared< Label >( "White Noise", logger_->clone( "WhiteNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetPinkNoiseCurrentType_ = std::make_shared< Label >( "Pink Noise", logger_->clone( "PinkNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetRedNoiseCurrentType_ = std::make_shared< Label >( "Red Noise", logger_->clone( "RedNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetBlueNoiseCurrentType_ = std::make_shared< Label >( "Blue Noise", logger_->clone( "BlueNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetVioletNoiseCurrentType_ = std::make_shared< Label >( "Violet Noise", logger_->clone( "VioletNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetGreyNoiseCurrentType_ = std::make_shared< Label >( "Grey Noise", logger_->clone( "GreyNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetVelvetNoiseCurrentType_ = std::make_shared< Label >( "Velvet Noise", logger_->clone( "VelvetNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
 
   guiWidgetSineWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
@@ -1363,21 +1363,21 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetSineWaveCurrentType_->SetText( fmt::format( "Sine Wave: {:s}", _pb_::SineWaveType_Name( state_.synth_sine_wave_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "SineWaveNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetSquareWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_square_wave_type( _pb_::SquareWaveType( customMod( int( state_.synth_square_wave_type() ) + 1, _pb_::SquareWaveType_ARRAYSIZE ) ) );
         guiWidgetSquareWaveCurrentType_->SetText( fmt::format( "Square Wave: {:s}", _pb_::SquareWaveType_Name( state_.synth_square_wave_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "SquareWaveNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetSawWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_saw_wave_type( _pb_::SawWaveType( customMod( int( state_.synth_saw_wave_type() ) + 1, _pb_::SawWaveType_ARRAYSIZE ) ) );
         guiWidgetSawWaveCurrentType_->SetText( fmt::format( "Saw Wave: {:s}", _pb_::SawWaveType_Name( state_.synth_saw_wave_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "SawWaveNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetTriangleWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_triangle_wave_type(
@@ -1385,35 +1385,35 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetTriangleWaveCurrentType_->SetText( fmt::format( "Triangle Wave: {:s}", _pb_::TriangleWaveType_Name( state_.synth_triangle_wave_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "TriangleWaveNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetWhiteNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_white_noise_type( _pb_::WhiteNoiseType( customMod( int( state_.synth_white_noise_type() ) + 1, _pb_::WhiteNoiseType_ARRAYSIZE ) ) );
         guiWidgetWhiteNoiseCurrentType_->SetText( fmt::format( "White Noise: {:s}", _pb_::WhiteNoiseType_Name( state_.synth_white_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "WhiteNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetPinkNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_pink_noise_type( _pb_::PinkNoiseType( customMod( int( state_.synth_pink_noise_type() ) + 1, _pb_::PinkNoiseType_ARRAYSIZE ) ) );
         guiWidgetPinkNoiseCurrentType_->SetText( fmt::format( "Pink Noise: {:s}", _pb_::PinkNoiseType_Name( state_.synth_pink_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "PinkNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetRedNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_red_noise_type( _pb_::RedNoiseType( customMod( int( state_.synth_red_noise_type() ) + 1, _pb_::RedNoiseType_ARRAYSIZE ) ) );
         guiWidgetRedNoiseCurrentType_->SetText( fmt::format( "Red Noise: {:s}", _pb_::RedNoiseType_Name( state_.synth_red_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "RedNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetBlueNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_blue_noise_type( _pb_::BlueNoiseType( customMod( int( state_.synth_blue_noise_type() ) + 1, _pb_::BlueNoiseType_ARRAYSIZE ) ) );
         guiWidgetBlueNoiseCurrentType_->SetText( fmt::format( "Blue Noise: {:s}", _pb_::BlueNoiseType_Name( state_.synth_blue_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "BlueNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetVioletNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_violet_noise_type(
@@ -1421,14 +1421,14 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetVioletNoiseCurrentType_->SetText( fmt::format( "Violet Noise: {:s}", _pb_::VioletNoiseType_Name( state_.synth_violet_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "VioletNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetGreyNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_grey_noise_type( _pb_::GreyNoiseType( customMod( int( state_.synth_grey_noise_type() ) + 1, _pb_::GreyNoiseType_ARRAYSIZE ) ) );
         guiWidgetGreyNoiseCurrentType_->SetText( fmt::format( "Grey Noise: {:s}", _pb_::GreyNoiseType_Name( state_.synth_grey_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "GreyNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
   guiWidgetVelvetNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_velvet_noise_type(
@@ -1436,33 +1436,33 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
         guiWidgetVelvetNoiseCurrentType_->SetText( fmt::format( "Velvet Noise: {:s}", _pb_::VelvetNoiseType_Name( state_.synth_velvet_noise_type() ) ) );
       },
       ">",
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      logger_->clone( "VelvetNoiseNextType" ), SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
 
-  guiWidgetSineWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetSquareWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetSawWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetTriangleWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetWhiteNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetPinkNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetRedNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetBlueNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetVioletNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetGreyNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetVelvetNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSineWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSquareWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSawWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetTriangleWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetWhiteNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetPinkNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetRedNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetBlueNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetVioletNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetGreyNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetVelvetNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
 
-  guiWidgetSquareWavePwm_ = std::make_shared< Slider >( Slider::Orientation::Vertical, SDL_FRect{ 0.00f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSquareWavePwm_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWavePwm" ), SDL_FRect{ 0.00f, 0.25f, 0.125f, 0.75f } );
 
-  guiWidgetSineWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetSquareWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetSawWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetTriangleWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetWhiteNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetPinkNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetRedNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetBlueNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetVioletNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetGreyNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetVelvetNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetSineWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SineWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetSquareWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SquareWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetSawWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SawWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetTriangleWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "TriangleWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetWhiteNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "WhiteNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetPinkNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "PinkNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetRedNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "RedNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetBlueNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "BlueNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetVioletNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "VioletNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetGreyNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "GreyNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetVelvetNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "VelvetNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
 
   guiWidgetSineWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_mix( value ); } );
   guiWidgetSquareWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_mix( value ); } );

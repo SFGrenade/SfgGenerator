@@ -7,6 +7,7 @@
 #include "common/_gui.hpp"
 #include "plugin/AudioAnalysis.pb.h"
 #include "plugin/BasePlugin.hpp"
+#include "widgets/FrequencyDisplay.hpp"
 #include "widgets/HorizontalDbfsDisplay.hpp"
 #include "widgets/Widget.hpp"
 
@@ -82,6 +83,7 @@ class AudioAnalysis : BasePlugin {
   std::shared_ptr< HorizontalDbfsDisplay > guiWidgetShortTermRms_ = nullptr;
   std::shared_ptr< HorizontalDbfsDisplay > guiWidgetMomentaryLufs_ = nullptr;
   std::shared_ptr< HorizontalDbfsDisplay > guiWidgetShortTermLufs_ = nullptr;
+  std::shared_ptr< FrequencyDisplay > guiWidgetFrequencies_ = nullptr;
   std::shared_ptr< SDL_Window > guiWindow_ = nullptr;
   std::shared_ptr< SDL_Renderer > guiWindowRenderer_ = nullptr;
   std::unique_ptr< Timer > guiTimer_ = nullptr;

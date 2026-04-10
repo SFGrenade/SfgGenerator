@@ -15,7 +15,7 @@ class Button : public Label {
   using _base_::_base_;
 
   public:
-  Button( std::function< void() > const& callback, std::string const& text, SDL_FRect position = { 0, 0, 0, 0 } );
+  Button( std::function< void() > const& callback, std::string const& text, std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~Button();
 
   public:

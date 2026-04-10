@@ -1,14 +1,23 @@
 // Header assigned to this source
 #include "widgets/AudioSampleDisplay.hpp"
 
-AudioSampleDisplay::AudioSampleDisplay( double sampleRate, SDL_FRect position )
-    : _base_( position ), samples_( sampleRate * 0.1 ), points_( sampleRate * 0.1 ) {}
+AudioSampleDisplay::AudioSampleDisplay( double sampleRate, std::shared_ptr< spdlog::logger > logger, SDL_FRect position )
+    : _base_( logger, position ), samples_( sampleRate * 0.1 ), points_( sampleRate * 0.1 ) {
+  logger_->trace( "[{:s}] [{:p}] enter( sampleRate={:f}, position=({:f}, {:f}, {:f}, {:f}) )",
+                  __FUNCTION__,
+                  static_cast< void* >( this ),
+                  sampleRate,
+                  position.x,
+                  position.y,
+                  position.w,
+                  position.h );
+}
 
 AudioSampleDisplay::~AudioSampleDisplay() {}
 
 void AudioSampleDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
-  _base_::OnRender( renderer );
   if( !IsVisibleHierarchy() ) {
+    _base_::OnRender( renderer );
     return;
   }
 
@@ -22,12 +31,18 @@ void AudioSampleDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
 
 
   if( IsActiveHierarchy() ) {
-    SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff );
+    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   } else {
-    SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 );
+    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 ) )
+      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
-  SDL_RenderRect( renderer.get(), &global_position_ );
-  SDL_RenderLines( renderer.get(), points_.data(), points_.size() );
+  if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  if( !SDL_RenderLines( renderer.get(), points_.data(), points_.size() ) )
+    logger_->warn( "[{:s}] [{:p}] SDL_RenderLines signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+
+  _base_::OnRender( renderer );
 }
 
 void AudioSampleDisplay::PushSample( float sample ) {

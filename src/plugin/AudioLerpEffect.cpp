@@ -336,10 +336,10 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
 
   InputManager::init();
 
-  guiRootWidget_ = std::make_shared< Widget >();
+  guiRootWidget_ = std::make_shared< Widget >( logger_->clone( "root" ) );
   guiRootWidget_->SetPadding( 1.0f );
   {
-    guiWidgetMainLabel_ = std::make_shared< Label >( "Audio A<=>B Interpolation", SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.33f } );
+    guiWidgetMainLabel_ = std::make_shared< Label >( "Audio A<=>B Interpolation", logger_->clone( "MainLabel" ), SDL_FRect{ 0.0f, 0.0f, 1.0f, 0.33f } );
     guiWidgetMainLabel_->InitUi( guiRootWidget_ );
     guiWidgetMainLabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
     guiWidgetMainLabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
@@ -350,7 +350,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetMainLabel_->SetPadding( 1.0f );
   }
   {
-    guiWidgetALabel_ = std::make_shared< Label >( "A", SDL_FRect{ 0.0f, 0.33f, 0.125f, 0.33f } );
+    guiWidgetALabel_ = std::make_shared< Label >( "A", logger_->clone( "ALabel" ), SDL_FRect{ 0.0f, 0.33f, 0.125f, 0.33f } );
     guiWidgetALabel_->InitUi( guiRootWidget_ );
     guiWidgetALabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Right );
     guiWidgetALabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
@@ -361,7 +361,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetALabel_->SetPadding( 1.0f );
   }
   {
-    guiWidgetBLabel_ = std::make_shared< Label >( "B", SDL_FRect{ 0.875f, 0.33f, 0.125f, 0.33f } );
+    guiWidgetBLabel_ = std::make_shared< Label >( "B", logger_->clone( "BLabel" ), SDL_FRect{ 0.875f, 0.33f, 0.125f, 0.33f } );
     guiWidgetBLabel_->InitUi( guiRootWidget_ );
     guiWidgetBLabel_->SetHorizontalAlignment( Label::HorizontalAlignment::Left );
     guiWidgetBLabel_->SetVerticalAlignment( Label::VerticalAlignment::Centered );
@@ -372,7 +372,7 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetBLabel_->SetPadding( 1.0f );
   }
   {
-    guiWidgetAbSlider_ = std::make_shared< Slider >( Slider::Orientation::Horizontal, SDL_FRect{ 0.125f, 0.33f, 0.75f, 0.33f } );
+    guiWidgetAbSlider_ = std::make_shared< Slider >( Slider::Orientation::Horizontal, logger_->clone( "AbSlider" ), SDL_FRect{ 0.125f, 0.33f, 0.75f, 0.33f } );
     guiWidgetAbSlider_->InitUi( guiRootWidget_ );
     guiWidgetAbSlider_->SetMinValue( 0.0f );
     guiWidgetAbSlider_->SetMaxValue( 1.0f );
@@ -382,13 +382,13 @@ bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
     guiWidgetAbSlider_->OnValueChanged( [this]( float value ) { state_.set_a_b( value ); } );
   }
   {
-    guiWidgetAInput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.0f, 0.67f, 0.25f, 0.33f } );
+    guiWidgetAInput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "AInput" ), SDL_FRect{ 0.0f, 0.67f, 0.25f, 0.33f } );
     guiWidgetAInput_->InitUi( guiRootWidget_ );
     guiWidgetAInput_->SetPadding( 1.0f );
-    guiWidgetOutput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.375f, 0.67f, 0.25f, 0.33f } );
+    guiWidgetOutput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "Output" ), SDL_FRect{ 0.375f, 0.67f, 0.25f, 0.33f } );
     guiWidgetOutput_->InitUi( guiRootWidget_ );
     guiWidgetOutput_->SetPadding( 1.0f );
-    guiWidgetBInput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, SDL_FRect{ 0.75f, 0.67f, 0.25f, 0.33f } );
+    guiWidgetBInput_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "BInput" ), SDL_FRect{ 0.75f, 0.67f, 0.25f, 0.33f } );
     guiWidgetBInput_->InitUi( guiRootWidget_ );
     guiWidgetBInput_->SetPadding( 1.0f );
   }

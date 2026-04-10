@@ -9,6 +9,7 @@
 
 // C++ std includes
 #include <cstdint>
+#include <filesystem>
 #include <unordered_map>
 
 class InputManager {
@@ -57,6 +58,18 @@ class InputManager {
   private:
   static std::unordered_map< SDL_Keycode, InputManager::KeyData > keys_;
   static InputManager::MouseData mouse_;
+};
+
+class FontManager {
+  // file, pointSize
+  typedef std::pair< std::filesystem::path, float > FontIdentifier;
+
+  public:
+  static void Deinit();
+  static TTF_Font* getFont( std::filesystem::path const& path, float pointSize );
+
+  private:
+  static std::map< FontManager::FontIdentifier, TTF_Font* > fonts_;
 };
 
 class DrawHelper {

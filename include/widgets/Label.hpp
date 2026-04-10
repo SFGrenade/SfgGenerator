@@ -21,7 +21,7 @@ class Label : public Widget {
   enum class VerticalAlignment { Top, Centered, Bottom };
 
   public:
-  Label( std::string const& text, SDL_FRect position = { 0, 0, 0, 0 } );
+  Label( std::string const& text, std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~Label();
 
   public:

@@ -17,7 +17,7 @@ class AudioSampleDisplay : public Widget {
   using _base_::_base_;
 
   public:
-  AudioSampleDisplay( double sampleRate, SDL_FRect position = { 0, 0, 0, 0 } );
+  AudioSampleDisplay( double sampleRate, std::shared_ptr< spdlog::logger > logger, SDL_FRect position = { 0, 0, 0, 0 } );
   virtual ~AudioSampleDisplay();
 
   public:
