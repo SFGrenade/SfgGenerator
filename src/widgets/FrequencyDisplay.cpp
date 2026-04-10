@@ -61,8 +61,8 @@ void FrequencyDisplay::InitUi( std::shared_ptr< Widget > parent ) {
     tmp->SetVerticalAlignment( Label::VerticalAlignment::Bottom );
     tmp->SetFontFile( ClapGlobals::PLUGIN_PATH.parent_path() / "SfgGenerator" / "fonts" / "NotoSerif-Regular.ttf" );
     tmp->SetFontSize( 12 );
-    tmp->SetFontColourActive( SDL_Color{ 0xff, 0x00, 0x00, 0xff } );
-    tmp->SetFontColourInactive( SDL_Color{ 0xff, 0x00, 0x00, 0x80 } );
+    tmp->SetFontColourActive( SDL_Color{ 0x00, 0xff, 0xff, 0xff } );
+    tmp->SetFontColourInactive( SDL_Color{ 0x00, 0xff, 0xff, 0x80 } );
     tmp->SetPadding( 2.0f );
   }
 

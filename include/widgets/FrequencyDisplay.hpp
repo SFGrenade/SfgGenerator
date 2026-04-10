@@ -46,7 +46,7 @@ class FrequencyDisplay : public Widget {
   std::vector< FftOutputInformation > curatedFftOutput_;
 
   private:
-  static constexpr float const FFT_DISPLAY_MIN_FREQ = 10.0f;
+  static constexpr float const FFT_DISPLAY_MIN_FREQ = 18.0f;
   float FFT_DISPLAY_MAX_FREQ = 44100.0f / 2.0f;  // set dynamically with the sampleRate_
   float MIN_FREQ_LOG = 0.0f;
   float MAX_FREQ_LOG = 0.0f;
