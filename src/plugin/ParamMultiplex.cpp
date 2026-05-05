@@ -508,7 +508,7 @@ bool ParamMultiplex::gui_create( std::string const& api, bool is_floating ) {
                  static_cast< void* >( guiWindowRenderer_.get() ) );
   SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
 
-  guiTimer_ = Timer::createNative( 10, std::bind( &ParamMultiplex::guiTimerCallback, this ) );
+  guiTimer_ = Timer::createNative( 1, std::bind( &ParamMultiplex::guiTimerCallback, this ) );
   guiTimer_->start();
   return true;
 }

@@ -90,7 +90,13 @@ void LinuxTimer::stop() {
 
 void LinuxTimer::onTimer( int signal, siginfo_t *signalInfo, void *ucontext ) {
   auto self = static_cast< LinuxTimer * >( signalInfo->si_value.sival_ptr );
-  self->cb_();
+  if( self ) {
+    if( self->available_ ) {
+      self->available_ = false;
+      self->cb_();
+      self->available_ = true;
+    }
+  }
 }
 #endif
 
@@ -133,7 +139,13 @@ void MacOsTimer::stop() {
 
 void MacOsTimer::onTimer( CFRunLoopTimerRef /*timer*/, void *ctx ) {
   auto self = static_cast< MacOsTimer * >( ctx );
-  self->cb_();
+  if( self ) {
+    if( self->available_ ) {
+      self->available_ = false;
+      self->cb_();
+      self->available_ = true;
+    }
+  }
 }
 #endif
 
@@ -185,7 +197,11 @@ void WindowsTimer::onTimer( HWND /*hwnd*/, UINT /*message*/, UINT_PTR idTimer, D
   }
 
   if( self ) {
-    self->cb_();
+    if( self->available_ ) {
+      self->available_ = false;
+      self->cb_();
+      self->available_ = true;
+    }
   }
 }
 #endif

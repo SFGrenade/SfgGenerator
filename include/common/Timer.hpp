@@ -35,6 +35,7 @@ class LinuxTimer final : public Timer {
 
   uint32_t const durationMs_;
   std::function< void() > const cb_;
+  bool available_ = true;
   struct sigaction signalAction_;
   sigset_t signalMask_;
   sigevent signalEvent_;
@@ -60,6 +61,7 @@ class MacOsTimer final : public Timer {
 
   uint32_t const durationMs_;
   std::function< void() > const cb_;
+  bool available_ = true;
   CFRunLoopTimerRef timer_ = nullptr;
   CFRunLoopTimerContext ctx_;
 };
@@ -88,6 +90,7 @@ class WindowsTimer final : public Timer {
 
   uint32_t const durationMs_;
   std::function< void() > const cb_;
+  bool available_ = true;
   UINT_PTR timer_ = 0;
   static std::mutex timersLock_;
   static std::unordered_map< UINT_PTR, WindowsTimer* > timers_;
