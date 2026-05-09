@@ -49,12 +49,12 @@ void FrequencyDisplay::InitUi( std::shared_ptr< Widget > parent ) {
     std::shared_ptr< Label > tmp = nullptr;
     if( frequency < 1000.0f ) {
       tmp = std::make_shared< Label >( fmt::format( "{:.0f} Hz", frequency ),
-                                                  logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ),
-                                                  SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
+                                       logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ),
+                                       SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
     } else if( 1000.0f <= frequency ) {
       tmp = std::make_shared< Label >( fmt::format( "{:.0f} kHz", frequency / 1000.0f ),
-                                                  logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ),
-                                                  SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
+                                       logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ),
+                                       SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
     }
     tmp->InitUi( self );
     tmp->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
@@ -69,6 +69,18 @@ void FrequencyDisplay::InitUi( std::shared_ptr< Widget > parent ) {
   _base_::InitUi( parent );
 }
 
+void FrequencyDisplay::OnLogic() {
+  _base_::OnLogic();
+  if( !IsVisibleHierarchy() ) {
+    return;
+  }
+  if( !IsActiveHierarchy() ) {
+    return;
+  }
+
+  TryCalcFft();
+}
+
 void FrequencyDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   if( !IsVisibleHierarchy() ) {
     _base_::OnRender( renderer );
@@ -76,21 +88,16 @@ void FrequencyDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   }
 
   if( IsActiveHierarchy() ) {
-    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0xff );
   } else {
-    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0x80 );
   }
-  if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_RenderRect, renderer.get(), &global_position_ );
 
   if( IsActiveHierarchy() ) {
-    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0xff );
   } else {
-    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0x80 );
   }
   for( size_t i = 0; i < global_position_.w; i++ ) {
     double binMinimumFrequency = std::pow( 10.0, MIN_FREQ_LOG + ( double( i + 0 ) * ( MAX_FREQ_LOG - MIN_FREQ_LOG ) / double( global_position_.w - 1 ) ) );
@@ -126,9 +133,10 @@ void FrequencyDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     float magnitudeSumDb = 20.0f * std::log10( binMagnitudeSum + 1e-12f );
 
     float x = global_position_.x + float( i );
-    float y = global_position_.y + ( global_position_.h * ( 1.0f - float( magnitudeSumDb - ( -0.0f ) ) / ( 100.0f - ( -0.0f ) ) ) );
-    if( !SDL_RenderLine( renderer.get(), x, global_position_.y + global_position_.h, x, y ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_RenderLine signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    float y = global_position_.y
+              + ( global_position_.h
+                  * ( 1.0f - float( magnitudeSumDb - FFT_DISPLAY_MIN_MAGNITUDE_DB ) / ( FFT_DISPLAY_MAX_MAGNITUDE_DB - FFT_DISPLAY_MIN_MAGNITUDE_DB ) ) );
+    WRAP_SDL_CALL_INST( SDL_RenderLine, renderer.get(), x, global_position_.y + global_position_.h, x, y );
   }
 
   _base_::OnRender( renderer );
@@ -136,12 +144,17 @@ void FrequencyDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
 
 void FrequencyDisplay::PushSample( float sample ) {
   samples_.push_back( std::clamp( sample, -1.0f, 1.0f ) );
-  pushedSamples_++;
 
-  if( pushedSamples_ < size_t( samples_.capacity() / 4 ) ) {
-    return;
-  }
-  pushedSamples_ = 0;
+  // todo: fixme: maybe add a toggle somewhere to choose between every 100ms or just always
+  // pushedSamples_++;
+}
+
+void FrequencyDisplay::TryCalcFft() {
+  // todo: fixme: maybe add a toggle somewhere to choose between every 100ms or just always
+  // if( pushedSamples_ < size_t( samples_.capacity() / 4 ) ) {
+  //   return;
+  // }
+  // pushedSamples_ -= size_t( samples_.capacity() / 4 );
 
   for( size_t i = 0; i < fftInputSize_; i++ ) {
     if( i < samples_.size() ) {
@@ -161,7 +174,7 @@ void FrequencyDisplay::PushSample( float sample ) {
     float outImaginary = fftOutput_[i][1];
 
     curatedFftOutput_[i].frequency = float( i ) * float( sampleRate_ ) / float( fftInputSize_ );
-    curatedFftOutput_[i].magnitude = std::sqrt( ( outReal * outReal ) + ( outImaginary * outImaginary ) );
+    curatedFftOutput_[i].magnitude = std::sqrt( ( outReal * outReal ) + ( outImaginary * outImaginary ) ) / float( fftInputSize_ );
     curatedFftOutput_[i].magnitudeInDB = 20.0f * std::log10( curatedFftOutput_[i].magnitude + 1e-12f );
     curatedFftOutput_[i].phase = std::atan2( outImaginary, outReal ) * 180.0f / std::numbers::pi_v< float >;
   }

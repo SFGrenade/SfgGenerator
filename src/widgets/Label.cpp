@@ -35,12 +35,20 @@ void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   if( font_ && renderer ) {
     SDL_Surface* textSurface;
     if( IsActiveHierarchy() ) {
-      textSurface = TTF_RenderText_Blended_Wrapped( font_, text_.c_str(), text_.size(), fontColourActive_, static_cast< uint32_t >( global_position_.w ) );
+      WRAP_SDL_CALL_INST( textSurface = TTF_RenderText_Blended_Wrapped,
+                          font_,
+                          text_.c_str(),
+                          text_.size(),
+                          fontColourActive_,
+                          static_cast< uint32_t >( global_position_.w ) );
     } else {
-      textSurface = TTF_RenderText_Blended_Wrapped( font_, text_.c_str(), text_.size(), fontColourInactive_, static_cast< uint32_t >( global_position_.w ) );
+      WRAP_SDL_CALL_INST( textSurface = TTF_RenderText_Blended_Wrapped,
+                          font_,
+                          text_.c_str(),
+                          text_.size(),
+                          fontColourInactive_,
+                          static_cast< uint32_t >( global_position_.w ) );
     }
-    if( !textSurface )
-      logger_->warn( "[{:s}] [{:p}] TTF_RenderText_Blended_Wrapped signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
 
     textTextureSize_.w = static_cast< float >( textSurface->w );
     textTextureSize_.h = static_cast< float >( textSurface->h );
@@ -50,9 +58,7 @@ void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
       SDL_DestroyTexture( textTexture_ );
       textTexture_ = nullptr;
     }
-    textTexture_ = SDL_CreateTextureFromSurface( renderer.get(), textSurface );
-    if( !textTexture_ )
-      logger_->warn( "[{:s}] [{:p}] SDL_CreateTextureFromSurface signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( textTexture_ = SDL_CreateTextureFromSurface, renderer.get(), textSurface );
     SDL_DestroySurface( textSurface );
   }
   // align texture inside bounding box
@@ -72,16 +78,13 @@ void Label::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   }
   // safety, only have texture that's intersecting with the render size
   int w, h;
-  if( !SDL_GetCurrentRenderOutputSize( renderer.get(), &w, &h ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_GetCurrentRenderOutputSize signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_GetCurrentRenderOutputSize, renderer.get(), &w, &h )
   SDL_FRect screen{ 0, 0, float( w ), float( h ) };
   SDL_FRect result;
-  if( !SDL_GetRectIntersectionFloat( &textTextureSize_, &screen, &result ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_GetRectIntersectionFloat signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_GetRectIntersectionFloat, &textTextureSize_, &screen, &result )
   // copy texture
   if( renderer && textTexture_ ) {
-    if( !SDL_RenderTexture( renderer.get(), textTexture_, nullptr, &result ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_RenderTexture signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_RenderTexture, renderer.get(), textTexture_, nullptr, &result )
   }
 
   _base_::OnRender( renderer );

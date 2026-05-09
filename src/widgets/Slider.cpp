@@ -89,14 +89,11 @@ void Slider::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   }
 
   if( IsActiveHierarchy() ) {
-    if( !SDL_SetRenderDrawColor( renderer.get(), barColourActive_.r, barColourActive_.g, barColourActive_.b, barColourActive_.a ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), barColourActive_.r, barColourActive_.g, barColourActive_.b, barColourActive_.a );
   } else {
-    if( !SDL_SetRenderDrawColor( renderer.get(), barColourInactive_.r, barColourInactive_.g, barColourInactive_.b, barColourInactive_.a ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), barColourInactive_.r, barColourInactive_.g, barColourInactive_.b, barColourInactive_.a );
   }
-  if( !SDL_RenderFillRect( renderer.get(), &barRect_ ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderFillRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_RenderFillRect, renderer.get(), &barRect_ );
 
   DrawHelper::drawFillCircle( renderer,
                               IsActiveHierarchy() ? knobColourActive_ : knobColourInactive_,

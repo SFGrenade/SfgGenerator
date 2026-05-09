@@ -19,16 +19,13 @@ void Bar::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   }
 
   if( IsActiveHierarchy() ) {
-    if( !SDL_SetRenderDrawColor( renderer.get(), colourActive_.r, colourActive_.g, colourActive_.b, colourActive_.a ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), colourActive_.r, colourActive_.g, colourActive_.b, colourActive_.a );
   } else {
-    if( !SDL_SetRenderDrawColor( renderer.get(), colourInactive_.r, colourInactive_.g, colourInactive_.b, colourInactive_.a ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), colourInactive_.r, colourInactive_.g, colourInactive_.b, colourInactive_.a );
   }
   SDL_FRect tmpRect = global_position_;
   tmpRect.w = global_position_.w * value_;
-  if( !SDL_RenderFillRect( renderer.get(), &tmpRect ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderFillRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_RenderFillRect, renderer.get(), &tmpRect );
 
   _base_::OnRender( renderer );
 }

@@ -31,16 +31,12 @@ void AudioSampleDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
 
 
   if( IsActiveHierarchy() ) {
-    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0xff );
   } else {
-    if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0x80 );
   }
-  if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
-  if( !SDL_RenderLines( renderer.get(), points_.data(), points_.size() ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderLines signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_RenderRect, renderer.get(), &global_position_ );
+  WRAP_SDL_CALL_INST( SDL_RenderLines, renderer.get(), points_.data(), points_.size() );
 
   _base_::OnRender( renderer );
 }

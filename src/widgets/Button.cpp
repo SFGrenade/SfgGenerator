@@ -39,35 +39,36 @@ void Button::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   bool drawBackground = IsActiveHierarchy() && ( mbDown_ || cursorHovering_ );
   if( drawBackground ) {
     if( mbDown_ ) {
-      if( !SDL_SetRenderDrawColor( renderer.get(),
-                                   backgroundColourPressed_.r,
-                                   backgroundColourPressed_.g,
-                                   backgroundColourPressed_.b,
-                                   backgroundColourPressed_.a ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor,
+                          renderer.get(),
+                          backgroundColourPressed_.r,
+                          backgroundColourPressed_.g,
+                          backgroundColourPressed_.b,
+                          backgroundColourPressed_.a );
     } else if( cursorHovering_ ) {
-      if( !SDL_SetRenderDrawColor( renderer.get(),
-                                   backgroundColourHovering_.r,
-                                   backgroundColourHovering_.g,
-                                   backgroundColourHovering_.b,
-                                   backgroundColourHovering_.a ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor,
+                          renderer.get(),
+                          backgroundColourHovering_.r,
+                          backgroundColourHovering_.g,
+                          backgroundColourHovering_.b,
+                          backgroundColourHovering_.a );
     }
-    if( !SDL_RenderFillRect( renderer.get(), &global_position_ ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_RenderFillRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_RenderFillRect, renderer.get(), &global_position_ );
   }
 
   bool drawBorder = true;
   if( drawBorder ) {
     if( IsActiveHierarchy() ) {
-      if( !SDL_SetRenderDrawColor( renderer.get(), borderColourActive_.r, borderColourActive_.g, borderColourActive_.b, borderColourActive_.a ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), borderColourActive_.r, borderColourActive_.g, borderColourActive_.b, borderColourActive_.a );
     } else {
-      if( !SDL_SetRenderDrawColor( renderer.get(), borderColourInactive_.r, borderColourInactive_.g, borderColourInactive_.b, borderColourInactive_.a ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor,
+                          renderer.get(),
+                          borderColourInactive_.r,
+                          borderColourInactive_.g,
+                          borderColourInactive_.b,
+                          borderColourInactive_.a );
     }
-    if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_RenderRect, renderer.get(), &global_position_ );
   }
 
   _base_::OnRender( renderer );

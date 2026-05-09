@@ -85,25 +85,19 @@ void Widget::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
   // do rendering
   if( debug_ ) {
     if( IsActiveHierarchy() ) {
-      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0xff ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0x00, 0x00, 0xff );
     } else {
-      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0x00, 0x00, 0x80 ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0x00, 0x00, 0x80 );
     }
-    if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_RenderRect, renderer.get(), &global_position_ );
   }
   if( frame_ ) {
     if( IsActiveHierarchy() ) {
-      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0xff ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0xff );
     } else {
-      if( !SDL_SetRenderDrawColor( renderer.get(), 0xff, 0xff, 0xff, 0x80 ) )
-        logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+      WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, renderer.get(), 0xff, 0xff, 0xff, 0x80 );
     }
-    if( !SDL_RenderRect( renderer.get(), &global_position_ ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_RenderRect signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_RenderRect, renderer.get(), &global_position_ );
   }
 
   // then render children

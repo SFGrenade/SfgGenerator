@@ -712,8 +712,7 @@ void AudioAnalysis::guiTimerCallback() {
   {
     int winW;
     int winH;
-    if( !SDL_GetWindowSize( guiWindow_.get(), &winW, &winH ) )
-      logger_->warn( "[{:s}] [{:p}] SDL_GetWindowSize signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+    WRAP_SDL_CALL_INST( SDL_GetWindowSize, guiWindow_.get(), &winW, &winH );
     guiRootWidget_->SetW( static_cast< float >( winW ) );
     guiRootWidget_->SetH( static_cast< float >( winH ) );
   }
@@ -747,16 +746,13 @@ void AudioAnalysis::guiTimerCallback() {
 #pragma endregion Logic
 
 #pragma region Rendering
-  if( !SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_SetRenderDrawColor signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
-  if( !SDL_RenderClear( guiWindowRenderer_.get() ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderClear signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  WRAP_SDL_CALL_INST( SDL_RenderClear, guiWindowRenderer_.get() );
 
   // actually draw stuff here
   guiRootWidget_->OnRender( guiWindowRenderer_ );
 
-  if( !SDL_RenderPresent( guiWindowRenderer_.get() ) )
-    logger_->warn( "[{:s}] [{:p}] SDL_RenderPresent signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
+  WRAP_SDL_CALL_INST( SDL_RenderPresent, guiWindowRenderer_.get() );
 #pragma endregion Rendering
 }
 
