@@ -31,12 +31,12 @@ LinuxTimer::LinuxTimer( uint32_t durationMs, const std::function< void() > &call
     // error establishing signal handler
   }
 
-  // block timer signal
-  sigemptyset( &signalMask_ );
-  sigaddset( &signalMask_, SIGRTMIN );
-  if( 0 != sigprocmask( SIG_SETMASK, &signalMask_, NULL ) ) {
-    // error blocking timer signal
-  }
+  // // block timer signal
+  // sigemptyset( &signalMask_ );
+  // sigaddset( &signalMask_, SIGRTMIN );
+  // if( 0 != sigprocmask( SIG_SETMASK, &signalMask_, NULL ) ) {
+  //   // error blocking timer signal
+  // }
 
   // create the timer
   signalEvent_.sigev_notify = SIGEV_SIGNAL;
@@ -58,10 +58,10 @@ LinuxTimer::~LinuxTimer() {
     // error destroying the timer
   }
 
-  // unblock timer signal
-  if( 0 != sigprocmask( SIG_UNBLOCK, &signalMask_, NULL ) ) {
-    // error unblocking timer signal
-  }
+  // // unblock timer signal
+  // if( 0 != sigprocmask( SIG_UNBLOCK, &signalMask_, NULL ) ) {
+  //   // error unblocking timer signal
+  // }
 
   // restore signal handler
   signalAction_.sa_flags = 0;
@@ -89,6 +89,12 @@ void LinuxTimer::stop() {
 }
 
 void LinuxTimer::onTimer( int signal, siginfo_t *signalInfo, void *ucontext ) {
+  if( signal != SIGRTMIN ) {
+    return;
+  }
+  if( signalInfo->si_code != SI_TIMER ) {
+    return;
+  }
   auto self = static_cast< LinuxTimer * >( signalInfo->si_value.sival_ptr );
   if( self ) {
     if( self->available_ ) {
