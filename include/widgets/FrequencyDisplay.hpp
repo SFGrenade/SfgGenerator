@@ -36,6 +36,14 @@ class FrequencyDisplay : public Widget {
   void TryCalcFft();
 
   private:
+  float xForFrequencyRelative( float frequency_Hz ) const;
+  float xForFrequency( float frequency_Hz ) const;
+  float yForMagnitudeDbRelative( float magnitude_dB ) const;
+  float yForMagnitudeDb( float magnitude_dB ) const;
+  float yForMagnitudeRelative( float magnitude ) const;
+  float yForMagnitude( float magnitude ) const;
+
+  private:
   double sampleRate_;
   boost::circular_buffer< float > samples_;
   size_t pushedSamples_ = 0;
