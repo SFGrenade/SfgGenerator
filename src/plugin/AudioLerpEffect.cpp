@@ -11,7 +11,16 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
-AudioLerpEffect::AudioLerpEffect() : _base_(), sampleQueueIn1_( 4096 ), sampleQueueIn2_( 4096 ), sampleQueueOut_( 4096 ) {
+AudioLerpEffect::AudioLerpEffect()
+    : _base_(),
+      guiWindow_( nullptr,
+                  []( SDL_Window* ptr ) {
+                    SDL_HideWindow( ptr );
+                    SDL_DestroyWindow( ptr );
+                  } ),
+      sampleQueueIn1_( 4096 ),
+      sampleQueueIn2_( 4096 ),
+      sampleQueueOut_( 4096 ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
@@ -327,7 +336,7 @@ bool AudioLerpEffect::gui_get_preferred_api( std::string& out_api, bool* out_is_
 
 bool AudioLerpEffect::gui_create( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
-  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+  if( !SDL_InitSubSystem( SDL_INIT_VIDEO ) ) {
     SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
   if( !TTF_Init() ) {
@@ -445,7 +454,7 @@ void AudioLerpEffect::gui_destroy( void ) {
 
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
   TTF_Quit();
-  SDL_Quit();
+  SDL_QuitSubSystem( SDL_INIT_VIDEO );
 }
 
 bool AudioLerpEffect::gui_set_scale( double scale ) {
@@ -707,7 +716,7 @@ void AudioLerpEffect::guiTimerCallback() {
   {
     int winW;
     int winH;
-    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    WRAP_SDL_CALL_INST( SDL_GetWindowSize, guiWindow_.get(), &winW, &winH );
     guiRootWidget_->SetW( static_cast< float >( winW ) );
     guiRootWidget_->SetH( static_cast< float >( winH ) );
   }
@@ -725,13 +734,13 @@ void AudioLerpEffect::guiTimerCallback() {
 #pragma endregion Logic
 
 #pragma region Rendering
-  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
-  SDL_RenderClear( guiWindowRenderer_.get() );
+  WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  WRAP_SDL_CALL_INST( SDL_RenderClear, guiWindowRenderer_.get() );
 
   // actually draw stuff here
   guiRootWidget_->OnRender( guiWindowRenderer_ );
 
-  SDL_RenderPresent( guiWindowRenderer_.get() );
+  WRAP_SDL_CALL_INST( SDL_RenderPresent, guiWindowRenderer_.get() );
 #pragma endregion Rendering
 }
 

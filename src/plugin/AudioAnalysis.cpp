@@ -354,7 +354,7 @@ bool AudioAnalysis::gui_get_preferred_api( std::string& out_api, bool* out_is_fl
 
 bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
-  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+  if( !SDL_InitSubSystem( SDL_INIT_VIDEO ) ) {
     SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
   if( !TTF_Init() ) {
@@ -451,7 +451,7 @@ void AudioAnalysis::gui_destroy( void ) {
 
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
   TTF_Quit();
-  SDL_Quit();
+  SDL_QuitSubSystem( SDL_INIT_VIDEO );
 }
 
 bool AudioAnalysis::gui_set_scale( double scale ) {

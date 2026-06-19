@@ -11,6 +11,10 @@ AudioSampleDisplay::AudioSampleDisplay( double sampleRate, std::shared_ptr< spdl
                   position.y,
                   position.w,
                   position.h );
+  for( auto& point : points_ ) {
+    point.x = 0.0f;
+    point.y = 0.0f;
+  }
 }
 
 AudioSampleDisplay::~AudioSampleDisplay() {}
@@ -21,7 +25,7 @@ void AudioSampleDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     return;
   }
 
-  for( size_t i = 0; i < points_.size(); i++ ) {
+  for( size_t i = 0; i < std::min( points_.size(), samples_.size() ); i++ ) {
     auto& point = points_.at( i );
     auto const& sample = samples_.at( i );
 

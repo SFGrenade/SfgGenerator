@@ -12,7 +12,11 @@
 
 namespace SfPb = SfgGenerator::Proto;
 
-ParamMultiplex::ParamMultiplex() : _base_() {
+ParamMultiplex::ParamMultiplex()
+    : _base_(), guiWindow_( nullptr, []( SDL_Window* ptr ) {
+        SDL_HideWindow( ptr );
+        SDL_DestroyWindow( ptr );
+      } ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 }
 
@@ -454,7 +458,7 @@ bool ParamMultiplex::gui_get_preferred_api( std::string& out_api, bool* out_is_f
 
 bool ParamMultiplex::gui_create( std::string const& api, bool is_floating ) {
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] init SDL", __FUNCTION__, static_cast< void* >( this ) );
-  if( !SDL_Init( SDL_INIT_VIDEO ) ) {
+  if( !SDL_InitSubSystem( SDL_INIT_VIDEO ) ) {
     SFG_LOG_ERROR( host_, host_log_, "[{:s}] [{:p}] error initializing SDL: {:s}", __FUNCTION__, static_cast< void* >( this ), SDL_GetError() );
   }
   if( !TTF_Init() ) {
@@ -521,7 +525,7 @@ void ParamMultiplex::gui_destroy( void ) {
 
   SFG_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] quit SDL", __FUNCTION__, static_cast< void* >( this ) );
   TTF_Quit();
-  SDL_Quit();
+  SDL_QuitSubSystem( SDL_INIT_VIDEO );
 }
 
 bool ParamMultiplex::gui_set_scale( double scale ) {
@@ -899,7 +903,7 @@ void ParamMultiplex::guiTimerCallback() {
   {
     int winW;
     int winH;
-    SDL_GetWindowSize( guiWindow_.get(), &winW, &winH );
+    WRAP_SDL_CALL_INST( SDL_GetWindowSize, guiWindow_.get(), &winW, &winH );
     guiRootWidget_->SetW( static_cast< float >( winW ) );
     guiRootWidget_->SetH( static_cast< float >( winH ) );
   }
@@ -917,13 +921,13 @@ void ParamMultiplex::guiTimerCallback() {
 #pragma endregion Logic
 
 #pragma region Rendering
-  SDL_SetRenderDrawColor( guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
-  SDL_RenderClear( guiWindowRenderer_.get() );
+  WRAP_SDL_CALL_INST( SDL_SetRenderDrawColor, guiWindowRenderer_.get(), 0x00, 0x00, 0x00, 0xff );
+  WRAP_SDL_CALL_INST( SDL_RenderClear, guiWindowRenderer_.get() );
 
   // actually draw stuff here
   guiRootWidget_->OnRender( guiWindowRenderer_ );
 
-  SDL_RenderPresent( guiWindowRenderer_.get() );
+  WRAP_SDL_CALL_INST( SDL_RenderPresent, guiWindowRenderer_.get() );
 #pragma endregion Rendering
 }
 
