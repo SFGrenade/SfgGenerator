@@ -21,10 +21,14 @@ FrequencyDisplay::FrequencyDisplay( double sampleRate, std::shared_ptr< spdlog::
                   position.h );
   MIN_FREQ_LOG = std::log10( FFT_DISPLAY_MIN_FREQ );
   MAX_FREQ_LOG = std::log10( FFT_DISPLAY_MAX_FREQ );
-  fftInputSize_ = 1;
-  while( fftInputSize_ < samples_.capacity() ) {
-    fftInputSize_ = fftInputSize_ << 1;
-  }
+
+  // todo: usually not advised, but it works
+  fftInputSize_ = samples_.capacity();
+  // fftInputSize_ = 1;
+  // while( fftInputSize_ < samples_.capacity() ) {
+  //   fftInputSize_ = fftInputSize_ << 1;
+  // }
+
   fftOutputSize_ = fftInputSize_ / 2 + 1;
   fftWindow_.resize( fftInputSize_, 0.0 );
   hann( fftWindow_.data(), fftInputSize_, false );
