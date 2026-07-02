@@ -2,8 +2,9 @@
 #include "widgets/FrequencyDisplay.hpp"
 
 // Project includes
+#include "common/SplinePoint.hpp"
 #include "common/WindowFunctions.hpp"
-#include "common/_fftw.hpp"
+#include "libraryExtensions/_fftw.hpp"
 #include "widgets/Label.hpp"
 
 // C++ std includes

@@ -2,7 +2,7 @@
 #include "common/NoteMap.hpp"
 
 // Project includes
-#include "common/math.hpp"
+#include "libraryExtensions/math.hpp"
 
 // C++ std includes
 #include <algorithm>

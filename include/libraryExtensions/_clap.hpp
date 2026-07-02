@@ -2,7 +2,7 @@
 #define CLAP_HAS_THREAD
 
 // Project includes
-#include "common/_fmt.hpp"
+#include "libraryExtensions/logging.hpp"
 
 // Other lib includes
 #include <clap/all.h>

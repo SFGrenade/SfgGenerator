@@ -1,7 +1,7 @@
 #pragma once
 
 // Project includes
-#include "common/_fmt.hpp"
+#include "libraryExtensions/logging.hpp"
 #include "common/_gui.hpp"
 #include "widgets/Label.hpp"
 

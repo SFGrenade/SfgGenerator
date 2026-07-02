@@ -65,8 +65,7 @@ add_requires( "vcpkg::iir1", { alias = "vcpkg-iir1" } )
 
 add_requireconfs( "boost", { configs = { header_only = true } } )
 add_requireconfs( "fmt", { configs = { header_only = true, unicode = true } } )
-add_requireconfs( "libsdl3", { debug = true, configs = { sdlmain = false, shared = true } } )
-add_requireconfs( "libsdl3_ttf", { configs = { shared = true } } )
+add_requireconfs( "libsdl3", { debug = true, configs = { sdlmain = false } } )
 add_requireconfs( "spdlog", { configs = { header_only = true, fmt_external_ho = true } } )
 add_requireconfs( "vcpkg-fftw3", { configs = { features = { "threads" } } } )
 add_requireconfs( "**.abseil", { override = true, system = false } ) -- https://github.com/xmake-io/xmake-repo/issues/9228#issuecomment-3828155467
@@ -74,11 +73,12 @@ add_requireconfs( "**.abseil", { override = true, system = false } ) -- https://
 -- for sdl main to not exist
 add_defines( "SDL_MAIN_HANDLED" )
 
-target( "SfgGeneratorMain" )
-  set_kind( "shared", { public = false } )
+-- the actually loaded .DLL file
+target( "SfgGenerator" )
+  set_kind( "shared" )
   set_encodings( "utf-8" )
 
-  set_default( false )
+  set_default( true )
   set_group( "LIBS" )
 
   add_packages( "boost", { public = false } )
@@ -94,12 +94,15 @@ target( "SfgGeneratorMain" )
 
   if is_plat( "linux" ) then
     add_defines( "SFG_GEN_IS_LINUX", { public = true } )
+    add_defines( "UI_LINUX", { public = true } ) -- for luigi2.h
     add_ldflags( "rt", { public = false } ) -- for the timer
   elseif is_plat( "macosx" ) then
     add_defines( "SFG_GEN_IS_MACOS", { public = true } )
+    add_defines( "UI_MACOS", { public = true } ) -- for luigi2.h -- doesn't exist
     add_frameworks( "CoreFoundation", { public = false } ) -- for the timer
   elseif is_plat( "windows" ) then
     add_defines( "SFG_GEN_IS_WINDOWS", { public = true } )
+    add_defines( "UI_WINDOWS", { public = true } ) -- for luigi2.h
     add_ldflags( "User32", { public = false } ) -- for the timer
   end
 
@@ -109,41 +112,18 @@ target( "SfgGeneratorMain" )
   add_files( "proto/**.proto", { proto_public = false, proto_rootdir = path.join( "proto" ) } )
 
   add_includedirs( "include", { public = true } )
-  add_headerfiles( "include/(plugin/main.hpp)" )
   add_headerfiles( "include/common/*.hpp" )
+  add_headerfiles( "include/libraryExtensions/*.hpp" )
+  add_headerfiles( "include/main/*.hpp" )
   add_headerfiles( "include/plugin/*.hpp" )
+  add_headerfiles( "include/vendor/*.h" )
   add_headerfiles( "include/widgets/*.hpp" )
   add_files( "src/common/*.cpp" )
+  add_files( "src/libraryExtensions/*.cpp" )
+  add_files( "src/main/*.cpp" )
   add_files( "src/plugin/*.cpp" )
+  add_files( "src/vendor/*.cpp" )
   add_files( "src/widgets/*.cpp" )
-
-  after_build( function ( target )
-    import( "core.project.config" )
-    os.mkdir( path.join( path.join( "$(projectdir)", target.targetdir( target ) ), "resources" ) )
-    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( path.join( "$(projectdir)", target.targetdir( target ) ) ) )
-  end )
-  after_install( function ( target )
-    import( "core.project.config" )
-    os.mkdir( path.join( target.installdir( target ), "resources" ) )
-    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( target.installdir( target ) ) )
-  end )
-  after_installcmd( function ( target )
-    import( "core.project.config" )
-    os.mkdir( path.join( target.installdir( target ), "resources" ) )
-    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( target.installdir( target ) ) )
-  end )
-target_end()
-
-target( "SfgGenerator" )
-  set_kind( "shared" )
-  set_encodings( "utf-8" )
-
-  set_default( true )
-  set_group( "LIBS" )
-
-  add_packages( "vcpkg-clap", { public = false } )
-
-  add_files( "src/main.cpp" )
 
   if is_plat( "linux" ) then
     add_ldflags( "-Wl,--version-script=" .. path.join( os.scriptdir(), "linux-clap-plugins.version" ), "-Wl,-z,defs", { force = true } )
@@ -160,6 +140,22 @@ target( "SfgGenerator" )
   end
 
   add_rules( "utils.symbols.export_list", { symbols = { "clap_entry" } } )
+
+  after_build( function ( target )
+    import( "core.project.config" )
+    os.mkdir( path.join( path.join( "$(projectdir)", target.targetdir( target ) ), "resources" ) )
+    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( path.join( "$(projectdir)", target.targetdir( target ) ) ) )
+  end )
+  after_install( function ( target )
+    import( "core.project.config" )
+    os.mkdir( path.join( target.installdir( target ), "resources" ) )
+    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( target.installdir( target ) ) )
+  end )
+  after_installcmd( function ( target )
+    import( "core.project.config" )
+    os.mkdir( path.join( target.installdir( target ), "resources" ) )
+    os.cp( path.join( "$(scriptdir)", "resources" ), path.join( target.installdir( target ) ) )
+  end )
 
   on_test( function ( target, opt )
     local args = {

@@ -1,12 +1,12 @@
 #pragma once
 
 // Project includes
+#include "common/BasePlugin.hpp"
 #include "common/Timer.hpp"
-#include "common/_clap.hpp"
-#include "common/_fmt.hpp"
 #include "common/_gui.hpp"
+#include "libraryExtensions/_clap.hpp"
+#include "libraryExtensions/logging.hpp"
 #include "plugin/AudioAnalysis.pb.h"
-#include "plugin/BasePlugin.hpp"
 #include "widgets/FrequencyDisplay.hpp"
 #include "widgets/HorizontalDbfsDisplay.hpp"
 #include "widgets/Widget.hpp"

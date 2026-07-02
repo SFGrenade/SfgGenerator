@@ -1,12 +1,8 @@
 // Header assigned to this source
-#include "common/_fftw.hpp"
+#include "common/SplinePoint.hpp"
 
 // C++ std includes
 #include <cmath>
-
-std::shared_ptr< fftwf_plan_s > make_fftw_shared_ptr( fftwf_plan s ) {
-  return std::shared_ptr< fftwf_plan_s >( s, []( fftwf_plan p ) { fftwf_destroy_plan( p ); } );
-}
 
 SplinePoint catmullRom( SplinePoint const& p0, SplinePoint const& p1, SplinePoint const& p2, SplinePoint const& p3, double t ) {
   double t2 = t * t;

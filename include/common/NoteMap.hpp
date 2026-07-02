@@ -1,8 +1,8 @@
 #pragma once
 
 // Project includes
-#include "common/_clap.hpp"
-#include "common/_fmt.hpp"
+#include "libraryExtensions/_clap.hpp"
+#include "libraryExtensions/logging.hpp"
 
 // C++ std includes
 #include <cstdint>

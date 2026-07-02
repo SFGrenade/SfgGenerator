@@ -1,5 +1,5 @@
 // Header assigned to this source
-#include "common/math.hpp"
+#include "libraryExtensions/math.hpp"
 
 // C++ std includes
 #include <cmath>

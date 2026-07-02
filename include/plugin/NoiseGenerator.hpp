@@ -1,18 +1,17 @@
 #pragma once
 
 // Project includes
+#include "common/BasePlugin.hpp"
 #include "common/NoteMap.hpp"
 #include "common/Timer.hpp"
-#include "common/_clap.hpp"
-#include "common/_fmt.hpp"
-#include "plugin/BasePlugin.hpp"
+#include "libraryExtensions/_clap.hpp"
+#include "libraryExtensions/logging.hpp"
 #include "plugin/NoiseGenerator.pb.h"
 #include "widgets/AudioSampleDisplay.hpp"
 #include "widgets/Button.hpp"
 #include "widgets/Label.hpp"
 #include "widgets/Slider.hpp"
 #include "widgets/Widget.hpp"
-
 
 // Other lib includes
 #include <boost/lockfree/spsc_queue.hpp>

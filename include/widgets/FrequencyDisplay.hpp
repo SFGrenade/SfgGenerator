@@ -1,8 +1,8 @@
 #pragma once
 
 // Project includes
-#include "common/_fftw.hpp"
-#include "common/_fmt.hpp"
+#include "libraryExtensions/_fftw.hpp"
+#include "libraryExtensions/logging.hpp"
 #include "common/_gui.hpp"
 #include "widgets/Widget.hpp"
 

@@ -1,7 +1,7 @@
 #pragma once
 
 // Project includes
-#include "common/_clap.hpp"
+#include "libraryExtensions/_clap.hpp"
 
 // Other lib includes
 #include <SDL3/SDL.h>

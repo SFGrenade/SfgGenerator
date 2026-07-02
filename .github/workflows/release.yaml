@@ -77,6 +77,7 @@ jobs:
         mkdir -p dest/SfgGenerator/
         mv tmpDest/bin/SfgGenerator.clap dest/
         mv tmpDest/bin/* dest/SfgGenerator/
+        mv tmpDest/resources/* dest/SfgGenerator/
       shell: bash
 
     - name: Copy files to the right location (mac & linux)
@@ -85,6 +86,7 @@ jobs:
         mkdir -p dest/SfgGenerator/
         mv tmpDest/lib/SfgGenerator.clap dest/
         mv tmpDest/lib/* dest/SfgGenerator/
+        mv tmpDest/resources/* dest/SfgGenerator/
       shell: bash
 
     - name: Archive result

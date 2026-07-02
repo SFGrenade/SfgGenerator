@@ -1,11 +1,12 @@
 // Header assigned to this source
-#include "plugin/main.hpp"
+#include "main/main.hpp"
 
 // Project includes
 #include "plugin/AudioAnalysis.hpp"
 #include "plugin/AudioLerpEffect.hpp"
 #include "plugin/NoiseGenerator.hpp"
 #include "plugin/ParamMultiplex.hpp"
+#include "vendor/luigi2.h"
 
 #define DEBUG_LOG_ARGS_PLUGIN( fmt_string, ... ) \
   plug->host_log->log( plug->host,               \
@@ -90,12 +91,18 @@ bool entry_init( char const* plugin_path ) {
   // spdlog::register_logger( ClapGlobals::PLUGIN_LOGGER );
 
   ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter( plugin_path={:?} )", __FUNCTION__, plugin_path );
+
+  ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] Initializing luigi2", __FUNCTION__ );
+  UIInitialise();
+  ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] Initialized luigi2", __FUNCTION__ );
+
   return true;
 }
 
 void entry_deinit( void ) {
-  if( ClapGlobals::PLUGIN_LOGGER )
+  if( ClapGlobals::PLUGIN_LOGGER ) {
     ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter()", __FUNCTION__ );
+  }
   // perform the plugin de-initialization
   spdlog::shutdown();
   ClapGlobals::PLUGIN_PATH.clear();
@@ -108,3 +115,48 @@ void const* entry_get_factory( char const* factory_id ) {
     return &s_plugin_factory;
   return nullptr;
 }
+
+static std::mutex G_ENTRY_LOCK;
+static std::atomic_int32_t G_ENTRY_INIT_COUNTER = 0;
+
+// thread safe init counter
+bool entry_init_guard( char const* plugin_path ) {
+  std::lock_guard< std::mutex > _( G_ENTRY_LOCK );
+  int const cnt = ++G_ENTRY_INIT_COUNTER;
+  if( cnt > 1 )
+    return true;
+  if( entry_init( plugin_path ) )
+    return true;
+  G_ENTRY_INIT_COUNTER = 0;
+  return false;
+}
+
+// thread safe deinit counter
+void entry_deinit_guard( void ) {
+  std::lock_guard< std::mutex > _( G_ENTRY_LOCK );
+  int const cnt = --G_ENTRY_INIT_COUNTER;
+  if( cnt == 0 ) {
+    entry_deinit();
+  }
+}
+
+void const* entry_get_factory_guard( char const* factory_id ) {
+  if( ( G_ENTRY_INIT_COUNTER <= 0 ) )
+    return nullptr;
+  return entry_get_factory( factory_id );
+}
+
+#if __cplusplus
+extern "C" {
+#endif
+
+CLAP_EXPORT clap_plugin_entry_t const clap_entry = {
+    .clap_version = CLAP_VERSION_INIT,
+    .init = entry_init_guard,
+    .deinit = entry_deinit_guard,
+    .get_factory = entry_get_factory_guard,
+};
+
+#if __cplusplus
+}
+#endif
