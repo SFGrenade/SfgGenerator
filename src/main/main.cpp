@@ -5,8 +5,8 @@
 #include "plugin/AudioAnalysis.hpp"
 #include "plugin/AudioLerpEffect.hpp"
 #include "plugin/NoiseGenerator.hpp"
+#include "plugin/OrganGenerator.hpp"
 #include "plugin/ParamMultiplex.hpp"
-#include "vendor/luigi2.h"
 
 #define DEBUG_LOG_ARGS_PLUGIN( fmt_string, ... ) \
   plug->host_log->log( plug->host,               \
@@ -37,6 +37,10 @@ static struct {
     {
         .desc = AudioAnalysis::descriptor_get(),
         .create = AudioAnalysis::s_create,
+    },
+    {
+        .desc = OrganGenerator::descriptor_get(),
+        .create = OrganGenerator::s_create,
     },
 };
 
@@ -91,10 +95,6 @@ bool entry_init( char const* plugin_path ) {
   // spdlog::register_logger( ClapGlobals::PLUGIN_LOGGER );
 
   ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] enter( plugin_path={:?} )", __FUNCTION__, plugin_path );
-
-  ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] Initializing luigi2", __FUNCTION__ );
-  UIInitialise();
-  ClapGlobals::PLUGIN_LOGGER->trace( "[{:s}] Initialized luigi2", __FUNCTION__ );
 
   return true;
 }

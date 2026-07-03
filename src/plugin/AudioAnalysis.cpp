@@ -14,8 +14,8 @@ namespace SfPb = SfgGenerator::Proto;
 AudioAnalysis::AudioAnalysis()
     : _base_(),
       guiWindow_( nullptr,
-                  []( SDL_Window* ptr ) {
-                    SDL_HideWindow( ptr );
+                  [this]( SDL_Window* ptr ) {
+                    WRAP_SDL_CALL_INST( SDL_HideWindow, ptr );
                     SDL_DestroyWindow( ptr );
                   } ),
       sampleQueue_( 4096 ) {
@@ -400,21 +400,21 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
+  WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
   if( !is_floating ) {
-    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+    WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
   } else {
-    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
-    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
+    WRAP_SDL_CALL_INST( SDL_SetStringProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.AudioAnalysis" );
+    WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
   }
-  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
+  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), [this]( SDL_Window* ptr ) {
     if( ptr ) {
-      SDL_HideWindow( ptr );
+      WRAP_SDL_CALL_INST( SDL_HideWindow, ptr );
       SDL_DestroyWindow( ptr );
     }
   } );
@@ -436,7 +436,7 @@ bool AudioAnalysis::gui_create( std::string const& api, bool is_floating ) {
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void* >( guiWindowRenderer_.get() ) );
-  SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+  WRAP_SDL_CALL_INST( SDL_SetRenderDrawBlendMode, guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
 
   guiTimer_ = Timer::createNative( 1, std::bind( &AudioAnalysis::guiTimerCallback, this ) );
   guiTimer_->start();
@@ -459,7 +459,7 @@ bool AudioAnalysis::gui_set_scale( double scale ) {
 }
 
 bool AudioAnalysis::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
+  WRAP_SDL_CALL_INST( SDL_GetWindowSize, guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
   return true;
 }
 
@@ -480,7 +480,7 @@ bool AudioAnalysis::gui_adjust_size( uint32_t* out_width, uint32_t* out_height )
 }
 
 bool AudioAnalysis::gui_set_size( uint32_t width, uint32_t height ) {
-  SDL_SetWindowSize( guiWindow_.get(), width, height );
+  WRAP_SDL_CALL_INST( SDL_SetWindowSize, guiWindow_.get(), width, height );
   state_.set_gui_width( width );
   state_.set_gui_height( height );
   return true;
@@ -498,26 +498,26 @@ bool AudioAnalysis::gui_set_parent( clap_window_t const* window ) {
   } else {
     setParentWindow( guiWindow_, window );
   }
-  SDL_SetWindowPosition( guiWindow_.get(), 0, 0 );
+  WRAP_SDL_CALL_INST( SDL_SetWindowPosition, guiWindow_.get(), 0, 0 );
   return true;
 }
 
 bool AudioAnalysis::gui_set_transient( clap_window_t const* window ) {
-  SDL_RaiseWindow( guiWindow_.get() );
+  WRAP_SDL_CALL_INST( SDL_RaiseWindow, guiWindow_.get() );
   return true;
 }
 
 void AudioAnalysis::gui_suggest_title( std::string const& title ) {
-  SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
+  WRAP_SDL_CALL_INST( SDL_SetWindowTitle, guiWindow_.get(), title.c_str() );
 }
 
 bool AudioAnalysis::gui_show( void ) {
-  SDL_ShowWindow( guiWindow_.get() );
+  WRAP_SDL_CALL_INST( SDL_ShowWindow, guiWindow_.get() );
   return true;
 }
 
 bool AudioAnalysis::gui_hide( void ) {
-  SDL_HideWindow( guiWindow_.get() );
+  WRAP_SDL_CALL_INST( SDL_HideWindow, guiWindow_.get() );
   return true;
 }
 
@@ -684,7 +684,7 @@ void AudioAnalysis::guiTimerCallback() {
   // PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 
 #pragma region Inputs
-  for( SDL_Event event; SDL_PollEvent( &event ) != 0; ) {
+  for( SDL_Event event; SDL_PollEvent( &event ); ) {
     if( event.type == SDL_EVENT_QUIT ) {
       // shouldn't happen since we're inside a DAW
       break;

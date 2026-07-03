@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SfgGenerator.Proto;
+
+// this is the state of the generator
+message OrganGenerator {
+  uint32 gui_width = 101;
+  uint32 gui_height = 102;
+
+  // params
+  // double synth_sine_wave_mix = 1;
+}

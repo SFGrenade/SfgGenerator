@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 #define WRAP_SDL_CALL_INST( function, ... ) \
-  if( !( function( __VA_ARGS__ ) ) )                   \
+  if( !( function( __VA_ARGS__ ) ) )        \
     logger_->warn( "[{:s}] [{:p}] {:s} signalled error: {:s}", __FUNCTION__, static_cast< void* >( this ), #function, SDL_GetError() );
 
 class InputManager {

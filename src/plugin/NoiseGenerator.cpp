@@ -46,8 +46,8 @@ std::array< std::string, NoiseGenerator::_pb_::VelvetNoiseType_ARRAYSIZE > const
 NoiseGenerator::NoiseGenerator()
     : _base_(),
       guiWindow_( nullptr,
-                  []( SDL_Window* ptr ) {
-                    SDL_HideWindow( ptr );
+                  [this]( SDL_Window* ptr ) {
+                    WRAP_SDL_CALL_INST( SDL_HideWindow, ptr );
                     SDL_DestroyWindow( ptr );
                   } ),
       sampleQueueSineWave_( 4096 ),
@@ -75,7 +75,7 @@ std::string NoiseGenerator::get_name( void ) const {
 
 #pragma region wave generators
 
-namespace SFG_PRIVATE {
+namespace SFG_PRIVATE_NoiseGenerator {
 double sine_wave_StdSin( double phase, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
@@ -285,14 +285,14 @@ double velvet_noise_SporadicImpulse( std::uniform_real_distribution< double >& /
   // TODO: FIXME: ADD IMPLEMENTATION
   return 0.0;
 }
-}  // namespace SFG_PRIVATE
+}  // namespace SFG_PRIVATE_NoiseGenerator
 
 double NoiseGenerator::get_sample_sine_wave( double phase ) {
   switch( state_.synth_sine_wave_type() ) {
     case _pb_::SineWaveType::NoiseGenerator_SineWaveType_StdSin:
-      return SFG_PRIVATE::sine_wave_StdSin( phase, state_.synth_sine_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::sine_wave_StdSin( phase, state_.synth_sine_wave_mix() );
     case _pb_::SineWaveType::NoiseGenerator_SineWaveType_CSin:
-      return SFG_PRIVATE::sine_wave_CSin( phase, state_.synth_sine_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::sine_wave_CSin( phase, state_.synth_sine_wave_mix() );
     default:
       return 0.0;
   }
@@ -301,9 +301,9 @@ double NoiseGenerator::get_sample_sine_wave( double phase ) {
 double NoiseGenerator::get_sample_square_wave( double phase ) {
   switch( state_.synth_square_wave_type() ) {
     case _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth:
-      return SFG_PRIVATE::square_wave_PhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::square_wave_PhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
     case _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth:
-      return SFG_PRIVATE::square_wave_InversePhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::square_wave_InversePhaseWidth( phase, state_.synth_square_wave_pwm(), state_.synth_square_wave_mix() );
     default:
       return 0.0;
   }
@@ -312,9 +312,9 @@ double NoiseGenerator::get_sample_square_wave( double phase ) {
 double NoiseGenerator::get_sample_saw_wave( double phase ) {
   switch( state_.synth_saw_wave_type() ) {
     case _pb_::SawWaveType::NoiseGenerator_SawWaveType_Phase:
-      return SFG_PRIVATE::saw_wave_Phase( phase, state_.synth_saw_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::saw_wave_Phase( phase, state_.synth_saw_wave_mix() );
     case _pb_::SawWaveType::NoiseGenerator_SawWaveType_InversePhase:
-      return SFG_PRIVATE::saw_wave_InversePhase( phase, state_.synth_saw_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::saw_wave_InversePhase( phase, state_.synth_saw_wave_mix() );
     default:
       return 0.0;
   }
@@ -323,7 +323,7 @@ double NoiseGenerator::get_sample_saw_wave( double phase ) {
 double NoiseGenerator::get_sample_triangle_wave( double phase ) {
   switch( state_.synth_triangle_wave_type() ) {
     case _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp:
-      return SFG_PRIVATE::triangle_wave_ChunkLerp( phase, state_.synth_triangle_wave_mix() );
+      return SFG_PRIVATE_NoiseGenerator::triangle_wave_ChunkLerp( phase, state_.synth_triangle_wave_mix() );
     default:
       return 0.0;
   }
@@ -332,9 +332,9 @@ double NoiseGenerator::get_sample_triangle_wave( double phase ) {
 double NoiseGenerator::get_sample_white_noise( double /*phase*/ ) {
   switch( state_.synth_white_noise_type() ) {
     case _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom:
-      return SFG_PRIVATE::white_noise_StdRandom( dist_, eng_, state_.synth_white_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::white_noise_StdRandom( dist_, eng_, state_.synth_white_noise_mix() );
     case _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand:
-      return SFG_PRIVATE::white_noise_RandMaxRand( state_.synth_white_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::white_noise_RandMaxRand( state_.synth_white_noise_mix() );
     default:
       return 0.0;
   }
@@ -343,7 +343,7 @@ double NoiseGenerator::get_sample_white_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_pink_noise( double /*phase*/ ) {
   switch( state_.synth_pink_noise_type() ) {
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined:
-      return SFG_PRIVATE::pink_noise_PaulKellettRefined( dist_,
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_PaulKellettRefined( dist_,
                                                          eng_,
                                                          pink_refined_b0_,
                                                          pink_refined_b1_,
@@ -354,11 +354,11 @@ double NoiseGenerator::get_sample_pink_noise( double /*phase*/ ) {
                                                          pink_refined_b6_,
                                                          state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettEconomy:
-      return SFG_PRIVATE::pink_noise_PaulKellettEconomy( dist_, eng_, pink_economy_b0_, pink_economy_b1_, pink_economy_b2_, state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_PaulKellettEconomy( dist_, eng_, pink_economy_b0_, pink_economy_b1_, pink_economy_b2_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_VossMcCartney:
-      return SFG_PRIVATE::pink_noise_VossMcCartney( dist_, eng_, pink_VossMcCartney_sample_, pink_VossMcCartney_streams_, state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_VossMcCartney( dist_, eng_, pink_VossMcCartney_sample_, pink_VossMcCartney_streams_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation:
-      return SFG_PRIVATE::pink_noise_IirFilterApproximation( dist_, eng_, state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_IirFilterApproximation( dist_, eng_, state_.synth_pink_noise_mix() );
     default:
       return 0.0;
   }
@@ -367,15 +367,15 @@ double NoiseGenerator::get_sample_pink_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_red_noise( double /*phase*/ ) {
   switch( state_.synth_red_noise_type() ) {
     case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration:
-      return SFG_PRIVATE::red_noise_BasicIntegration( dist_, eng_, state_.synth_red_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::red_noise_BasicIntegration( dist_, eng_, state_.synth_red_noise_mix() );
     case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_LeakyIntegration:
-      return SFG_PRIVATE::red_noise_LeakyIntegration( dist_, eng_, state_.synth_red_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::red_noise_LeakyIntegration( dist_, eng_, state_.synth_red_noise_mix() );
     case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_IntegerWalk:
-      return SFG_PRIVATE::red_noise_IntegerWalk( dist_, eng_, state_.synth_red_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::red_noise_IntegerWalk( dist_, eng_, state_.synth_red_noise_mix() );
     case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_OnePoleIirFilter:
-      return SFG_PRIVATE::red_noise_OnePoleIirFilter( dist_, eng_, state_.synth_red_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::red_noise_OnePoleIirFilter( dist_, eng_, state_.synth_red_noise_mix() );
     case _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp:
-      return SFG_PRIVATE::red_noise_CumulativeWithClamp( dist_, eng_, state_.synth_red_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::red_noise_CumulativeWithClamp( dist_, eng_, state_.synth_red_noise_mix() );
     default:
       return 0.0;
   }
@@ -384,15 +384,15 @@ double NoiseGenerator::get_sample_red_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_blue_noise( double /*phase*/ ) {
   switch( state_.synth_blue_noise_type() ) {
     case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster:
-      return SFG_PRIVATE::blue_noise_VoidAndCluster( dist_, eng_, state_.synth_blue_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::blue_noise_VoidAndCluster( dist_, eng_, state_.synth_blue_noise_mix() );
     case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PoissonDiskSampling:
-      return SFG_PRIVATE::blue_noise_PoissonDiskSampling( dist_, eng_, state_.synth_blue_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::blue_noise_PoissonDiskSampling( dist_, eng_, state_.synth_blue_noise_mix() );
     case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_SimpleSpectralShaping:
-      return SFG_PRIVATE::blue_noise_SimpleSpectralShaping( dist_, eng_, state_.synth_blue_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::blue_noise_SimpleSpectralShaping( dist_, eng_, state_.synth_blue_noise_mix() );
     case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_R2JitteredSampling:
-      return SFG_PRIVATE::blue_noise_R2JitteredSampling( dist_, eng_, state_.synth_blue_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::blue_noise_R2JitteredSampling( dist_, eng_, state_.synth_blue_noise_mix() );
     case _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise:
-      return SFG_PRIVATE::blue_noise_PermutedGradientNoise( dist_, eng_, state_.synth_blue_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::blue_noise_PermutedGradientNoise( dist_, eng_, state_.synth_blue_noise_mix() );
     default:
       return 0.0;
   }
@@ -401,9 +401,9 @@ double NoiseGenerator::get_sample_blue_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_violet_noise( double /*phase*/ ) {
   switch( state_.synth_violet_noise_type() ) {
     case _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference:
-      return SFG_PRIVATE::violet_noise_FirstOrderDifference( dist_, eng_, state_.synth_violet_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::violet_noise_FirstOrderDifference( dist_, eng_, state_.synth_violet_noise_mix() );
     case _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter:
-      return SFG_PRIVATE::violet_noise_FirstOrderIirFilter( dist_, eng_, state_.synth_violet_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::violet_noise_FirstOrderIirFilter( dist_, eng_, state_.synth_violet_noise_mix() );
     default:
       return 0.0;
   }
@@ -412,13 +412,13 @@ double NoiseGenerator::get_sample_violet_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_grey_noise( double /*phase*/ ) {
   switch( state_.synth_grey_noise_type() ) {
     case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter:
-      return SFG_PRIVATE::grey_noise_PsychoacousticFilter( dist_, eng_, state_.synth_grey_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::grey_noise_PsychoacousticFilter( dist_, eng_, state_.synth_grey_noise_mix() );
     case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_AweightingInversion:
-      return SFG_PRIVATE::grey_noise_AweightingInversion( dist_, eng_, state_.synth_grey_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::grey_noise_AweightingInversion( dist_, eng_, state_.synth_grey_noise_mix() );
     case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_MultiBandpass:
-      return SFG_PRIVATE::grey_noise_MultiBandpass( dist_, eng_, state_.synth_grey_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::grey_noise_MultiBandpass( dist_, eng_, state_.synth_grey_noise_mix() );
     case _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation:
-      return SFG_PRIVATE::grey_noise_EqualLoudnessApproximation( dist_, eng_, state_.synth_grey_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::grey_noise_EqualLoudnessApproximation( dist_, eng_, state_.synth_grey_noise_mix() );
     default:
       return 0.0;
   }
@@ -427,7 +427,7 @@ double NoiseGenerator::get_sample_grey_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_velvet_noise( double /*phase*/ ) {
   switch( state_.synth_velvet_noise_type() ) {
     case _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse:
-      return SFG_PRIVATE::velvet_noise_SporadicImpulse( dist_, eng_, state_.synth_velvet_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::velvet_noise_SporadicImpulse( dist_, eng_, state_.synth_velvet_noise_mix() );
     default:
       return 0.0;
   }
@@ -1635,21 +1635,21 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
-  SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
-  SDL_SetNumberProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
+  WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true );
+  WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state_.gui_width() );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state_.gui_height() );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0 );
+  WRAP_SDL_CALL_INST( SDL_SetNumberProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0 );
   if( !is_floating ) {
-    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
+    WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true );
   } else {
-    SDL_SetStringProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.NoiseGenerator" );
-    SDL_SetBooleanProperty( windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
+    WRAP_SDL_CALL_INST( SDL_SetStringProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "com.SFGrenade.NoiseGenerator" );
+    WRAP_SDL_CALL_INST( SDL_SetBooleanProperty, windowCreateProps, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, false );
   }
-  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), []( SDL_Window* ptr ) {
+  guiWindow_ = std::shared_ptr< SDL_Window >( SDL_CreateWindowWithProperties( windowCreateProps ), [this]( SDL_Window* ptr ) {
     if( ptr ) {
-      SDL_HideWindow( ptr );
+      WRAP_SDL_CALL_INST( SDL_HideWindow, ptr );
       SDL_DestroyWindow( ptr );
     }
   } );
@@ -1671,7 +1671,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
                  __FUNCTION__,
                  static_cast< void* >( this ),
                  static_cast< void* >( guiWindowRenderer_.get() ) );
-  SDL_SetRenderDrawBlendMode( guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
+  WRAP_SDL_CALL_INST( SDL_SetRenderDrawBlendMode, guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
 
   guiTimer_ = Timer::createNative( 1, std::bind( &NoiseGenerator::guiTimerCallback, this ) );
   guiTimer_->start();
@@ -1694,7 +1694,7 @@ bool NoiseGenerator::gui_set_scale( double scale ) {
 }
 
 bool NoiseGenerator::gui_get_size( uint32_t* out_width, uint32_t* out_height ) {
-  SDL_GetWindowSize( guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
+  WRAP_SDL_CALL_INST( SDL_GetWindowSize, guiWindow_.get(), reinterpret_cast< int* >( out_width ), reinterpret_cast< int* >( out_height ) );
   return true;
 }
 
@@ -1715,7 +1715,7 @@ bool NoiseGenerator::gui_adjust_size( uint32_t* out_width, uint32_t* out_height 
 }
 
 bool NoiseGenerator::gui_set_size( uint32_t width, uint32_t height ) {
-  SDL_SetWindowSize( guiWindow_.get(), width, height );
+  WRAP_SDL_CALL_INST( SDL_SetWindowSize, guiWindow_.get(), width, height );
   state_.set_gui_width( width );
   state_.set_gui_height( height );
   return true;
@@ -1733,26 +1733,26 @@ bool NoiseGenerator::gui_set_parent( clap_window_t const* window ) {
   } else {
     setParentWindow( guiWindow_, window );
   }
-  SDL_SetWindowPosition( guiWindow_.get(), 0, 0 );
+  WRAP_SDL_CALL_INST( SDL_SetWindowPosition, guiWindow_.get(), 0, 0 );
   return true;
 }
 
 bool NoiseGenerator::gui_set_transient( clap_window_t const* window ) {
-  SDL_RaiseWindow( guiWindow_.get() );
+  WRAP_SDL_CALL_INST( SDL_RaiseWindow, guiWindow_.get() );
   return true;
 }
 
 void NoiseGenerator::gui_suggest_title( std::string const& title ) {
-  SDL_SetWindowTitle( guiWindow_.get(), title.c_str() );
+  WRAP_SDL_CALL_INST( SDL_SetWindowTitle, guiWindow_.get(), title.c_str() );
 }
 
 bool NoiseGenerator::gui_show( void ) {
-  SDL_ShowWindow( guiWindow_.get() );
+  WRAP_SDL_CALL_INST( SDL_ShowWindow, guiWindow_.get() );
   return true;
 }
 
 bool NoiseGenerator::gui_hide( void ) {
-  SDL_HideWindow( guiWindow_.get() );
+  WRAP_SDL_CALL_INST( SDL_HideWindow, guiWindow_.get() );
   return true;
 }
 
@@ -2460,7 +2460,7 @@ void NoiseGenerator::guiTimerCallback() {
   // PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
 
 #pragma region Inputs
-  for( SDL_Event event; SDL_PollEvent( &event ) != 0; ) {
+  for( SDL_Event event; SDL_PollEvent( &event ); ) {
     if( event.type == SDL_EVENT_QUIT ) {
       // shouldn't happen since we're inside a DAW
       break;

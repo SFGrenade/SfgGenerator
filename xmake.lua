@@ -116,13 +116,11 @@ target( "SfgGenerator" )
   add_headerfiles( "include/libraryExtensions/*.hpp" )
   add_headerfiles( "include/main/*.hpp" )
   add_headerfiles( "include/plugin/*.hpp" )
-  add_headerfiles( "include/vendor/*.h" )
   add_headerfiles( "include/widgets/*.hpp" )
   add_files( "src/common/*.cpp" )
   add_files( "src/libraryExtensions/*.cpp" )
   add_files( "src/main/*.cpp" )
   add_files( "src/plugin/*.cpp" )
-  add_files( "src/vendor/*.cpp" )
   add_files( "src/widgets/*.cpp" )
 
   if is_plat( "linux" ) then
