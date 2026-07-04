@@ -52,6 +52,31 @@ bool OrganGenerator::init( void ) {
   return ret;
 }
 
+bool OrganGenerator::activate( double sample_rate, uint32_t min_frames_count, uint32_t max_frames_count ) {
+  PLUGIN_LOG_TRACE( host_,
+                    host_log_,
+                    "[{:s}] [{:p}] enter( sample_rate={:f}, min_frames_count={:d}, max_frames_count={:d} )",
+                    __FUNCTION__,
+                    static_cast< void* >( this ),
+                    sample_rate,
+                    min_frames_count,
+                    max_frames_count );
+  bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
+
+  // todo: fixme: temporary single pipe here
+  size_t i;
+  decltype( fluePipes_ )::iterator iter;
+  for( i = 0, iter = fluePipes_.begin(); iter != fluePipes_.end(); i++, iter++ ) {
+    double freq = 440.0 * std::pow( 2.0, ( double( i ) - 69.0 ) / 12.0 );
+    iter->length = SPEED_OF_SOUND / ( 2.0 * freq );
+    iter->openess = FluePipe::Openess::Open;
+    iter->Init( sample_rate, logger_->clone( fmt::format( "OrganGenerator::fluePipe_{:d}", i ) ) );
+  }
+
+  ret = ret && true;
+  return ret;
+}
+
 void OrganGenerator::on_main_thread( void ) {
   PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   _base_::on_main_thread();
@@ -251,23 +276,11 @@ clap_process_status OrganGenerator::process( clap_process_t const* process ) {
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
         float out = 0.0f;
         if( active_ && process_ ) {
-          noteMap_.foreach( [this, &out]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
-            // A4 (note id 69) is 440.0 Hz
-            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
-
-            // entry.second.phase is 0.0 .. 1.0
-            // float sample_sine_wave = get_sample_sine_wave( entry.second.phase );
-
-            // float sample = sample_sine_wave + sample_square_wave + sample_saw_wave + sample_triangle_wave + sample_white_noise + sample_pink_noise
-            //                + sample_red_noise + sample_blue_noise + sample_violet_noise + sample_grey_noise + sample_velvet_noise;
-            float sample = 0.0f;
-
-            entry.second.phase += freq / sample_rate_;
-            if( entry.second.phase >= 1.0f )
-              entry.second.phase -= 1.0f;
-
-            out += sample * entry.second.velocity;
-          } );
+          for( size_t fluePipe = 0; fluePipe < fluePipes_.size(); fluePipe++ ) {
+            NoteMap::NoteDescription note;
+            note.key = fluePipe;
+            out += fluePipes_[fluePipe].Update( noteMap_.velocity( note ) );
+          }
         }
         // store output
         if( process->audio_outputs[0].data32 )

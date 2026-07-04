@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <mutex>
 
 class NoteMap {
   public:
@@ -34,6 +35,7 @@ class NoteMap {
   virtual ~NoteMap();
 
   void clear();
+  double velocity( NoteMap::NoteDescription const& note ) const;
   void foreach( std::function< void( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) > const& callback );
   void handleEvent( clap_event_note_t const* ev );
   void handleEvent( clap_event_midi_t const* ev );
@@ -45,4 +47,5 @@ class NoteMap {
 
   private:
   std::map< NoteDescription, NoteData > noteMap_;
+  mutable std::mutex noteMapMutex_;
 };

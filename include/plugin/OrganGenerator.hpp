@@ -6,6 +6,8 @@
 #include "common/Timer.hpp"
 #include "libraryExtensions/_clap.hpp"
 #include "libraryExtensions/logging.hpp"
+#include "organ/FluePipe.hpp"
+#include "organ/Pipe.hpp"
 #include "plugin/OrganGenerator.pb.h"
 #include "widgets/Button.hpp"
 #include "widgets/Label.hpp"
@@ -33,6 +35,7 @@ class OrganGenerator : BasePlugin {
   // shit to override
   public:
   bool init( void ) override;
+  bool activate( double sample_rate, uint32_t min_frames_count, uint32_t max_frames_count ) override;
   void on_main_thread( void ) override;
   void reset( void ) override;
   void process_event( clap_event_header_t const* hdr, clap_output_events_t const* out_events ) override;
@@ -95,6 +98,7 @@ class OrganGenerator : BasePlugin {
 
   // temporary values
   NoteMap noteMap_;
+  std::array< FluePipe, 128 > fluePipes_;
 
   // shit for the factory
   public:

@@ -30,10 +30,36 @@ NoteMap::~NoteMap() {
 }
 
 void NoteMap::clear() {
+  // std::lock_guard< std::mutex > lock( noteMapMutex_ );
   noteMap_.clear();
 }
 
+double NoteMap::velocity( NoteMap::NoteDescription const& note ) const {
+  // std::lock_guard< std::mutex > lock( noteMapMutex_ );
+  for( auto iter = noteMap_.begin(); iter != noteMap_.end(); ) {
+    if( ( note.portIndex != -1 ) && ( note.portIndex != iter->first.portIndex ) ) {
+      iter++;
+      continue;
+    }
+    if( ( note.channelId != -1 ) && ( note.channelId != iter->first.channelId ) ) {
+      iter++;
+      continue;
+    }
+    if( ( note.key != -1 ) && ( note.key != iter->first.key ) ) {
+      iter++;
+      continue;
+    }
+    if( ( note.noteId != -1 ) && ( note.noteId != iter->first.noteId ) ) {
+      iter++;
+      continue;
+    }
+    return iter->second.velocity;
+  }
+  return 0.0;
+}
+
 void NoteMap::foreach( std::function< void( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) > const& callback ) {
+  // std::lock_guard< std::mutex > lock( noteMapMutex_ );
   for( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry : noteMap_ ) {
     callback( entry );
   }
@@ -93,6 +119,7 @@ void NoteMap::handleEvent( clap_event_midi_t const* ev ) {
 }
 
 void NoteMap::handleNoteOn( NoteMap::NoteDescription const& note, double velocity ) {
+  // std::lock_guard< std::mutex > lock( noteMapMutex_ );
   if( ( ( note.portIndex != -1 ) && ( note.channelId != -1 ) && ( note.key != -1 ) && ( note.noteId != -1 ) ) && ( noteMap_.find( note ) == noteMap_.end() ) ) {
     noteMap_.insert( { note, NoteMap::NoteData() } );
   }
@@ -120,6 +147,7 @@ void NoteMap::handleNoteOn( NoteMap::NoteDescription const& note, double velocit
 }
 
 void NoteMap::handleNoteVelocityChange( NoteMap::NoteDescription const& note, double velocity ) {
+  // std::lock_guard< std::mutex > lock( noteMapMutex_ );
   for( auto iter = noteMap_.begin(); iter != noteMap_.end(); ) {
     if( ( note.portIndex != -1 ) && ( note.portIndex != iter->first.portIndex ) ) {
       iter++;
@@ -143,6 +171,7 @@ void NoteMap::handleNoteVelocityChange( NoteMap::NoteDescription const& note, do
 }
 
 void NoteMap::handleNoteOff( NoteMap::NoteDescription const& note ) {
+  // std::lock_guard< std::mutex > lock( noteMapMutex_ );
   for( auto iter = noteMap_.begin(); iter != noteMap_.end(); ) {
     if( ( note.portIndex != -1 ) && ( note.portIndex != iter->first.portIndex ) ) {
       iter++;
