@@ -104,6 +104,7 @@ target( "SfgGenerator" )
     add_defines( "SFG_GEN_IS_WINDOWS", { public = true } )
     add_defines( "UI_WINDOWS", { public = true } ) -- for luigi2.h
     add_ldflags( "User32", { public = false } ) -- for the timer
+    add_ldflags( "Shell32", "Ole32", { public = false } ) -- for the env vars
   end
 
   add_defines( "SFG_GEN_EXPORT_CLAP_INIT", { public = false } )
