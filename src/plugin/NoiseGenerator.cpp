@@ -467,6 +467,23 @@ bool NoiseGenerator::init( void ) {
   return ret;
 }
 
+bool NoiseGenerator::activate( double sample_rate, uint32_t min_frames_count, uint32_t max_frames_count ) {
+  PLUGIN_LOG_TRACE( host_,
+                    host_log_,
+                    "[{:s}] [{:p}] enter( sample_rate={:f}, min_frames_count={:d}, max_frames_count={:d} )",
+                    __FUNCTION__,
+                    static_cast< void* >( this ),
+                    sample_rate,
+                    min_frames_count,
+                    max_frames_count );
+  bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
+  noteMap_.setSampleRate( sample_rate );
+  noteMap_.setAdsrParameters( 0.001, 1.0, 1.0, 0.01 );
+
+  ret = ret && true;
+  return ret;
+}
+
 void NoiseGenerator::on_main_thread( void ) {
   PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter()", __FUNCTION__, static_cast< void* >( this ) );
   _base_::on_main_thread();
@@ -1131,17 +1148,17 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
             float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
 
             // phase is 0.0 .. 1.0
-            float sample_sine_wave = get_sample_sine_wave( entry.second.phase );
-            float sample_square_wave = get_sample_square_wave( entry.second.phase );
-            float sample_saw_wave = get_sample_saw_wave( entry.second.phase );
-            float sample_triangle_wave = get_sample_triangle_wave( entry.second.phase );
-            float sample_white_noise = get_sample_white_noise( entry.second.phase );
-            float sample_pink_noise = get_sample_pink_noise( entry.second.phase );
-            float sample_red_noise = get_sample_red_noise( entry.second.phase );
-            float sample_blue_noise = get_sample_blue_noise( entry.second.phase );
-            float sample_violet_noise = get_sample_violet_noise( entry.second.phase );
-            float sample_grey_noise = get_sample_grey_noise( entry.second.phase );
-            float sample_velvet_noise = get_sample_velvet_noise( entry.second.phase );
+            float sample_sine_wave = get_sample_sine_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_square_wave = get_sample_square_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_saw_wave = get_sample_saw_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_triangle_wave = get_sample_triangle_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_white_noise = get_sample_white_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_pink_noise = get_sample_pink_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_red_noise = get_sample_red_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_blue_noise = get_sample_blue_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_violet_noise = get_sample_violet_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_grey_noise = get_sample_grey_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            float sample_velvet_noise = get_sample_velvet_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
 
             out_sine_wave += sample_sine_wave;
             out_square_wave += sample_square_wave;
@@ -1162,7 +1179,7 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
             if( entry.second.phase >= 1.0f )
               entry.second.phase -= 1.0f;
 
-            out += sample * entry.second.velocity;
+            out += sample;
           } );
         }
         // store output

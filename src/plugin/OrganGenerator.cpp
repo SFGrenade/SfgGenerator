@@ -62,6 +62,7 @@ bool OrganGenerator::activate( double sample_rate, uint32_t min_frames_count, ui
                     min_frames_count,
                     max_frames_count );
   bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
+  noteMap_.setSampleRate( sample_rate );
 
   // todo: fixme: temporary single pipe here
   size_t i;
