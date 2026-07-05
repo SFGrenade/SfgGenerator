@@ -11,7 +11,7 @@ BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBinaryOperators: true
 BreakBeforeBraces: Attach
-ColumnLimit: 160
+ColumnLimit: 600
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IncludeCategories:
   - Regex:    '^\"((?!\/).)*\"$'

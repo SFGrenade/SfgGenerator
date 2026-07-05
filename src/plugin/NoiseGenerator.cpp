@@ -21,26 +21,11 @@ std::array< std::string, NoiseGenerator::_pb_::SquareWaveType_ARRAYSIZE > const 
 std::array< std::string, NoiseGenerator::_pb_::SawWaveType_ARRAYSIZE > const NoiseGenerator::SAWWAVE_OPTIONS{ "Phase", "InversePhase" };
 std::array< std::string, NoiseGenerator::_pb_::TriangleWaveType_ARRAYSIZE > const NoiseGenerator::TRIANGLEWAVE_OPTIONS{ "ChunkLerp" };
 std::array< std::string, NoiseGenerator::_pb_::WhiteNoiseType_ARRAYSIZE > const NoiseGenerator::WHITENOISE_OPTIONS{ "StdRandom", "RandMaxRand" };
-std::array< std::string, NoiseGenerator::_pb_::PinkNoiseType_ARRAYSIZE > const NoiseGenerator::PINKNOISE_OPTIONS{ "PaulKellettRefined",
-                                                                                                                  "PaulKellettEconomy",
-                                                                                                                  "VossMcCartney",
-                                                                                                                  "IirFilterApproximation" };
-std::array< std::string, NoiseGenerator::_pb_::RedNoiseType_ARRAYSIZE > const NoiseGenerator::REDNOISE_OPTIONS{ "BasicIntegration",
-                                                                                                                "LeakyIntegration",
-                                                                                                                "IntegerWalk",
-                                                                                                                "OnePoleIirFilter",
-                                                                                                                "CumulativeWithClamp" };
-std::array< std::string, NoiseGenerator::_pb_::BlueNoiseType_ARRAYSIZE > const NoiseGenerator::BLUENOISE_OPTIONS{ "VoidAndCluster",
-                                                                                                                  "PoissonDiskSampling",
-                                                                                                                  "SimpleSpectralShaping",
-                                                                                                                  "R2JitteredSampling",
-                                                                                                                  "PermutedGradientNoise" };
-std::array< std::string, NoiseGenerator::_pb_::VioletNoiseType_ARRAYSIZE > const NoiseGenerator::VIOLETNOISE_OPTIONS{ "FirstOrderDifference",
-                                                                                                                      "FirstOrderIirFilter" };
-std::array< std::string, NoiseGenerator::_pb_::GreyNoiseType_ARRAYSIZE > const NoiseGenerator::GREYNOISE_OPTIONS{ "PsychoacousticFilter",
-                                                                                                                  "AweightingInversion",
-                                                                                                                  "MultiBandpass",
-                                                                                                                  "EqualLoudnessApproximation" };
+std::array< std::string, NoiseGenerator::_pb_::PinkNoiseType_ARRAYSIZE > const NoiseGenerator::PINKNOISE_OPTIONS{ "PaulKellettRefined", "PaulKellettEconomy", "VossMcCartney", "IirFilterApproximation" };
+std::array< std::string, NoiseGenerator::_pb_::RedNoiseType_ARRAYSIZE > const NoiseGenerator::REDNOISE_OPTIONS{ "BasicIntegration", "LeakyIntegration", "IntegerWalk", "OnePoleIirFilter", "CumulativeWithClamp" };
+std::array< std::string, NoiseGenerator::_pb_::BlueNoiseType_ARRAYSIZE > const NoiseGenerator::BLUENOISE_OPTIONS{ "VoidAndCluster", "PoissonDiskSampling", "SimpleSpectralShaping", "R2JitteredSampling", "PermutedGradientNoise" };
+std::array< std::string, NoiseGenerator::_pb_::VioletNoiseType_ARRAYSIZE > const NoiseGenerator::VIOLETNOISE_OPTIONS{ "FirstOrderDifference", "FirstOrderIirFilter" };
+std::array< std::string, NoiseGenerator::_pb_::GreyNoiseType_ARRAYSIZE > const NoiseGenerator::GREYNOISE_OPTIONS{ "PsychoacousticFilter", "AweightingInversion", "MultiBandpass", "EqualLoudnessApproximation" };
 std::array< std::string, NoiseGenerator::_pb_::VelvetNoiseType_ARRAYSIZE > const NoiseGenerator::VELVETNOISE_OPTIONS{ "SporadicImpulse" };
 
 NoiseGenerator::NoiseGenerator()
@@ -127,16 +112,7 @@ double white_noise_RandMaxRand( double mix ) {
     return 0.0;
   return ( ( 2.0 * static_cast< double >( rand() ) / static_cast< double >( RAND_MAX ) ) - 1.0 ) * mix;
 }
-double pink_noise_PaulKellettRefined( std::uniform_real_distribution< double >& dist,
-                                      std::mt19937_64& eng,
-                                      double& b0,
-                                      double& b1,
-                                      double& b2,
-                                      double& b3,
-                                      double& b4,
-                                      double& b5,
-                                      double& b6,
-                                      double mix ) {
+double pink_noise_PaulKellettRefined( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, double& b0, double& b1, double& b2, double& b3, double& b4, double& b5, double& b6, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   double white = dist( eng );
@@ -160,11 +136,7 @@ double pink_noise_PaulKellettEconomy( std::uniform_real_distribution< double >& 
   double pink = b0 + b1 + b2 + white * 0.1848;
   return std::clamp( pink * 0.05, -1.0, 1.0 ) * mix;  // empirically estimated
 }
-double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist,
-                                 std::mt19937_64& eng,
-                                 uint64_t& sampleIndex,
-                                 std::vector< double >& streams,
-                                 double mix ) {
+double pink_noise_VossMcCartney( std::uniform_real_distribution< double >& dist, std::mt19937_64& eng, uint64_t& sampleIndex, std::vector< double >& streams, double mix ) {
   if( mix <= 0.0 )
     return 0.0;
   double sum = 0.0;
@@ -343,29 +315,11 @@ double NoiseGenerator::get_sample_white_noise( double /*phase*/ ) {
 double NoiseGenerator::get_sample_pink_noise( double /*phase*/ ) {
   switch( state_.synth_pink_noise_type() ) {
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined:
-      return SFG_PRIVATE_NoiseGenerator::pink_noise_PaulKellettRefined( dist_,
-                                                                        eng_,
-                                                                        pink_refined_b0_,
-                                                                        pink_refined_b1_,
-                                                                        pink_refined_b2_,
-                                                                        pink_refined_b3_,
-                                                                        pink_refined_b4_,
-                                                                        pink_refined_b5_,
-                                                                        pink_refined_b6_,
-                                                                        state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_PaulKellettRefined( dist_, eng_, pink_refined_b0_, pink_refined_b1_, pink_refined_b2_, pink_refined_b3_, pink_refined_b4_, pink_refined_b5_, pink_refined_b6_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettEconomy:
-      return SFG_PRIVATE_NoiseGenerator::pink_noise_PaulKellettEconomy( dist_,
-                                                                        eng_,
-                                                                        pink_economy_b0_,
-                                                                        pink_economy_b1_,
-                                                                        pink_economy_b2_,
-                                                                        state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_PaulKellettEconomy( dist_, eng_, pink_economy_b0_, pink_economy_b1_, pink_economy_b2_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_VossMcCartney:
-      return SFG_PRIVATE_NoiseGenerator::pink_noise_VossMcCartney( dist_,
-                                                                   eng_,
-                                                                   pink_VossMcCartney_sample_,
-                                                                   pink_VossMcCartney_streams_,
-                                                                   state_.synth_pink_noise_mix() );
+      return SFG_PRIVATE_NoiseGenerator::pink_noise_VossMcCartney( dist_, eng_, pink_VossMcCartney_sample_, pink_VossMcCartney_streams_, state_.synth_pink_noise_mix() );
     case _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation:
       return SFG_PRIVATE_NoiseGenerator::pink_noise_IirFilterApproximation( dist_, eng_, state_.synth_pink_noise_mix() );
     default:
@@ -459,6 +413,50 @@ bool NoiseGenerator::init( void ) {
   state_.set_gui_width( 300 );
   state_.set_gui_height( 200 );
   state_.set_synth_square_wave_pwm( 0.5 );
+  state_.set_synth_sine_wave_attack( 0.01 );
+  state_.set_synth_sine_wave_decay( 1.0 );
+  state_.set_synth_sine_wave_sustain( 1.0 );
+  state_.set_synth_sine_wave_release( 0.01 );
+  state_.set_synth_square_wave_attack( 0.01 );
+  state_.set_synth_square_wave_decay( 1.0 );
+  state_.set_synth_square_wave_sustain( 1.0 );
+  state_.set_synth_square_wave_release( 0.01 );
+  state_.set_synth_saw_wave_attack( 0.01 );
+  state_.set_synth_saw_wave_decay( 1.0 );
+  state_.set_synth_saw_wave_sustain( 1.0 );
+  state_.set_synth_saw_wave_release( 0.01 );
+  state_.set_synth_triangle_wave_attack( 0.01 );
+  state_.set_synth_triangle_wave_decay( 1.0 );
+  state_.set_synth_triangle_wave_sustain( 1.0 );
+  state_.set_synth_triangle_wave_release( 0.01 );
+  state_.set_synth_white_noise_attack( 0.01 );
+  state_.set_synth_white_noise_decay( 1.0 );
+  state_.set_synth_white_noise_sustain( 1.0 );
+  state_.set_synth_white_noise_release( 0.01 );
+  state_.set_synth_pink_noise_attack( 0.01 );
+  state_.set_synth_pink_noise_decay( 1.0 );
+  state_.set_synth_pink_noise_sustain( 1.0 );
+  state_.set_synth_pink_noise_release( 0.01 );
+  state_.set_synth_red_noise_attack( 0.01 );
+  state_.set_synth_red_noise_decay( 1.0 );
+  state_.set_synth_red_noise_sustain( 1.0 );
+  state_.set_synth_red_noise_release( 0.01 );
+  state_.set_synth_blue_noise_attack( 0.01 );
+  state_.set_synth_blue_noise_decay( 1.0 );
+  state_.set_synth_blue_noise_sustain( 1.0 );
+  state_.set_synth_blue_noise_release( 0.01 );
+  state_.set_synth_violet_noise_attack( 0.01 );
+  state_.set_synth_violet_noise_decay( 1.0 );
+  state_.set_synth_violet_noise_sustain( 1.0 );
+  state_.set_synth_violet_noise_release( 0.01 );
+  state_.set_synth_grey_noise_attack( 0.01 );
+  state_.set_synth_grey_noise_decay( 1.0 );
+  state_.set_synth_grey_noise_sustain( 1.0 );
+  state_.set_synth_grey_noise_release( 0.01 );
+  state_.set_synth_velvet_noise_attack( 0.01 );
+  state_.set_synth_velvet_noise_decay( 1.0 );
+  state_.set_synth_velvet_noise_sustain( 1.0 );
+  state_.set_synth_velvet_noise_release( 0.01 );
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -470,24 +468,47 @@ bool NoiseGenerator::init( void ) {
   pink_economy_b1_ = 0.0;
   pink_economy_b2_ = 0.0;
   red_leaky_integrator_prev_ = 0.0;
-  noteMap_.clear();
+  noteMapSineWave_.clear();
+  noteMapSquareWave_.clear();
+  noteMapSawWave_.clear();
+  noteMapTriangleWave_.clear();
+  noteMapWhiteNoise_.clear();
+  noteMapPinkNoise_.clear();
+  noteMapRedNoise_.clear();
+  noteMapBlueNoise_.clear();
+  noteMapVioletNoise_.clear();
+  noteMapGreyNoise_.clear();
+  noteMapVelvetNoise_.clear();
 
   ret = ret && true;
   return ret;
 }
 
 bool NoiseGenerator::activate( double sample_rate, uint32_t min_frames_count, uint32_t max_frames_count ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( sample_rate={:f}, min_frames_count={:d}, max_frames_count={:d} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    sample_rate,
-                    min_frames_count,
-                    max_frames_count );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( sample_rate={:f}, min_frames_count={:d}, max_frames_count={:d} )", __FUNCTION__, static_cast< void* >( this ), sample_rate, min_frames_count, max_frames_count );
   bool ret = _base_::activate( sample_rate, min_frames_count, max_frames_count );
-  noteMap_.setSampleRate( sample_rate );
-  noteMap_.setAdsrParameters( 0.001, 1.0, 1.0, 0.01 );
+  noteMapSineWave_.setSampleRate( sample_rate );
+  noteMapSineWave_.setAdsrParameters( state_.synth_sine_wave_attack(), state_.synth_sine_wave_decay(), state_.synth_sine_wave_sustain(), state_.synth_sine_wave_release() );
+  noteMapSquareWave_.setSampleRate( sample_rate );
+  noteMapSquareWave_.setAdsrParameters( state_.synth_square_wave_attack(), state_.synth_square_wave_decay(), state_.synth_square_wave_sustain(), state_.synth_square_wave_release() );
+  noteMapSawWave_.setSampleRate( sample_rate );
+  noteMapSawWave_.setAdsrParameters( state_.synth_saw_wave_attack(), state_.synth_saw_wave_decay(), state_.synth_saw_wave_sustain(), state_.synth_saw_wave_release() );
+  noteMapTriangleWave_.setSampleRate( sample_rate );
+  noteMapTriangleWave_.setAdsrParameters( state_.synth_triangle_wave_attack(), state_.synth_triangle_wave_decay(), state_.synth_triangle_wave_sustain(), state_.synth_triangle_wave_release() );
+  noteMapWhiteNoise_.setSampleRate( sample_rate );
+  noteMapWhiteNoise_.setAdsrParameters( state_.synth_white_noise_attack(), state_.synth_white_noise_decay(), state_.synth_white_noise_sustain(), state_.synth_white_noise_release() );
+  noteMapPinkNoise_.setSampleRate( sample_rate );
+  noteMapPinkNoise_.setAdsrParameters( state_.synth_pink_noise_attack(), state_.synth_pink_noise_decay(), state_.synth_pink_noise_sustain(), state_.synth_pink_noise_release() );
+  noteMapRedNoise_.setSampleRate( sample_rate );
+  noteMapRedNoise_.setAdsrParameters( state_.synth_red_noise_attack(), state_.synth_red_noise_decay(), state_.synth_red_noise_sustain(), state_.synth_red_noise_release() );
+  noteMapBlueNoise_.setSampleRate( sample_rate );
+  noteMapBlueNoise_.setAdsrParameters( state_.synth_blue_noise_attack(), state_.synth_blue_noise_decay(), state_.synth_blue_noise_sustain(), state_.synth_blue_noise_release() );
+  noteMapVioletNoise_.setSampleRate( sample_rate );
+  noteMapVioletNoise_.setAdsrParameters( state_.synth_violet_noise_attack(), state_.synth_violet_noise_decay(), state_.synth_violet_noise_sustain(), state_.synth_violet_noise_release() );
+  noteMapGreyNoise_.setSampleRate( sample_rate );
+  noteMapGreyNoise_.setAdsrParameters( state_.synth_grey_noise_attack(), state_.synth_grey_noise_decay(), state_.synth_grey_noise_sustain(), state_.synth_grey_noise_release() );
+  noteMapVelvetNoise_.setSampleRate( sample_rate );
+  noteMapVelvetNoise_.setAdsrParameters( state_.synth_velvet_noise_attack(), state_.synth_velvet_noise_decay(), state_.synth_velvet_noise_sustain(), state_.synth_velvet_noise_release() );
 
   ret = ret && true;
   return ret;
@@ -515,6 +536,50 @@ void NoiseGenerator::reset( void ) {
   state_.set_gui_width( 300 );
   state_.set_gui_height( 200 );
   state_.set_synth_square_wave_pwm( 0.5 );
+  state_.set_synth_sine_wave_attack( 0.01 );
+  state_.set_synth_sine_wave_decay( 1.0 );
+  state_.set_synth_sine_wave_sustain( 1.0 );
+  state_.set_synth_sine_wave_release( 0.01 );
+  state_.set_synth_square_wave_attack( 0.01 );
+  state_.set_synth_square_wave_decay( 1.0 );
+  state_.set_synth_square_wave_sustain( 1.0 );
+  state_.set_synth_square_wave_release( 0.01 );
+  state_.set_synth_saw_wave_attack( 0.01 );
+  state_.set_synth_saw_wave_decay( 1.0 );
+  state_.set_synth_saw_wave_sustain( 1.0 );
+  state_.set_synth_saw_wave_release( 0.01 );
+  state_.set_synth_triangle_wave_attack( 0.01 );
+  state_.set_synth_triangle_wave_decay( 1.0 );
+  state_.set_synth_triangle_wave_sustain( 1.0 );
+  state_.set_synth_triangle_wave_release( 0.01 );
+  state_.set_synth_white_noise_attack( 0.01 );
+  state_.set_synth_white_noise_decay( 1.0 );
+  state_.set_synth_white_noise_sustain( 1.0 );
+  state_.set_synth_white_noise_release( 0.01 );
+  state_.set_synth_pink_noise_attack( 0.01 );
+  state_.set_synth_pink_noise_decay( 1.0 );
+  state_.set_synth_pink_noise_sustain( 1.0 );
+  state_.set_synth_pink_noise_release( 0.01 );
+  state_.set_synth_red_noise_attack( 0.01 );
+  state_.set_synth_red_noise_decay( 1.0 );
+  state_.set_synth_red_noise_sustain( 1.0 );
+  state_.set_synth_red_noise_release( 0.01 );
+  state_.set_synth_blue_noise_attack( 0.01 );
+  state_.set_synth_blue_noise_decay( 1.0 );
+  state_.set_synth_blue_noise_sustain( 1.0 );
+  state_.set_synth_blue_noise_release( 0.01 );
+  state_.set_synth_violet_noise_attack( 0.01 );
+  state_.set_synth_violet_noise_decay( 1.0 );
+  state_.set_synth_violet_noise_sustain( 1.0 );
+  state_.set_synth_violet_noise_release( 0.01 );
+  state_.set_synth_grey_noise_attack( 0.01 );
+  state_.set_synth_grey_noise_decay( 1.0 );
+  state_.set_synth_grey_noise_sustain( 1.0 );
+  state_.set_synth_grey_noise_release( 0.01 );
+  state_.set_synth_velvet_noise_attack( 0.01 );
+  state_.set_synth_velvet_noise_decay( 1.0 );
+  state_.set_synth_velvet_noise_sustain( 1.0 );
+  state_.set_synth_velvet_noise_release( 0.01 );
   pink_refined_b0_ = 0.0;
   pink_refined_b1_ = 0.0;
   pink_refined_b2_ = 0.0;
@@ -526,7 +591,17 @@ void NoiseGenerator::reset( void ) {
   pink_economy_b1_ = 0.0;
   pink_economy_b2_ = 0.0;
   red_leaky_integrator_prev_ = 0.0;
-  noteMap_.clear();
+  noteMapSineWave_.clear();
+  noteMapSquareWave_.clear();
+  noteMapSawWave_.clear();
+  noteMapTriangleWave_.clear();
+  noteMapWhiteNoise_.clear();
+  noteMapPinkNoise_.clear();
+  noteMapRedNoise_.clear();
+  noteMapBlueNoise_.clear();
+  noteMapVioletNoise_.clear();
+  noteMapGreyNoise_.clear();
+  noteMapVelvetNoise_.clear();
 }
 
 void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_events_t const* /*out_events*/ ) {
@@ -541,29 +616,59 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
   }
   if( hdr->type == CLAP_EVENT_NOTE_ON ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    noteMap_.handleEvent( ev );
+    noteMapSineWave_.handleEvent( ev );
+    noteMapSquareWave_.handleEvent( ev );
+    noteMapSawWave_.handleEvent( ev );
+    noteMapTriangleWave_.handleEvent( ev );
+    noteMapWhiteNoise_.handleEvent( ev );
+    noteMapPinkNoise_.handleEvent( ev );
+    noteMapRedNoise_.handleEvent( ev );
+    noteMapBlueNoise_.handleEvent( ev );
+    noteMapVioletNoise_.handleEvent( ev );
+    noteMapGreyNoise_.handleEvent( ev );
+    noteMapVelvetNoise_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_OFF ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    noteMap_.handleEvent( ev );
+    noteMapSineWave_.handleEvent( ev );
+    noteMapSquareWave_.handleEvent( ev );
+    noteMapSawWave_.handleEvent( ev );
+    noteMapTriangleWave_.handleEvent( ev );
+    noteMapWhiteNoise_.handleEvent( ev );
+    noteMapPinkNoise_.handleEvent( ev );
+    noteMapRedNoise_.handleEvent( ev );
+    noteMapBlueNoise_.handleEvent( ev );
+    noteMapVioletNoise_.handleEvent( ev );
+    noteMapGreyNoise_.handleEvent( ev );
+    noteMapVelvetNoise_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_CHOKE ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    noteMap_.handleEvent( ev );
+    noteMapSineWave_.handleEvent( ev );
+    noteMapSquareWave_.handleEvent( ev );
+    noteMapSawWave_.handleEvent( ev );
+    noteMapTriangleWave_.handleEvent( ev );
+    noteMapWhiteNoise_.handleEvent( ev );
+    noteMapPinkNoise_.handleEvent( ev );
+    noteMapRedNoise_.handleEvent( ev );
+    noteMapBlueNoise_.handleEvent( ev );
+    noteMapVioletNoise_.handleEvent( ev );
+    noteMapGreyNoise_.handleEvent( ev );
+    noteMapVelvetNoise_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_END ) {
     clap_event_note_t const* ev = reinterpret_cast< clap_event_note_t const* >( hdr );
-    noteMap_.handleEvent( ev );
+    noteMapSineWave_.handleEvent( ev );
+    noteMapSquareWave_.handleEvent( ev );
+    noteMapSawWave_.handleEvent( ev );
+    noteMapTriangleWave_.handleEvent( ev );
+    noteMapWhiteNoise_.handleEvent( ev );
+    noteMapPinkNoise_.handleEvent( ev );
+    noteMapRedNoise_.handleEvent( ev );
+    noteMapBlueNoise_.handleEvent( ev );
+    noteMapVioletNoise_.handleEvent( ev );
+    noteMapGreyNoise_.handleEvent( ev );
+    noteMapVelvetNoise_.handleEvent( ev );
   } else if( hdr->type == CLAP_EVENT_NOTE_EXPRESSION ) {
     clap_event_note_expression_t const* ev = reinterpret_cast< clap_event_note_expression_t const* >( hdr );
-    PLUGIN_LOG_TRACE( host_,
-                      host_log_,
-                      "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}",
-                      __FUNCTION__,
-                      static_cast< void* >( this ),
-                      ev->expression_id,
-                      ev->note_id,
-                      ev->port_index,
-                      ev->channel,
-                      ev->key,
-                      ev->value );
+    PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_NOTE_EXPRESSION - expression_id={:d}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, value={:f}", __FUNCTION__, static_cast< void* >( this ), ev->expression_id, ev->note_id, ev->port_index, ev->channel, ev->key, ev->value );
   } else if( hdr->type == CLAP_EVENT_PARAM_VALUE ) {
     clap_event_param_value_t const* ev = reinterpret_cast< clap_event_param_value_t const* >( hdr );
     // PLUGIN_LOG_TRACE( host_,
@@ -655,7 +760,29 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
     SFG_GEN_TMP_CHANGE_PARAM( else if, 1119, synth_velvet_noise_mix, double, last_velvetNoiseMix_ )
 
     // extra changes necessary
-    if( ev->param_id == 1061 ) {
+    if( ( ev->param_id == 1015 ) || ( ev->param_id == 1016 ) || ( ev->param_id == 1017 ) || ( ev->param_id == 1018 ) ) {
+      noteMapSineWave_.setAdsrParameters( state_.synth_sine_wave_attack(), state_.synth_sine_wave_decay(), state_.synth_sine_wave_sustain(), state_.synth_sine_wave_release() );
+    } else if( ( ev->param_id == 1025 ) || ( ev->param_id == 1026 ) || ( ev->param_id == 1027 ) || ( ev->param_id == 1028 ) ) {
+      noteMapSquareWave_.setAdsrParameters( state_.synth_square_wave_attack(), state_.synth_square_wave_decay(), state_.synth_square_wave_sustain(), state_.synth_square_wave_release() );
+    } else if( ( ev->param_id == 1035 ) || ( ev->param_id == 1036 ) || ( ev->param_id == 1037 ) || ( ev->param_id == 1038 ) ) {
+      noteMapSawWave_.setAdsrParameters( state_.synth_saw_wave_attack(), state_.synth_saw_wave_decay(), state_.synth_saw_wave_sustain(), state_.synth_saw_wave_release() );
+    } else if( ( ev->param_id == 1045 ) || ( ev->param_id == 1046 ) || ( ev->param_id == 1047 ) || ( ev->param_id == 1048 ) ) {
+      noteMapTriangleWave_.setAdsrParameters( state_.synth_triangle_wave_attack(), state_.synth_triangle_wave_decay(), state_.synth_triangle_wave_sustain(), state_.synth_triangle_wave_release() );
+    } else if( ( ev->param_id == 1055 ) || ( ev->param_id == 1056 ) || ( ev->param_id == 1057 ) || ( ev->param_id == 1058 ) ) {
+      noteMapWhiteNoise_.setAdsrParameters( state_.synth_white_noise_attack(), state_.synth_white_noise_decay(), state_.synth_white_noise_sustain(), state_.synth_white_noise_release() );
+    } else if( ( ev->param_id == 1065 ) || ( ev->param_id == 1066 ) || ( ev->param_id == 1067 ) || ( ev->param_id == 1068 ) ) {
+      noteMapPinkNoise_.setAdsrParameters( state_.synth_pink_noise_attack(), state_.synth_pink_noise_decay(), state_.synth_pink_noise_sustain(), state_.synth_pink_noise_release() );
+    } else if( ( ev->param_id == 1075 ) || ( ev->param_id == 1076 ) || ( ev->param_id == 1077 ) || ( ev->param_id == 1078 ) ) {
+      noteMapRedNoise_.setAdsrParameters( state_.synth_red_noise_attack(), state_.synth_red_noise_decay(), state_.synth_red_noise_sustain(), state_.synth_red_noise_release() );
+    } else if( ( ev->param_id == 1085 ) || ( ev->param_id == 1086 ) || ( ev->param_id == 1087 ) || ( ev->param_id == 1088 ) ) {
+      noteMapBlueNoise_.setAdsrParameters( state_.synth_blue_noise_attack(), state_.synth_blue_noise_decay(), state_.synth_blue_noise_sustain(), state_.synth_blue_noise_release() );
+    } else if( ( ev->param_id == 1095 ) || ( ev->param_id == 1096 ) || ( ev->param_id == 1097 ) || ( ev->param_id == 1098 ) ) {
+      noteMapVioletNoise_.setAdsrParameters( state_.synth_violet_noise_attack(), state_.synth_violet_noise_decay(), state_.synth_violet_noise_sustain(), state_.synth_violet_noise_release() );
+    } else if( ( ev->param_id == 1105 ) || ( ev->param_id == 1106 ) || ( ev->param_id == 1107 ) || ( ev->param_id == 1108 ) ) {
+      noteMapGreyNoise_.setAdsrParameters( state_.synth_grey_noise_attack(), state_.synth_grey_noise_decay(), state_.synth_grey_noise_sustain(), state_.synth_grey_noise_release() );
+    } else if( ( ev->param_id == 1115 ) || ( ev->param_id == 1116 ) || ( ev->param_id == 1117 ) || ( ev->param_id == 1118 ) ) {
+      noteMapVelvetNoise_.setAdsrParameters( state_.synth_velvet_noise_attack(), state_.synth_velvet_noise_decay(), state_.synth_velvet_noise_sustain(), state_.synth_velvet_noise_release() );
+    } else if( ev->param_id == 1061 ) {
       // std::vector< double >( state_.synth_pink_noise_vossmccartney_number(), 0.0 ).swap( pink_VossMcCartney_streams_ );
     }
 
@@ -663,34 +790,13 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
 
   } else if( hdr->type == CLAP_EVENT_PARAM_MOD ) {
     clap_event_param_mod_t const* ev = reinterpret_cast< clap_event_param_mod_t const* >( hdr );
-    PLUGIN_LOG_TRACE( host_,
-                      host_log_,
-                      "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}",
-                      __FUNCTION__,
-                      static_cast< void* >( this ),
-                      ev->param_id,
-                      ev->cookie,
-                      ev->note_id,
-                      ev->port_index,
-                      ev->channel,
-                      ev->key,
-                      ev->amount );
+    PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_MOD - param_id={:d}, cookie={:p}, note_id={:d}, port_index={:d}, channel={:d}, key={:d}, amount={:f}", __FUNCTION__, static_cast< void* >( this ), ev->param_id, ev->cookie, ev->note_id, ev->port_index, ev->channel, ev->key, ev->amount );
   } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ) {
     clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-    PLUGIN_LOG_TRACE( host_,
-                      host_log_,
-                      "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}",
-                      __FUNCTION__,
-                      static_cast< void* >( this ),
-                      ev->param_id );
+    PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_BEGIN - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
   } else if( hdr->type == CLAP_EVENT_PARAM_GESTURE_END ) {
     clap_event_param_gesture_t const* ev = reinterpret_cast< clap_event_param_gesture_t const* >( hdr );
-    PLUGIN_LOG_TRACE( host_,
-                      host_log_,
-                      "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}",
-                      __FUNCTION__,
-                      static_cast< void* >( this ),
-                      ev->param_id );
+    PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_PARAM_GESTURE_END - param_id={:d}", __FUNCTION__, static_cast< void* >( this ), ev->param_id );
   } else if( hdr->type == CLAP_EVENT_TRANSPORT ) {
     clap_event_transport_t const* ev = reinterpret_cast< clap_event_transport_t const* >( hdr );
     PLUGIN_LOG_TRACE( host_,
@@ -715,7 +821,17 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
                       ev->tsig_denom );
   } else if( hdr->type == CLAP_EVENT_MIDI ) {
     clap_event_midi_t const* ev = reinterpret_cast< clap_event_midi_t const* >( hdr );
-    noteMap_.handleEvent( ev );
+    noteMapSineWave_.handleEvent( ev );
+    noteMapSquareWave_.handleEvent( ev );
+    noteMapSawWave_.handleEvent( ev );
+    noteMapTriangleWave_.handleEvent( ev );
+    noteMapWhiteNoise_.handleEvent( ev );
+    noteMapPinkNoise_.handleEvent( ev );
+    noteMapRedNoise_.handleEvent( ev );
+    noteMapBlueNoise_.handleEvent( ev );
+    noteMapVioletNoise_.handleEvent( ev );
+    noteMapGreyNoise_.handleEvent( ev );
+    noteMapVelvetNoise_.handleEvent( ev );
     // PLUGIN_LOG_TRACE( host_,
     //                host_log_,
     //                "[{:s}] [{:p}] CLAP_EVENT_MIDI - port_index={:d}, data={}",
@@ -816,7 +932,29 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
       SFG_GEN_TMP_CHANGE_PARAM( else if, 1119, synth_velvet_noise_mix, double, last_velvetNoiseMix_ )
 
       // extra changes necessary
-      if( param_id == 1061 ) {
+      if( ( param_id == 1015 ) || ( param_id == 1016 ) || ( param_id == 1017 ) || ( param_id == 1018 ) ) {
+        noteMapSineWave_.setAdsrParameters( state_.synth_sine_wave_attack(), state_.synth_sine_wave_decay(), state_.synth_sine_wave_sustain(), state_.synth_sine_wave_release() );
+      } else if( ( param_id == 1025 ) || ( param_id == 1026 ) || ( param_id == 1027 ) || ( param_id == 1028 ) ) {
+        noteMapSquareWave_.setAdsrParameters( state_.synth_square_wave_attack(), state_.synth_square_wave_decay(), state_.synth_square_wave_sustain(), state_.synth_square_wave_release() );
+      } else if( ( param_id == 1035 ) || ( param_id == 1036 ) || ( param_id == 1037 ) || ( param_id == 1038 ) ) {
+        noteMapSawWave_.setAdsrParameters( state_.synth_saw_wave_attack(), state_.synth_saw_wave_decay(), state_.synth_saw_wave_sustain(), state_.synth_saw_wave_release() );
+      } else if( ( param_id == 1045 ) || ( param_id == 1046 ) || ( param_id == 1047 ) || ( param_id == 1048 ) ) {
+        noteMapTriangleWave_.setAdsrParameters( state_.synth_triangle_wave_attack(), state_.synth_triangle_wave_decay(), state_.synth_triangle_wave_sustain(), state_.synth_triangle_wave_release() );
+      } else if( ( param_id == 1055 ) || ( param_id == 1056 ) || ( param_id == 1057 ) || ( param_id == 1058 ) ) {
+        noteMapWhiteNoise_.setAdsrParameters( state_.synth_white_noise_attack(), state_.synth_white_noise_decay(), state_.synth_white_noise_sustain(), state_.synth_white_noise_release() );
+      } else if( ( param_id == 1065 ) || ( param_id == 1066 ) || ( param_id == 1067 ) || ( param_id == 1068 ) ) {
+        noteMapPinkNoise_.setAdsrParameters( state_.synth_pink_noise_attack(), state_.synth_pink_noise_decay(), state_.synth_pink_noise_sustain(), state_.synth_pink_noise_release() );
+      } else if( ( param_id == 1075 ) || ( param_id == 1076 ) || ( param_id == 1077 ) || ( param_id == 1078 ) ) {
+        noteMapRedNoise_.setAdsrParameters( state_.synth_red_noise_attack(), state_.synth_red_noise_decay(), state_.synth_red_noise_sustain(), state_.synth_red_noise_release() );
+      } else if( ( param_id == 1085 ) || ( param_id == 1086 ) || ( param_id == 1087 ) || ( param_id == 1088 ) ) {
+        noteMapBlueNoise_.setAdsrParameters( state_.synth_blue_noise_attack(), state_.synth_blue_noise_decay(), state_.synth_blue_noise_sustain(), state_.synth_blue_noise_release() );
+      } else if( ( param_id == 1095 ) || ( param_id == 1096 ) || ( param_id == 1097 ) || ( param_id == 1098 ) ) {
+        noteMapVioletNoise_.setAdsrParameters( state_.synth_violet_noise_attack(), state_.synth_violet_noise_decay(), state_.synth_violet_noise_sustain(), state_.synth_violet_noise_release() );
+      } else if( ( param_id == 1105 ) || ( param_id == 1106 ) || ( param_id == 1107 ) || ( param_id == 1108 ) ) {
+        noteMapGreyNoise_.setAdsrParameters( state_.synth_grey_noise_attack(), state_.synth_grey_noise_decay(), state_.synth_grey_noise_sustain(), state_.synth_grey_noise_release() );
+      } else if( ( param_id == 1115 ) || ( param_id == 1116 ) || ( param_id == 1117 ) || ( param_id == 1118 ) ) {
+        noteMapVelvetNoise_.setAdsrParameters( state_.synth_velvet_noise_attack(), state_.synth_velvet_noise_decay(), state_.synth_velvet_noise_sustain(), state_.synth_velvet_noise_release() );
+      } else if( param_id == 1061 ) {
         // todo: fixme: check if midi does weird shit
         // clap_param_info_t tmp;
         // // todo, check which index
@@ -831,23 +969,10 @@ void NoiseGenerator::process_event( clap_event_header_t const* hdr, clap_output_
     }
   } else if( hdr->type == CLAP_EVENT_MIDI_SYSEX ) {
     clap_event_midi_sysex_t const* ev = reinterpret_cast< clap_event_midi_sysex_t const* >( hdr );
-    PLUGIN_LOG_TRACE( host_,
-                      host_log_,
-                      "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}",
-                      __FUNCTION__,
-                      static_cast< void* >( this ),
-                      ev->port_index,
-                      static_cast< void const* >( ev->buffer ),
-                      ev->size );
+    PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_MIDI_SYSEX - port_index={:d}, buffer={:p}, size={}", __FUNCTION__, static_cast< void* >( this ), ev->port_index, static_cast< void const* >( ev->buffer ), ev->size );
   } else if( hdr->type == CLAP_EVENT_MIDI2 ) {
     clap_event_midi2_t const* ev = reinterpret_cast< clap_event_midi2_t const* >( hdr );
-    PLUGIN_LOG_TRACE( host_,
-                      host_log_,
-                      "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}",
-                      __FUNCTION__,
-                      static_cast< void* >( this ),
-                      ev->port_index,
-                      std::vector< uint8_t >( ev->data, ev->data + 4 ) );
+    PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] CLAP_EVENT_MIDI2 - port_index={:d}, data={}", __FUNCTION__, static_cast< void* >( this ), ev->port_index, std::vector< uint8_t >( ev->data, ev->data + 4 ) );
   }
 }
 
@@ -882,88 +1007,126 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
       }
     }
 
-#define SFG_GEN_TMP_CHECK_LAST_CHANGED( var, stateVar, id )               \
-  if( var != double( state_.stateVar() ) ) {                              \
-    clap_event_param_value_t out_ev{};                                    \
-    out_ev.header.size = sizeof( out_ev );                                \
-    out_ev.header.time = i;                                               \
-    out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;                    \
-    out_ev.header.type = CLAP_EVENT_PARAM_VALUE;                          \
-    out_ev.header.flags = CLAP_EVENT_IS_LIVE;                             \
-    out_ev.param_id = id;                                                 \
-    out_ev.value = double( state_.stateVar() );                           \
-    var = out_ev.value;                                                   \
-    process->out_events->try_push( process->out_events, &out_ev.header ); \
+#define SFG_GEN_TMP_CHECK_LAST_CHANGED( var, stateVar, id, changedBoolName ) \
+  if( var != double( state_.stateVar() ) ) {                                 \
+    changedBoolName = true;                                                  \
+    clap_event_param_value_t out_ev{};                                       \
+    out_ev.header.size = sizeof( out_ev );                                   \
+    out_ev.header.time = i;                                                  \
+    out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;                       \
+    out_ev.header.type = CLAP_EVENT_PARAM_VALUE;                             \
+    out_ev.header.flags = CLAP_EVENT_IS_LIVE;                                \
+    out_ev.param_id = id;                                                    \
+    out_ev.value = double( state_.stateVar() );                              \
+    var = out_ev.value;                                                      \
+    process->out_events->try_push( process->out_events, &out_ev.header );    \
   }
 
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveType_, synth_sine_wave_type, 1010 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveAttack_, synth_sine_wave_attack, 1015 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveDecay_, synth_sine_wave_decay, 1016 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveSustain_, synth_sine_wave_sustain, 1017 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveRelease_, synth_sine_wave_release, 1018 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveMix_, synth_sine_wave_mix, 1019 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveType_, synth_square_wave_type, 1020 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWavePwm_, synth_square_wave_pwm, 1021 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveAttack_, synth_square_wave_attack, 1025 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveDecay_, synth_square_wave_decay, 1026 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveSustain_, synth_square_wave_sustain, 1027 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveRelease_, synth_square_wave_release, 1028 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveMix_, synth_square_wave_mix, 1029 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveType_, synth_saw_wave_type, 1030 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveAttack_, synth_saw_wave_attack, 1035 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveDecay_, synth_saw_wave_decay, 1036 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveSustain_, synth_saw_wave_sustain, 1037 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveRelease_, synth_saw_wave_release, 1038 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveMix_, synth_saw_wave_mix, 1039 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveType_, synth_triangle_wave_type, 1040 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveAttack_, synth_triangle_wave_attack, 1045 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveDecay_, synth_triangle_wave_decay, 1046 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveSustain_, synth_triangle_wave_sustain, 1047 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveRelease_, synth_triangle_wave_release, 1048 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveMix_, synth_triangle_wave_mix, 1049 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseType_, synth_white_noise_type, 1050 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseAttack_, synth_white_noise_attack, 1055 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseDecay_, synth_white_noise_decay, 1056 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseSustain_, synth_white_noise_sustain, 1057 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseRelease_, synth_white_noise_release, 1058 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseMix_, synth_white_noise_mix, 1059 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseType_, synth_pink_noise_type, 1060 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseVossMcCartneyNumber_, synth_pink_noise_vossmccartney_number, 1061 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseAttack_, synth_pink_noise_attack, 1065 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseDecay_, synth_pink_noise_decay, 1066 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseSustain_, synth_pink_noise_sustain, 1067 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseRelease_, synth_pink_noise_release, 1068 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseMix_, synth_pink_noise_mix, 1069 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseType_, synth_red_noise_type, 1070 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseAttack_, synth_red_noise_attack, 1075 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseDecay_, synth_red_noise_decay, 1076 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseSustain_, synth_red_noise_sustain, 1077 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseRelease_, synth_red_noise_release, 1078 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseMix_, synth_red_noise_mix, 1079 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseType_, synth_blue_noise_type, 1080 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseAttack_, synth_blue_noise_attack, 1085 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseDecay_, synth_blue_noise_decay, 1086 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseSustain_, synth_blue_noise_sustain, 1087 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseRelease_, synth_blue_noise_release, 1088 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseMix_, synth_blue_noise_mix, 1089 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseType_, synth_violet_noise_type, 1090 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseAttack_, synth_violet_noise_attack, 1095 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseDecay_, synth_violet_noise_decay, 1096 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseSustain_, synth_violet_noise_sustain, 1097 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseRelease_, synth_violet_noise_release, 1098 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseMix_, synth_violet_noise_mix, 1099 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseType_, synth_grey_noise_type, 1100 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseAttack_, synth_grey_noise_attack, 1105 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseDecay_, synth_grey_noise_decay, 1106 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseSustain_, synth_grey_noise_sustain, 1107 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseRelease_, synth_grey_noise_release, 1108 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseMix_, synth_grey_noise_mix, 1109 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseType_, synth_velvet_noise_type, 1110 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseAttack_, synth_velvet_noise_attack, 1115 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseDecay_, synth_velvet_noise_decay, 1116 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseSustain_, synth_velvet_noise_sustain, 1117 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseRelease_, synth_velvet_noise_release, 1118 );
-    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseMix_, synth_velvet_noise_mix, 1119 );
+    bool tmpUnused = false;
+    bool sineWaveAdsrChanged = false;
+    bool squareWaveAdsrChanged = false;
+    bool sawWaveAdsrChanged = false;
+    bool triangleWaveAdsrChanged = false;
+    bool whiteNoiseAdsrChanged = false;
+    bool pinkNoiseAdsrChanged = false;
+    bool redNoiseAdsrChanged = false;
+    bool blueNoiseAdsrChanged = false;
+    bool violetNoiseAdsrChanged = false;
+    bool greyNoiseAdsrChanged = false;
+    bool velvetNoiseAdsrChanged = false;
+
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveType_, synth_sine_wave_type, 1010, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveAttack_, synth_sine_wave_attack, 1015, sineWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveDecay_, synth_sine_wave_decay, 1016, sineWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveSustain_, synth_sine_wave_sustain, 1017, sineWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveRelease_, synth_sine_wave_release, 1018, sineWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sineWaveMix_, synth_sine_wave_mix, 1019, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveType_, synth_square_wave_type, 1020, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWavePwm_, synth_square_wave_pwm, 1021, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveAttack_, synth_square_wave_attack, 1025, squareWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveDecay_, synth_square_wave_decay, 1026, squareWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveSustain_, synth_square_wave_sustain, 1027, squareWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveRelease_, synth_square_wave_release, 1028, squareWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_squareWaveMix_, synth_square_wave_mix, 1029, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveType_, synth_saw_wave_type, 1030, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveAttack_, synth_saw_wave_attack, 1035, sawWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveDecay_, synth_saw_wave_decay, 1036, sawWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveSustain_, synth_saw_wave_sustain, 1037, sawWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveRelease_, synth_saw_wave_release, 1038, sawWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_sawWaveMix_, synth_saw_wave_mix, 1039, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveType_, synth_triangle_wave_type, 1040, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveAttack_, synth_triangle_wave_attack, 1045, triangleWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveDecay_, synth_triangle_wave_decay, 1046, triangleWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveSustain_, synth_triangle_wave_sustain, 1047, triangleWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveRelease_, synth_triangle_wave_release, 1048, triangleWaveAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_triangleWaveMix_, synth_triangle_wave_mix, 1049, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseType_, synth_white_noise_type, 1050, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseAttack_, synth_white_noise_attack, 1055, whiteNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseDecay_, synth_white_noise_decay, 1056, whiteNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseSustain_, synth_white_noise_sustain, 1057, whiteNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseRelease_, synth_white_noise_release, 1058, whiteNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_whiteNoiseMix_, synth_white_noise_mix, 1059, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseType_, synth_pink_noise_type, 1060, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseVossMcCartneyNumber_, synth_pink_noise_vossmccartney_number, 1061, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseAttack_, synth_pink_noise_attack, 1065, pinkNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseDecay_, synth_pink_noise_decay, 1066, pinkNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseSustain_, synth_pink_noise_sustain, 1067, pinkNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseRelease_, synth_pink_noise_release, 1068, pinkNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_pinkNoiseMix_, synth_pink_noise_mix, 1069, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseType_, synth_red_noise_type, 1070, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseAttack_, synth_red_noise_attack, 1075, redNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseDecay_, synth_red_noise_decay, 1076, redNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseSustain_, synth_red_noise_sustain, 1077, redNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseRelease_, synth_red_noise_release, 1078, redNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_redNoiseMix_, synth_red_noise_mix, 1079, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseType_, synth_blue_noise_type, 1080, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseAttack_, synth_blue_noise_attack, 1085, blueNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseDecay_, synth_blue_noise_decay, 1086, blueNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseSustain_, synth_blue_noise_sustain, 1087, blueNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseRelease_, synth_blue_noise_release, 1088, blueNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_blueNoiseMix_, synth_blue_noise_mix, 1089, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseType_, synth_violet_noise_type, 1090, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseAttack_, synth_violet_noise_attack, 1095, violetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseDecay_, synth_violet_noise_decay, 1096, violetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseSustain_, synth_violet_noise_sustain, 1097, violetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseRelease_, synth_violet_noise_release, 1098, violetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_violetNoiseMix_, synth_violet_noise_mix, 1099, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseType_, synth_grey_noise_type, 1100, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseAttack_, synth_grey_noise_attack, 1105, greyNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseDecay_, synth_grey_noise_decay, 1106, greyNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseSustain_, synth_grey_noise_sustain, 1107, greyNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseRelease_, synth_grey_noise_release, 1108, greyNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_greyNoiseMix_, synth_grey_noise_mix, 1109, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseType_, synth_velvet_noise_type, 1110, tmpUnused );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseAttack_, synth_velvet_noise_attack, 1115, velvetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseDecay_, synth_velvet_noise_decay, 1116, velvetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseSustain_, synth_velvet_noise_sustain, 1117, velvetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseRelease_, synth_velvet_noise_release, 1118, velvetNoiseAdsrChanged );
+    SFG_GEN_TMP_CHECK_LAST_CHANGED( last_velvetNoiseMix_, synth_velvet_noise_mix, 1119, tmpUnused );
+
+    if( sineWaveAdsrChanged ) {
+      noteMapSineWave_.setAdsrParameters( state_.synth_sine_wave_attack(), state_.synth_sine_wave_decay(), state_.synth_sine_wave_sustain(), state_.synth_sine_wave_release() );
+    } else if( squareWaveAdsrChanged ) {
+      noteMapSquareWave_.setAdsrParameters( state_.synth_square_wave_attack(), state_.synth_square_wave_decay(), state_.synth_square_wave_sustain(), state_.synth_square_wave_release() );
+    } else if( sawWaveAdsrChanged ) {
+      noteMapSawWave_.setAdsrParameters( state_.synth_saw_wave_attack(), state_.synth_saw_wave_decay(), state_.synth_saw_wave_sustain(), state_.synth_saw_wave_release() );
+    } else if( triangleWaveAdsrChanged ) {
+      noteMapTriangleWave_.setAdsrParameters( state_.synth_triangle_wave_attack(), state_.synth_triangle_wave_decay(), state_.synth_triangle_wave_sustain(), state_.synth_triangle_wave_release() );
+    } else if( whiteNoiseAdsrChanged ) {
+      noteMapWhiteNoise_.setAdsrParameters( state_.synth_white_noise_attack(), state_.synth_white_noise_decay(), state_.synth_white_noise_sustain(), state_.synth_white_noise_release() );
+    } else if( pinkNoiseAdsrChanged ) {
+      noteMapPinkNoise_.setAdsrParameters( state_.synth_pink_noise_attack(), state_.synth_pink_noise_decay(), state_.synth_pink_noise_sustain(), state_.synth_pink_noise_release() );
+    } else if( redNoiseAdsrChanged ) {
+      noteMapRedNoise_.setAdsrParameters( state_.synth_red_noise_attack(), state_.synth_red_noise_decay(), state_.synth_red_noise_sustain(), state_.synth_red_noise_release() );
+    } else if( blueNoiseAdsrChanged ) {
+      noteMapBlueNoise_.setAdsrParameters( state_.synth_blue_noise_attack(), state_.synth_blue_noise_decay(), state_.synth_blue_noise_sustain(), state_.synth_blue_noise_release() );
+    } else if( violetNoiseAdsrChanged ) {
+      noteMapVioletNoise_.setAdsrParameters( state_.synth_violet_noise_attack(), state_.synth_violet_noise_decay(), state_.synth_violet_noise_sustain(), state_.synth_violet_noise_release() );
+    } else if( greyNoiseAdsrChanged ) {
+      noteMapGreyNoise_.setAdsrParameters( state_.synth_grey_noise_attack(), state_.synth_grey_noise_decay(), state_.synth_grey_noise_sustain(), state_.synth_grey_noise_release() );
+    } else if( velvetNoiseAdsrChanged ) {
+      noteMapVelvetNoise_.setAdsrParameters( state_.synth_velvet_noise_attack(), state_.synth_velvet_noise_decay(), state_.synth_velvet_noise_sustain(), state_.synth_velvet_noise_release() );
+    }
 
 #undef SFG_GEN_TMP_CHECK_LAST_CHANGED
 
@@ -983,55 +1146,137 @@ clap_process_status NoiseGenerator::process( clap_process_t const* process ) {
       for( uint32_t c = 0; c < process->audio_outputs[0].channel_count; c++ ) {
         float out = 0.0f;
         if( active_ && process_ ) {
-          noteMap_.foreach( [this,
-                             &out,
-                             &out_sine_wave,
-                             &out_square_wave,
-                             &out_saw_wave,
-                             &out_triangle_wave,
-                             &out_white_noise,
-                             &out_pink_noise,
-                             &out_red_noise,
-                             &out_blue_noise,
-                             &out_violet_noise,
-                             &out_grey_noise,
-                             &out_velvet_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+          noteMapSineWave_.foreach( [this, &out, &out_sine_wave]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
             // A4 (note id 69) is 440.0 Hz
             float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
-
             // phase is 0.0 .. 1.0
             float sample_sine_wave = get_sample_sine_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_square_wave = get_sample_square_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_saw_wave = get_sample_saw_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_triangle_wave = get_sample_triangle_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_white_noise = get_sample_white_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_pink_noise = get_sample_pink_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_red_noise = get_sample_red_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_blue_noise = get_sample_blue_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_violet_noise = get_sample_violet_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_grey_noise = get_sample_grey_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-            float sample_velvet_noise = get_sample_velvet_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
-
-            out_sine_wave += sample_sine_wave;
-            out_square_wave += sample_square_wave;
-            out_saw_wave += sample_saw_wave;
-            out_triangle_wave += sample_triangle_wave;
-            out_white_noise += sample_white_noise;
-            out_pink_noise += sample_pink_noise;
-            out_red_noise += sample_red_noise;
-            out_blue_noise += sample_blue_noise;
-            out_violet_noise += sample_violet_noise;
-            out_grey_noise += sample_grey_noise;
-            out_velvet_noise += sample_velvet_noise;
-
-            float sample = sample_sine_wave + sample_square_wave + sample_saw_wave + sample_triangle_wave + sample_white_noise + sample_pink_noise
-                           + sample_red_noise + sample_blue_noise + sample_violet_noise + sample_grey_noise + sample_velvet_noise;
-
             entry.second.phase += freq / sample_rate_;
-            if( entry.second.phase >= 1.0f )
+            if( entry.second.phase >= 1.0f ) {
               entry.second.phase -= 1.0f;
-
-            out += sample;
+            }
+            out_sine_wave += sample_sine_wave;
+            out += sample_sine_wave;
+          } );
+          noteMapSquareWave_.foreach( [this, &out, &out_square_wave]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_square_wave = get_sample_square_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_square_wave += sample_square_wave;
+            out += sample_square_wave;
+          } );
+          noteMapSawWave_.foreach( [this, &out, &out_saw_wave]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_saw_wave = get_sample_saw_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_saw_wave += sample_saw_wave;
+            out += sample_saw_wave;
+          } );
+          noteMapTriangleWave_.foreach( [this, &out, &out_triangle_wave]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_triangle_wave = get_sample_triangle_wave( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_triangle_wave += sample_triangle_wave;
+            out += sample_triangle_wave;
+          } );
+          noteMapWhiteNoise_.foreach( [this, &out, &out_white_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_white_noise = get_sample_white_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_white_noise += sample_white_noise;
+            out += sample_white_noise;
+          } );
+          noteMapPinkNoise_.foreach( [this, &out, &out_pink_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_pink_noise = get_sample_pink_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_pink_noise += sample_pink_noise;
+            out += sample_pink_noise;
+          } );
+          noteMapRedNoise_.foreach( [this, &out, &out_red_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_red_noise = get_sample_red_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_red_noise += sample_red_noise;
+            out += sample_red_noise;
+          } );
+          noteMapBlueNoise_.foreach( [this, &out, &out_blue_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_blue_noise = get_sample_blue_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_blue_noise += sample_blue_noise;
+            out += sample_blue_noise;
+          } );
+          noteMapVioletNoise_.foreach( [this, &out, &out_violet_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_violet_noise = get_sample_violet_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_violet_noise += sample_violet_noise;
+            out += sample_violet_noise;
+          } );
+          noteMapGreyNoise_.foreach( [this, &out, &out_grey_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_grey_noise = get_sample_grey_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_grey_noise += sample_grey_noise;
+            out += sample_grey_noise;
+          } );
+          noteMapVelvetNoise_.foreach( [this, &out, &out_velvet_noise]( std::pair< NoteMap::NoteDescription const, NoteMap::NoteData >& entry ) {
+            // A4 (note id 69) is 440.0 Hz
+            float freq = 440.0f * std::pow( 2.0f, ( float( entry.first.key ) - 69.0f ) / 12.0f );
+            // phase is 0.0 .. 1.0
+            float sample_velvet_noise = get_sample_velvet_noise( entry.second.phase ) * entry.second.velocity * entry.second.envelopeLevel;
+            entry.second.phase += freq / sample_rate_;
+            if( entry.second.phase >= 1.0f ) {
+              entry.second.phase -= 1.0f;
+            }
+            out_velvet_noise += sample_velvet_noise;
+            out += sample_velvet_noise;
           } );
         }
         // store output
@@ -1070,14 +1315,7 @@ uint32_t NoiseGenerator::audio_ports_count( bool is_input ) {
 }
 
 bool NoiseGenerator::audio_ports_get( uint32_t index, bool is_input, clap_audio_port_info_t* out_info ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    index,
-                    is_input,
-                    static_cast< void* >( out_info ) )
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )", __FUNCTION__, static_cast< void* >( this ), index, is_input, static_cast< void* >( out_info ) )
   if( index >= audio_ports_count( is_input ) )
     return false;
   if( !out_info )
@@ -1124,7 +1362,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
   InputManager::init();
 
   guiRootWidget_ = std::make_shared< Widget >( logger_->clone( "root" ) );
-  guiRootWidget_->SetPadding( 5.0f );
+  guiRootWidget_->SetPadding( 2.0f );
 
   guiWidgetSineWave_ = std::make_shared< Widget >( logger_->clone( "SineWave" ), SDL_FRect{ 0.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
   guiWidgetSquareWave_ = std::make_shared< Widget >( logger_->clone( "SquareWave" ), SDL_FRect{ 1.0f / 3.0f, 0.0f / 4.0f, 1.0f / 3.0f, 1.0f / 4.0f } );
@@ -1145,7 +1383,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "SineWavePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetSquareWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_square_wave_type( _pb_::SquareWaveType( customMod( int( state_.synth_square_wave_type() ) - 1, _pb_::SquareWaveType_ARRAYSIZE ) ) );
@@ -1153,7 +1391,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "SquareWavePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetSawWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_saw_wave_type( _pb_::SawWaveType( customMod( int( state_.synth_saw_wave_type() ) - 1, _pb_::SawWaveType_ARRAYSIZE ) ) );
@@ -1161,16 +1399,15 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "SawWavePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetTriangleWavePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
-        state_.set_synth_triangle_wave_type(
-            _pb_::TriangleWaveType( customMod( int( state_.synth_triangle_wave_type() ) - 1, _pb_::TriangleWaveType_ARRAYSIZE ) ) );
+        state_.set_synth_triangle_wave_type( _pb_::TriangleWaveType( customMod( int( state_.synth_triangle_wave_type() ) - 1, _pb_::TriangleWaveType_ARRAYSIZE ) ) );
         guiWidgetTriangleWaveCurrentType_->SetText( fmt::format( "Triangle Wave: {:s}", _pb_::TriangleWaveType_Name( state_.synth_triangle_wave_type() ) ) );
       },
       "<",
       logger_->clone( "TriangleWavePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetWhiteNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_white_noise_type( _pb_::WhiteNoiseType( customMod( int( state_.synth_white_noise_type() ) - 1, _pb_::WhiteNoiseType_ARRAYSIZE ) ) );
@@ -1178,7 +1415,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "WhiteNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetPinkNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_pink_noise_type( _pb_::PinkNoiseType( customMod( int( state_.synth_pink_noise_type() ) - 1, _pb_::PinkNoiseType_ARRAYSIZE ) ) );
@@ -1186,7 +1423,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "PinkNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetRedNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_red_noise_type( _pb_::RedNoiseType( customMod( int( state_.synth_red_noise_type() ) - 1, _pb_::RedNoiseType_ARRAYSIZE ) ) );
@@ -1194,7 +1431,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "RedNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetBlueNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_blue_noise_type( _pb_::BlueNoiseType( customMod( int( state_.synth_blue_noise_type() ) - 1, _pb_::BlueNoiseType_ARRAYSIZE ) ) );
@@ -1202,16 +1439,15 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "BlueNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetVioletNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
-        state_.set_synth_violet_noise_type(
-            _pb_::VioletNoiseType( customMod( int( state_.synth_violet_noise_type() ) - 1, _pb_::VioletNoiseType_ARRAYSIZE ) ) );
+        state_.set_synth_violet_noise_type( _pb_::VioletNoiseType( customMod( int( state_.synth_violet_noise_type() ) - 1, _pb_::VioletNoiseType_ARRAYSIZE ) ) );
         guiWidgetVioletNoiseCurrentType_->SetText( fmt::format( "Violet Noise: {:s}", _pb_::VioletNoiseType_Name( state_.synth_violet_noise_type() ) ) );
       },
       "<",
       logger_->clone( "VioletNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetGreyNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_grey_noise_type( _pb_::GreyNoiseType( customMod( int( state_.synth_grey_noise_type() ) - 1, _pb_::GreyNoiseType_ARRAYSIZE ) ) );
@@ -1219,33 +1455,27 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       "<",
       logger_->clone( "GreyNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
   guiWidgetVelvetNoisePreviousType_ = std::make_shared< Button >(
       [this, customMod]() {
-        state_.set_synth_velvet_noise_type(
-            _pb_::VelvetNoiseType( customMod( int( state_.synth_velvet_noise_type() ) - 1, _pb_::VelvetNoiseType_ARRAYSIZE ) ) );
+        state_.set_synth_velvet_noise_type( _pb_::VelvetNoiseType( customMod( int( state_.synth_velvet_noise_type() ) - 1, _pb_::VelvetNoiseType_ARRAYSIZE ) ) );
         guiWidgetVelvetNoiseCurrentType_->SetText( fmt::format( "Velvet Noise: {:s}", _pb_::VelvetNoiseType_Name( state_.synth_velvet_noise_type() ) ) );
       },
       "<",
       logger_->clone( "VelvetNoisePreviousType" ),
-      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.0f, 0.0f, 0.125f, 0.125f } );
 
-  guiWidgetSineWaveCurrentType_ = std::make_shared< Label >( "Sine Wave", logger_->clone( "SineWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetSquareWaveCurrentType_
-      = std::make_shared< Label >( "Square Wave", logger_->clone( "SquareWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetSawWaveCurrentType_ = std::make_shared< Label >( "Saw Wave", logger_->clone( "SawWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetTriangleWaveCurrentType_
-      = std::make_shared< Label >( "Triangle Wave", logger_->clone( "TriangleWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetWhiteNoiseCurrentType_
-      = std::make_shared< Label >( "White Noise", logger_->clone( "WhiteNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetPinkNoiseCurrentType_ = std::make_shared< Label >( "Pink Noise", logger_->clone( "PinkNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetRedNoiseCurrentType_ = std::make_shared< Label >( "Red Noise", logger_->clone( "RedNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetBlueNoiseCurrentType_ = std::make_shared< Label >( "Blue Noise", logger_->clone( "BlueNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetVioletNoiseCurrentType_
-      = std::make_shared< Label >( "Violet Noise", logger_->clone( "VioletNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetGreyNoiseCurrentType_ = std::make_shared< Label >( "Grey Noise", logger_->clone( "GreyNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
-  guiWidgetVelvetNoiseCurrentType_
-      = std::make_shared< Label >( "Velvet Noise", logger_->clone( "VelvetNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.25f } );
+  guiWidgetSineWaveCurrentType_ = std::make_shared< Label >( "Sine Wave", logger_->clone( "SineWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetSquareWaveCurrentType_ = std::make_shared< Label >( "Square Wave", logger_->clone( "SquareWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetSawWaveCurrentType_ = std::make_shared< Label >( "Saw Wave", logger_->clone( "SawWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetTriangleWaveCurrentType_ = std::make_shared< Label >( "Triangle Wave", logger_->clone( "TriangleWaveCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetWhiteNoiseCurrentType_ = std::make_shared< Label >( "White Noise", logger_->clone( "WhiteNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetPinkNoiseCurrentType_ = std::make_shared< Label >( "Pink Noise", logger_->clone( "PinkNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetRedNoiseCurrentType_ = std::make_shared< Label >( "Red Noise", logger_->clone( "RedNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetBlueNoiseCurrentType_ = std::make_shared< Label >( "Blue Noise", logger_->clone( "BlueNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetVioletNoiseCurrentType_ = std::make_shared< Label >( "Violet Noise", logger_->clone( "VioletNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetGreyNoiseCurrentType_ = std::make_shared< Label >( "Grey Noise", logger_->clone( "GreyNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
+  guiWidgetVelvetNoiseCurrentType_ = std::make_shared< Label >( "Velvet Noise", logger_->clone( "VelvetNoiseCurrentType" ), SDL_FRect{ 0.125f, 0.0f, 0.75f, 0.125f } );
 
   guiWidgetSineWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
@@ -1254,7 +1484,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "SineWaveNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetSquareWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_square_wave_type( _pb_::SquareWaveType( customMod( int( state_.synth_square_wave_type() ) + 1, _pb_::SquareWaveType_ARRAYSIZE ) ) );
@@ -1262,7 +1492,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "SquareWaveNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetSawWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_saw_wave_type( _pb_::SawWaveType( customMod( int( state_.synth_saw_wave_type() ) + 1, _pb_::SawWaveType_ARRAYSIZE ) ) );
@@ -1270,16 +1500,15 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "SawWaveNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetTriangleWaveNextType_ = std::make_shared< Button >(
       [this, customMod]() {
-        state_.set_synth_triangle_wave_type(
-            _pb_::TriangleWaveType( customMod( int( state_.synth_triangle_wave_type() ) + 1, _pb_::TriangleWaveType_ARRAYSIZE ) ) );
+        state_.set_synth_triangle_wave_type( _pb_::TriangleWaveType( customMod( int( state_.synth_triangle_wave_type() ) + 1, _pb_::TriangleWaveType_ARRAYSIZE ) ) );
         guiWidgetTriangleWaveCurrentType_->SetText( fmt::format( "Triangle Wave: {:s}", _pb_::TriangleWaveType_Name( state_.synth_triangle_wave_type() ) ) );
       },
       ">",
       logger_->clone( "TriangleWaveNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetWhiteNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_white_noise_type( _pb_::WhiteNoiseType( customMod( int( state_.synth_white_noise_type() ) + 1, _pb_::WhiteNoiseType_ARRAYSIZE ) ) );
@@ -1287,7 +1516,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "WhiteNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetPinkNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_pink_noise_type( _pb_::PinkNoiseType( customMod( int( state_.synth_pink_noise_type() ) + 1, _pb_::PinkNoiseType_ARRAYSIZE ) ) );
@@ -1295,7 +1524,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "PinkNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetRedNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_red_noise_type( _pb_::RedNoiseType( customMod( int( state_.synth_red_noise_type() ) + 1, _pb_::RedNoiseType_ARRAYSIZE ) ) );
@@ -1303,7 +1532,7 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "RedNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetBlueNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_blue_noise_type( _pb_::BlueNoiseType( customMod( int( state_.synth_blue_noise_type() ) + 1, _pb_::BlueNoiseType_ARRAYSIZE ) ) );
@@ -1311,16 +1540,15 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "BlueNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetVioletNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
-        state_.set_synth_violet_noise_type(
-            _pb_::VioletNoiseType( customMod( int( state_.synth_violet_noise_type() ) + 1, _pb_::VioletNoiseType_ARRAYSIZE ) ) );
+        state_.set_synth_violet_noise_type( _pb_::VioletNoiseType( customMod( int( state_.synth_violet_noise_type() ) + 1, _pb_::VioletNoiseType_ARRAYSIZE ) ) );
         guiWidgetVioletNoiseCurrentType_->SetText( fmt::format( "Violet Noise: {:s}", _pb_::VioletNoiseType_Name( state_.synth_violet_noise_type() ) ) );
       },
       ">",
       logger_->clone( "VioletNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetGreyNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
         state_.set_synth_grey_noise_type( _pb_::GreyNoiseType( customMod( int( state_.synth_grey_noise_type() ) + 1, _pb_::GreyNoiseType_ARRAYSIZE ) ) );
@@ -1328,64 +1556,139 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       },
       ">",
       logger_->clone( "GreyNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
   guiWidgetVelvetNoiseNextType_ = std::make_shared< Button >(
       [this, customMod]() {
-        state_.set_synth_velvet_noise_type(
-            _pb_::VelvetNoiseType( customMod( int( state_.synth_velvet_noise_type() ) + 1, _pb_::VelvetNoiseType_ARRAYSIZE ) ) );
+        state_.set_synth_velvet_noise_type( _pb_::VelvetNoiseType( customMod( int( state_.synth_velvet_noise_type() ) + 1, _pb_::VelvetNoiseType_ARRAYSIZE ) ) );
         guiWidgetVelvetNoiseCurrentType_->SetText( fmt::format( "Velvet Noise: {:s}", _pb_::VelvetNoiseType_Name( state_.synth_velvet_noise_type() ) ) );
       },
       ">",
       logger_->clone( "VelvetNoiseNextType" ),
-      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.25f } );
+      SDL_FRect{ 0.875f, 0.0f, 0.125f, 0.125f } );
 
-  guiWidgetSineWaveMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetSquareWaveMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetSawWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetTriangleWaveMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetWhiteNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetPinkNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetRedNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetBlueNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetVioletNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetGreyNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
-  guiWidgetVelvetNoiseMix_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseMix" ), SDL_FRect{ 0.875f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSineWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SineWaveSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetSquareWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SquareWaveSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.4f, 0.875f } );
+  guiWidgetSawWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SawWaveSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetTriangleWaveSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "TriangleWaveSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetWhiteNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "WhiteNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetPinkNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "PinkNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetRedNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "RedNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetBlueNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "BlueNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetVioletNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "VioletNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetGreyNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "GreyNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
+  guiWidgetVelvetNoiseSamples_ = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "VelvetNoiseSamples" ), SDL_FRect{ 0.0f, 0.125f, 0.5f, 0.875f } );
 
-  guiWidgetSquareWavePwm_
-      = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWavePwm" ), SDL_FRect{ 0.00f, 0.25f, 0.125f, 0.75f } );
+  guiWidgetSquareWavePwm_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWavePwm" ), SDL_FRect{ 0.4f, 0.125f, 0.1f, 0.875f } );
 
-  guiWidgetSineWaveSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SineWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetSquareWaveSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SquareWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetSawWaveSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "SawWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetTriangleWaveSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "TriangleWaveSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetWhiteNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "WhiteNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetPinkNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "PinkNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetRedNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "RedNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetBlueNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "BlueNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetVioletNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "VioletNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetGreyNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "GreyNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
-  guiWidgetVelvetNoiseSamples_
-      = std::make_shared< AudioSampleDisplay >( sample_rate_, logger_->clone( "VelvetNoiseSamples" ), SDL_FRect{ 0.125f, 0.25f, 0.75f, 0.75f } );
+  guiWidgetSineWaveAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSquareWaveAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSawWaveAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetTriangleWaveAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetWhiteNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetPinkNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetRedNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetBlueNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVioletNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetGreyNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVelvetNoiseAttack_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseAttack" ), SDL_FRect{ 0.5f, 0.125f, 0.1f, 0.875f } );
+
+  guiWidgetSineWaveDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSquareWaveDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSawWaveDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetTriangleWaveDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetWhiteNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetPinkNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetRedNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetBlueNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVioletNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetGreyNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVelvetNoiseDecay_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseDecay" ), SDL_FRect{ 0.6f, 0.125f, 0.1f, 0.875f } );
+
+  guiWidgetSineWaveSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSquareWaveSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSawWaveSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetTriangleWaveSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetWhiteNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetPinkNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetRedNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetBlueNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVioletNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetGreyNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVelvetNoiseSustain_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseSustain" ), SDL_FRect{ 0.7f, 0.125f, 0.1f, 0.875f } );
+
+  guiWidgetSineWaveRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSquareWaveRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSawWaveRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetTriangleWaveRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetWhiteNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetPinkNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetRedNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetBlueNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVioletNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetGreyNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVelvetNoiseRelease_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseRelease" ), SDL_FRect{ 0.8f, 0.125f, 0.1f, 0.875f } );
+
+  guiWidgetSineWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SineWaveMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSquareWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SquareWaveMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetSawWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "SawWaveMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetTriangleWaveMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "TriangleWaveMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetWhiteNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "WhiteNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetPinkNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "PinkNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetRedNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "RedNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetBlueNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "BlueNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVioletNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VioletNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetGreyNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "GreyNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+  guiWidgetVelvetNoiseMix_ = std::make_shared< Slider >( Slider::Orientation::Vertical, logger_->clone( "VelvetNoiseMix" ), SDL_FRect{ 0.9f, 0.125f, 0.1f, 0.875f } );
+
+  guiWidgetSquareWavePwm_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_pwm( value ); } );
+
+  guiWidgetSineWaveAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_attack( value ); } );
+  guiWidgetSquareWaveAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_attack( value ); } );
+  guiWidgetSawWaveAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_saw_wave_attack( value ); } );
+  guiWidgetTriangleWaveAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_triangle_wave_attack( value ); } );
+  guiWidgetWhiteNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_white_noise_attack( value ); } );
+  guiWidgetPinkNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_pink_noise_attack( value ); } );
+  guiWidgetRedNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_red_noise_attack( value ); } );
+  guiWidgetBlueNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_blue_noise_attack( value ); } );
+  guiWidgetVioletNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_violet_noise_attack( value ); } );
+  guiWidgetGreyNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_grey_noise_attack( value ); } );
+  guiWidgetVelvetNoiseAttack_->OnValueChanged( [this]( float value ) { state_.set_synth_velvet_noise_attack( value ); } );
+
+  guiWidgetSineWaveDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_decay( value ); } );
+  guiWidgetSquareWaveDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_decay( value ); } );
+  guiWidgetSawWaveDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_saw_wave_decay( value ); } );
+  guiWidgetTriangleWaveDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_triangle_wave_decay( value ); } );
+  guiWidgetWhiteNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_white_noise_decay( value ); } );
+  guiWidgetPinkNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_pink_noise_decay( value ); } );
+  guiWidgetRedNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_red_noise_decay( value ); } );
+  guiWidgetBlueNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_blue_noise_decay( value ); } );
+  guiWidgetVioletNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_violet_noise_decay( value ); } );
+  guiWidgetGreyNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_grey_noise_decay( value ); } );
+  guiWidgetVelvetNoiseDecay_->OnValueChanged( [this]( float value ) { state_.set_synth_velvet_noise_decay( value ); } );
+
+  guiWidgetSineWaveSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_sustain( value ); } );
+  guiWidgetSquareWaveSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_sustain( value ); } );
+  guiWidgetSawWaveSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_saw_wave_sustain( value ); } );
+  guiWidgetTriangleWaveSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_triangle_wave_sustain( value ); } );
+  guiWidgetWhiteNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_white_noise_sustain( value ); } );
+  guiWidgetPinkNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_pink_noise_sustain( value ); } );
+  guiWidgetRedNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_red_noise_sustain( value ); } );
+  guiWidgetBlueNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_blue_noise_sustain( value ); } );
+  guiWidgetVioletNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_violet_noise_sustain( value ); } );
+  guiWidgetGreyNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_grey_noise_sustain( value ); } );
+  guiWidgetVelvetNoiseSustain_->OnValueChanged( [this]( float value ) { state_.set_synth_velvet_noise_sustain( value ); } );
+
+  guiWidgetSineWaveRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_release( value ); } );
+  guiWidgetSquareWaveRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_release( value ); } );
+  guiWidgetSawWaveRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_saw_wave_release( value ); } );
+  guiWidgetTriangleWaveRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_triangle_wave_release( value ); } );
+  guiWidgetWhiteNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_white_noise_release( value ); } );
+  guiWidgetPinkNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_pink_noise_release( value ); } );
+  guiWidgetRedNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_red_noise_release( value ); } );
+  guiWidgetBlueNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_blue_noise_release( value ); } );
+  guiWidgetVioletNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_violet_noise_release( value ); } );
+  guiWidgetGreyNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_grey_noise_release( value ); } );
+  guiWidgetVelvetNoiseRelease_->OnValueChanged( [this]( float value ) { state_.set_synth_velvet_noise_release( value ); } );
 
   guiWidgetSineWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_sine_wave_mix( value ); } );
   guiWidgetSquareWaveMix_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_mix( value ); } );
@@ -1399,81 +1702,14 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
   guiWidgetGreyNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_grey_noise_mix( value ); } );
   guiWidgetVelvetNoiseMix_->OnValueChanged( [this]( float value ) { state_.set_synth_velvet_noise_mix( value ); } );
 
-  guiWidgetSquareWavePwm_->OnValueChanged( [this]( float value ) { state_.set_synth_square_wave_pwm( value ); } );
-
-  std::vector< std::shared_ptr< Widget > > frames{ guiWidgetSineWave_,
-                                                   guiWidgetSquareWave_,
-                                                   guiWidgetSawWave_,
-                                                   guiWidgetTriangleWave_,
-                                                   guiWidgetWhiteNoise_,
-                                                   guiWidgetPinkNoise_,
-                                                   guiWidgetRedNoise_,
-                                                   guiWidgetBlueNoise_,
-                                                   guiWidgetVioletNoise_,
-                                                   guiWidgetGreyNoise_,
-                                                   guiWidgetVelvetNoise_ };
-  std::vector< std::shared_ptr< Button > > previousTypeButtons{ guiWidgetSineWavePreviousType_,
-                                                                guiWidgetSquareWavePreviousType_,
-                                                                guiWidgetSawWavePreviousType_,
-                                                                guiWidgetTriangleWavePreviousType_,
-                                                                guiWidgetWhiteNoisePreviousType_,
-                                                                guiWidgetPinkNoisePreviousType_,
-                                                                guiWidgetRedNoisePreviousType_,
-                                                                guiWidgetBlueNoisePreviousType_,
-                                                                guiWidgetVioletNoisePreviousType_,
-                                                                guiWidgetGreyNoisePreviousType_,
-                                                                guiWidgetVelvetNoisePreviousType_ };
-  std::vector< std::shared_ptr< Label > > currentTypeLabels{ guiWidgetSineWaveCurrentType_,
-                                                             guiWidgetSquareWaveCurrentType_,
-                                                             guiWidgetSawWaveCurrentType_,
-                                                             guiWidgetTriangleWaveCurrentType_,
-                                                             guiWidgetWhiteNoiseCurrentType_,
-                                                             guiWidgetPinkNoiseCurrentType_,
-                                                             guiWidgetRedNoiseCurrentType_,
-                                                             guiWidgetBlueNoiseCurrentType_,
-                                                             guiWidgetVioletNoiseCurrentType_,
-                                                             guiWidgetGreyNoiseCurrentType_,
-                                                             guiWidgetVelvetNoiseCurrentType_ };
-  std::vector< std::shared_ptr< Button > > nextTypeButtons{ guiWidgetSineWaveNextType_,
-                                                            guiWidgetSquareWaveNextType_,
-                                                            guiWidgetSawWaveNextType_,
-                                                            guiWidgetTriangleWaveNextType_,
-                                                            guiWidgetWhiteNoiseNextType_,
-                                                            guiWidgetPinkNoiseNextType_,
-                                                            guiWidgetRedNoiseNextType_,
-                                                            guiWidgetBlueNoiseNextType_,
-                                                            guiWidgetVioletNoiseNextType_,
-                                                            guiWidgetGreyNoiseNextType_,
-                                                            guiWidgetVelvetNoiseNextType_ };
-  std::vector< std::shared_ptr< Slider > > mixSliders{ guiWidgetSineWaveMix_,
-                                                       guiWidgetSquareWaveMix_,
-                                                       guiWidgetSawWaveMix_,
-                                                       guiWidgetTriangleWaveMix_,
-                                                       guiWidgetWhiteNoiseMix_,
-                                                       guiWidgetPinkNoiseMix_,
-                                                       guiWidgetRedNoiseMix_,
-                                                       guiWidgetBlueNoiseMix_,
-                                                       guiWidgetVioletNoiseMix_,
-                                                       guiWidgetGreyNoiseMix_,
-                                                       guiWidgetVelvetNoiseMix_ };
-  std::vector< std::shared_ptr< AudioSampleDisplay > > sampleDisplays{ guiWidgetSineWaveSamples_,
-                                                                       guiWidgetSquareWaveSamples_,
-                                                                       guiWidgetSawWaveSamples_,
-                                                                       guiWidgetTriangleWaveSamples_,
-                                                                       guiWidgetWhiteNoiseSamples_,
-                                                                       guiWidgetPinkNoiseSamples_,
-                                                                       guiWidgetRedNoiseSamples_,
-                                                                       guiWidgetBlueNoiseSamples_,
-                                                                       guiWidgetVioletNoiseSamples_,
-                                                                       guiWidgetGreyNoiseSamples_,
-                                                                       guiWidgetVelvetNoiseSamples_ };
-
+  std::vector< std::shared_ptr< Widget > > frames{ guiWidgetSineWave_, guiWidgetSquareWave_, guiWidgetSawWave_, guiWidgetTriangleWave_, guiWidgetWhiteNoise_, guiWidgetPinkNoise_, guiWidgetRedNoise_, guiWidgetBlueNoise_, guiWidgetVioletNoise_, guiWidgetGreyNoise_, guiWidgetVelvetNoise_ };
   for( auto frames : frames ) {
     frames->InitUi( guiRootWidget_ );
     frames->SetFrame( true );
-    frames->SetPadding( 5.0f );
+    frames->SetPadding( 2.0f );
   }
 
+  std::vector< std::shared_ptr< Button > > previousTypeButtons{ guiWidgetSineWavePreviousType_, guiWidgetSquareWavePreviousType_, guiWidgetSawWavePreviousType_, guiWidgetTriangleWavePreviousType_, guiWidgetWhiteNoisePreviousType_, guiWidgetPinkNoisePreviousType_, guiWidgetRedNoisePreviousType_, guiWidgetBlueNoisePreviousType_, guiWidgetVioletNoisePreviousType_, guiWidgetGreyNoisePreviousType_, guiWidgetVelvetNoisePreviousType_ };
   for( size_t i = 0; i < previousTypeButtons.size(); i++ ) {
     auto& button = previousTypeButtons.at( i );
     button->InitUi( frames.at( i ) );
@@ -1483,12 +1719,13 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
     button->SetFontSize( 18 );
     button->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
     button->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
-    button->SetPadding( 5.0f );
+    button->SetPadding( 2.0f );
 
     // THIS IS TO RESET THE SELECTION AND UPDATE THE LABELS!!!
     button->GetCallback()();
   }
 
+  std::vector< std::shared_ptr< Label > > currentTypeLabels{ guiWidgetSineWaveCurrentType_, guiWidgetSquareWaveCurrentType_, guiWidgetSawWaveCurrentType_, guiWidgetTriangleWaveCurrentType_, guiWidgetWhiteNoiseCurrentType_, guiWidgetPinkNoiseCurrentType_, guiWidgetRedNoiseCurrentType_, guiWidgetBlueNoiseCurrentType_, guiWidgetVioletNoiseCurrentType_, guiWidgetGreyNoiseCurrentType_, guiWidgetVelvetNoiseCurrentType_ };
   for( size_t i = 0; i < currentTypeLabels.size(); i++ ) {
     auto& label = currentTypeLabels.at( i );
     label->InitUi( frames.at( i ) );
@@ -1498,9 +1735,10 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
     label->SetFontSize( 18 );
     label->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
     label->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
-    label->SetPadding( 5.0f );
+    label->SetPadding( 2.0f );
   }
 
+  std::vector< std::shared_ptr< Button > > nextTypeButtons{ guiWidgetSineWaveNextType_, guiWidgetSquareWaveNextType_, guiWidgetSawWaveNextType_, guiWidgetTriangleWaveNextType_, guiWidgetWhiteNoiseNextType_, guiWidgetPinkNoiseNextType_, guiWidgetRedNoiseNextType_, guiWidgetBlueNoiseNextType_, guiWidgetVioletNoiseNextType_, guiWidgetGreyNoiseNextType_, guiWidgetVelvetNoiseNextType_ };
   for( size_t i = 0; i < nextTypeButtons.size(); i++ ) {
     auto& button = nextTypeButtons.at( i );
     button->InitUi( frames.at( i ) );
@@ -1510,28 +1748,114 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
     button->SetFontSize( 18 );
     button->SetFontColourActive( SDL_Color{ 0xff, 0xff, 0xff, 0xff } );
     button->SetFontColourInactive( SDL_Color{ 0xff, 0xff, 0xff, 0x80 } );
-    button->SetPadding( 5.0f );
+    button->SetPadding( 2.0f );
 
     // THIS IS TO RESET THE SELECTION AND UPDATE THE LABELS!!!
     button->GetCallback()();
   }
 
-  for( size_t i = 0; i < mixSliders.size(); i++ ) {
-    auto& slider = mixSliders.at( i );
-    slider->InitUi( frames.at( i ) );
-    slider->SetMinValue( 0.0f );
-    slider->SetMaxValue( 1.0f );
-    slider->SetDefaultValue( 0.0f );
-    slider->SetPadding( 5.0f );
-  }
   {
     guiWidgetSquareWavePwm_->InitUi( guiWidgetSquareWave_ );
     guiWidgetSquareWavePwm_->SetMinValue( 0.0f );
     guiWidgetSquareWavePwm_->SetMaxValue( 1.0f );
     guiWidgetSquareWavePwm_->SetDefaultValue( 0.5f );
-    guiWidgetSquareWavePwm_->SetPadding( 5.0f );
+    guiWidgetSquareWavePwm_->SetPadding( 2.0f );
   }
+  guiWidgetSquareWavePwm_->SetCurrentValue( state_.synth_square_wave_pwm() );
 
+  std::vector< std::shared_ptr< Slider > > slidersAttack{ guiWidgetSineWaveAttack_, guiWidgetSquareWaveAttack_, guiWidgetSawWaveAttack_, guiWidgetTriangleWaveAttack_, guiWidgetWhiteNoiseAttack_, guiWidgetPinkNoiseAttack_, guiWidgetRedNoiseAttack_, guiWidgetBlueNoiseAttack_, guiWidgetVioletNoiseAttack_, guiWidgetGreyNoiseAttack_, guiWidgetVelvetNoiseAttack_ };
+  for( size_t i = 0; i < slidersAttack.size(); i++ ) {
+    auto& slider = slidersAttack.at( i );
+    slider->InitUi( frames.at( i ) );
+    slider->SetMinValue( 0.0f );
+    slider->SetMaxValue( 5.0f );
+    slider->SetDefaultValue( 0.01f );
+    slider->SetPadding( 2.0f );
+  }
+  guiWidgetSineWaveAttack_->SetCurrentValue( state_.synth_sine_wave_attack() );
+  guiWidgetSquareWaveAttack_->SetCurrentValue( state_.synth_square_wave_attack() );
+  guiWidgetSawWaveAttack_->SetCurrentValue( state_.synth_saw_wave_attack() );
+  guiWidgetTriangleWaveAttack_->SetCurrentValue( state_.synth_triangle_wave_attack() );
+  guiWidgetWhiteNoiseAttack_->SetCurrentValue( state_.synth_white_noise_attack() );
+  guiWidgetPinkNoiseAttack_->SetCurrentValue( state_.synth_pink_noise_attack() );
+  guiWidgetRedNoiseAttack_->SetCurrentValue( state_.synth_red_noise_attack() );
+  guiWidgetBlueNoiseAttack_->SetCurrentValue( state_.synth_blue_noise_attack() );
+  guiWidgetVioletNoiseAttack_->SetCurrentValue( state_.synth_violet_noise_attack() );
+  guiWidgetGreyNoiseAttack_->SetCurrentValue( state_.synth_grey_noise_attack() );
+  guiWidgetVelvetNoiseAttack_->SetCurrentValue( state_.synth_velvet_noise_attack() );
+
+  std::vector< std::shared_ptr< Slider > > slidersDecay{ guiWidgetSineWaveDecay_, guiWidgetSquareWaveDecay_, guiWidgetSawWaveDecay_, guiWidgetTriangleWaveDecay_, guiWidgetWhiteNoiseDecay_, guiWidgetPinkNoiseDecay_, guiWidgetRedNoiseDecay_, guiWidgetBlueNoiseDecay_, guiWidgetVioletNoiseDecay_, guiWidgetGreyNoiseDecay_, guiWidgetVelvetNoiseDecay_ };
+  for( size_t i = 0; i < slidersDecay.size(); i++ ) {
+    auto& slider = slidersDecay.at( i );
+    slider->InitUi( frames.at( i ) );
+    slider->SetMinValue( 0.0f );
+    slider->SetMaxValue( 5.0f );
+    slider->SetDefaultValue( 1.0f );
+    slider->SetPadding( 2.0f );
+  }
+  guiWidgetSineWaveDecay_->SetCurrentValue( state_.synth_sine_wave_decay() );
+  guiWidgetSquareWaveDecay_->SetCurrentValue( state_.synth_square_wave_decay() );
+  guiWidgetSawWaveDecay_->SetCurrentValue( state_.synth_saw_wave_decay() );
+  guiWidgetTriangleWaveDecay_->SetCurrentValue( state_.synth_triangle_wave_decay() );
+  guiWidgetWhiteNoiseDecay_->SetCurrentValue( state_.synth_white_noise_decay() );
+  guiWidgetPinkNoiseDecay_->SetCurrentValue( state_.synth_pink_noise_decay() );
+  guiWidgetRedNoiseDecay_->SetCurrentValue( state_.synth_red_noise_decay() );
+  guiWidgetBlueNoiseDecay_->SetCurrentValue( state_.synth_blue_noise_decay() );
+  guiWidgetVioletNoiseDecay_->SetCurrentValue( state_.synth_violet_noise_decay() );
+  guiWidgetGreyNoiseDecay_->SetCurrentValue( state_.synth_grey_noise_decay() );
+  guiWidgetVelvetNoiseDecay_->SetCurrentValue( state_.synth_velvet_noise_decay() );
+
+  std::vector< std::shared_ptr< Slider > > slidersSustain{ guiWidgetSineWaveSustain_, guiWidgetSquareWaveSustain_, guiWidgetSawWaveSustain_, guiWidgetTriangleWaveSustain_, guiWidgetWhiteNoiseSustain_, guiWidgetPinkNoiseSustain_, guiWidgetRedNoiseSustain_, guiWidgetBlueNoiseSustain_, guiWidgetVioletNoiseSustain_, guiWidgetGreyNoiseSustain_, guiWidgetVelvetNoiseSustain_ };
+  for( size_t i = 0; i < slidersSustain.size(); i++ ) {
+    auto& slider = slidersSustain.at( i );
+    slider->InitUi( frames.at( i ) );
+    slider->SetMinValue( 0.0f );
+    slider->SetMaxValue( 1.0f );
+    slider->SetDefaultValue( 1.0f );
+    slider->SetPadding( 2.0f );
+  }
+  guiWidgetSineWaveSustain_->SetCurrentValue( state_.synth_sine_wave_sustain() );
+  guiWidgetSquareWaveSustain_->SetCurrentValue( state_.synth_square_wave_sustain() );
+  guiWidgetSawWaveSustain_->SetCurrentValue( state_.synth_saw_wave_sustain() );
+  guiWidgetTriangleWaveSustain_->SetCurrentValue( state_.synth_triangle_wave_sustain() );
+  guiWidgetWhiteNoiseSustain_->SetCurrentValue( state_.synth_white_noise_sustain() );
+  guiWidgetPinkNoiseSustain_->SetCurrentValue( state_.synth_pink_noise_sustain() );
+  guiWidgetRedNoiseSustain_->SetCurrentValue( state_.synth_red_noise_sustain() );
+  guiWidgetBlueNoiseSustain_->SetCurrentValue( state_.synth_blue_noise_sustain() );
+  guiWidgetVioletNoiseSustain_->SetCurrentValue( state_.synth_violet_noise_sustain() );
+  guiWidgetGreyNoiseSustain_->SetCurrentValue( state_.synth_grey_noise_sustain() );
+  guiWidgetVelvetNoiseSustain_->SetCurrentValue( state_.synth_velvet_noise_sustain() );
+
+  std::vector< std::shared_ptr< Slider > > slidersRelease{ guiWidgetSineWaveRelease_, guiWidgetSquareWaveRelease_, guiWidgetSawWaveRelease_, guiWidgetTriangleWaveRelease_, guiWidgetWhiteNoiseRelease_, guiWidgetPinkNoiseRelease_, guiWidgetRedNoiseRelease_, guiWidgetBlueNoiseRelease_, guiWidgetVioletNoiseRelease_, guiWidgetGreyNoiseRelease_, guiWidgetVelvetNoiseRelease_ };
+  for( size_t i = 0; i < slidersRelease.size(); i++ ) {
+    auto& slider = slidersRelease.at( i );
+    slider->InitUi( frames.at( i ) );
+    slider->SetMinValue( 0.0f );
+    slider->SetMaxValue( 5.0f );
+    slider->SetDefaultValue( 0.01f );
+    slider->SetPadding( 2.0f );
+  }
+  guiWidgetSineWaveRelease_->SetCurrentValue( state_.synth_sine_wave_release() );
+  guiWidgetSquareWaveRelease_->SetCurrentValue( state_.synth_square_wave_release() );
+  guiWidgetSawWaveRelease_->SetCurrentValue( state_.synth_saw_wave_release() );
+  guiWidgetTriangleWaveRelease_->SetCurrentValue( state_.synth_triangle_wave_release() );
+  guiWidgetWhiteNoiseRelease_->SetCurrentValue( state_.synth_white_noise_release() );
+  guiWidgetPinkNoiseRelease_->SetCurrentValue( state_.synth_pink_noise_release() );
+  guiWidgetRedNoiseRelease_->SetCurrentValue( state_.synth_red_noise_release() );
+  guiWidgetBlueNoiseRelease_->SetCurrentValue( state_.synth_blue_noise_release() );
+  guiWidgetVioletNoiseRelease_->SetCurrentValue( state_.synth_violet_noise_release() );
+  guiWidgetGreyNoiseRelease_->SetCurrentValue( state_.synth_grey_noise_release() );
+  guiWidgetVelvetNoiseRelease_->SetCurrentValue( state_.synth_velvet_noise_release() );
+
+  std::vector< std::shared_ptr< Slider > > slidersMix{ guiWidgetSineWaveMix_, guiWidgetSquareWaveMix_, guiWidgetSawWaveMix_, guiWidgetTriangleWaveMix_, guiWidgetWhiteNoiseMix_, guiWidgetPinkNoiseMix_, guiWidgetRedNoiseMix_, guiWidgetBlueNoiseMix_, guiWidgetVioletNoiseMix_, guiWidgetGreyNoiseMix_, guiWidgetVelvetNoiseMix_ };
+  for( size_t i = 0; i < slidersMix.size(); i++ ) {
+    auto& slider = slidersMix.at( i );
+    slider->InitUi( frames.at( i ) );
+    slider->SetMinValue( 0.0f );
+    slider->SetMaxValue( 1.0f );
+    slider->SetDefaultValue( 0.0f );
+    slider->SetPadding( 2.0f );
+  }
   guiWidgetSineWaveMix_->SetCurrentValue( state_.synth_sine_wave_mix() );
   guiWidgetSquareWaveMix_->SetCurrentValue( state_.synth_square_wave_mix() );
   guiWidgetSawWaveMix_->SetCurrentValue( state_.synth_saw_wave_mix() );
@@ -1544,12 +1868,11 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
   guiWidgetGreyNoiseMix_->SetCurrentValue( state_.synth_grey_noise_mix() );
   guiWidgetVelvetNoiseMix_->SetCurrentValue( state_.synth_velvet_noise_mix() );
 
-  guiWidgetSquareWavePwm_->SetCurrentValue( state_.synth_square_wave_pwm() );
-
+  std::vector< std::shared_ptr< AudioSampleDisplay > > sampleDisplays{ guiWidgetSineWaveSamples_, guiWidgetSquareWaveSamples_, guiWidgetSawWaveSamples_, guiWidgetTriangleWaveSamples_, guiWidgetWhiteNoiseSamples_, guiWidgetPinkNoiseSamples_, guiWidgetRedNoiseSamples_, guiWidgetBlueNoiseSamples_, guiWidgetVioletNoiseSamples_, guiWidgetGreyNoiseSamples_, guiWidgetVelvetNoiseSamples_ };
   for( size_t i = 0; i < sampleDisplays.size(); i++ ) {
     auto& display = sampleDisplays.at( i );
     display->InitUi( frames.at( i ) );
-    display->SetPadding( 5.0f );
+    display->SetPadding( 2.0f );
   }
 
   SDL_PropertiesID windowCreateProps = SDL_CreateProperties();
@@ -1571,24 +1894,14 @@ bool NoiseGenerator::gui_create( std::string const& api, bool is_floating ) {
       SDL_DestroyWindow( ptr );
     }
   } );
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] window created at {:p}",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    static_cast< void* >( guiWindow_.get() ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] window created at {:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( guiWindow_.get() ) );
 
   guiWindowRenderer_ = std::shared_ptr< SDL_Renderer >( SDL_CreateRenderer( guiWindow_.get(), nullptr ), []( SDL_Renderer* ptr ) {
     if( ptr ) {
       SDL_DestroyRenderer( ptr );
     }
   } );
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] window renderer at {:p}",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    static_cast< void* >( guiWindowRenderer_.get() ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] window renderer at {:p}", __FUNCTION__, static_cast< void* >( this ), static_cast< void* >( guiWindowRenderer_.get() ) );
   WRAP_SDL_CALL_INST( SDL_SetRenderDrawBlendMode, guiWindowRenderer_.get(), SDL_BLENDMODE_BLEND );
 
   guiTimer_ = Timer::createNative( 1, std::bind( &NoiseGenerator::guiTimerCallback, this ) );
@@ -1683,14 +1996,7 @@ uint32_t NoiseGenerator::note_ports_count( bool is_input ) {
 }
 
 bool NoiseGenerator::note_ports_get( uint32_t index, bool is_input, clap_note_port_info_t* out_info ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    index,
-                    is_input,
-                    static_cast< void* >( out_info ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( index={:d}, is_input={}, out_info={:p} )", __FUNCTION__, static_cast< void* >( this ), index, is_input, static_cast< void* >( out_info ) );
   if( index >= note_ports_count( is_input ) )
     return false;
   if( !out_info )
@@ -1713,13 +2019,7 @@ uint32_t NoiseGenerator::params_count( void ) {
 }
 
 bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* out_param_info ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( param_index={:d}, out_param_info={:p} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    param_index,
-                    static_cast< void* >( out_param_info ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( param_index={:d}, out_param_info={:p} )", __FUNCTION__, static_cast< void* >( this ), param_index, static_cast< void* >( out_param_info ) );
   if( param_index >= params_count() )
     return false;
   if( !out_param_info )
@@ -1748,161 +2048,73 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
     out_param_info->default_value = paramDefault;                                                                             \
   }
 
-  SFG_GEN_TMP_GET_INFO( if,
-                        0,
-                        1010,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Sine Wave",
-                        static_cast< double >( _pb_::SineWaveType::NoiseGenerator_SineWaveType_StdSin ),
-                        static_cast< double >( _pb_::SineWaveType::NoiseGenerator_SineWaveType_CSin ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 1, 1015, 0, "Attack", "Sine Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 2, 1016, 0, "Decay", "Sine Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 3, 1017, 0, "Sustain", "Sine Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 4, 1018, 0, "Release", "Sine Wave", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( if, 0, 1010, CLAP_PARAM_IS_STEPPED, "Type", "Sine Wave", static_cast< double >( _pb_::SineWaveType::NoiseGenerator_SineWaveType_StdSin ), static_cast< double >( _pb_::SineWaveType::NoiseGenerator_SineWaveType_CSin ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 1, 1015, 0, "Attack", "Sine Wave", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 2, 1016, 0, "Decay", "Sine Wave", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 3, 1017, 0, "Sustain", "Sine Wave", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 4, 1018, 0, "Release", "Sine Wave", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 5, 1019, 0, "Mix", "Sine Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        6,
-                        1020,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Square Wave",
-                        static_cast< double >( _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth ),
-                        static_cast< double >( _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth ),
-                        out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 6, 1020, CLAP_PARAM_IS_STEPPED, "Type", "Square Wave", static_cast< double >( _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_PhaseWidth ), static_cast< double >( _pb_::SquareWaveType::NoiseGenerator_SquareWaveType_InversePhaseWidth ), out_param_info->min_value )
   SFG_GEN_TMP_GET_INFO( else if, 7, 1021, 0, "PWM", "Square Wave", 0.0, 1.0, 0.5 )
-  SFG_GEN_TMP_GET_INFO( else if, 8, 1025, 0, "Attack", "Square Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 9, 1026, 0, "Decay", "Square Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 10, 1027, 0, "Sustain", "Square Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 11, 1028, 0, "Release", "Square Wave", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 8, 1025, 0, "Attack", "Square Wave", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 9, 1026, 0, "Decay", "Square Wave", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 10, 1027, 0, "Sustain", "Square Wave", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 11, 1028, 0, "Release", "Square Wave", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 12, 1029, 0, "Mix", "Square Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        13,
-                        1030,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Saw Wave",
-                        static_cast< double >( _pb_::SawWaveType::NoiseGenerator_SawWaveType_Phase ),
-                        static_cast< double >( _pb_::SawWaveType::NoiseGenerator_SawWaveType_InversePhase ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 14, 1035, 0, "Attack", "Saw Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 15, 1036, 0, "Decay", "Saw Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 16, 1037, 0, "Sustain", "Saw Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 17, 1038, 0, "Release", "Saw Wave", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 13, 1030, CLAP_PARAM_IS_STEPPED, "Type", "Saw Wave", static_cast< double >( _pb_::SawWaveType::NoiseGenerator_SawWaveType_Phase ), static_cast< double >( _pb_::SawWaveType::NoiseGenerator_SawWaveType_InversePhase ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 14, 1035, 0, "Attack", "Saw Wave", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 15, 1036, 0, "Decay", "Saw Wave", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 16, 1037, 0, "Sustain", "Saw Wave", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 17, 1038, 0, "Release", "Saw Wave", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 18, 1039, 0, "Mix", "Saw Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        19,
-                        1040,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Triangle Wave",
-                        static_cast< double >( _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp ),
-                        static_cast< double >( _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 20, 1045, 0, "Attack", "Triangle Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 21, 1046, 0, "Decay", "Triangle Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 22, 1047, 0, "Sustain", "Triangle Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 23, 1048, 0, "Release", "Triangle Wave", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 19, 1040, CLAP_PARAM_IS_STEPPED, "Type", "Triangle Wave", static_cast< double >( _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp ), static_cast< double >( _pb_::TriangleWaveType::NoiseGenerator_TriangleWaveType_ChunkLerp ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 20, 1045, 0, "Attack", "Triangle Wave", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 21, 1046, 0, "Decay", "Triangle Wave", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 22, 1047, 0, "Sustain", "Triangle Wave", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 23, 1048, 0, "Release", "Triangle Wave", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 24, 1049, 0, "Mix", "Triangle Wave", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        25,
-                        1050,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "White Noise",
-                        static_cast< double >( _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom ),
-                        static_cast< double >( _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 26, 1055, 0, "Attack", "White Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 27, 1056, 0, "Decay", "White Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 28, 1057, 0, "Sustain", "White Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 29, 1058, 0, "Release", "White Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 25, 1050, CLAP_PARAM_IS_STEPPED, "Type", "White Noise", static_cast< double >( _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_StdRandom ), static_cast< double >( _pb_::WhiteNoiseType::NoiseGenerator_WhiteNoiseType_RandMaxRand ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 26, 1055, 0, "Attack", "White Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 27, 1056, 0, "Decay", "White Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 28, 1057, 0, "Sustain", "White Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 29, 1058, 0, "Release", "White Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 30, 1059, 0, "Mix", "White Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        31,
-                        1060,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Pink Noise",
-                        static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined ),
-                        static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation ),
-                        out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 31, 1060, CLAP_PARAM_IS_STEPPED, "Type", "Pink Noise", static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_PaulKellettRefined ), static_cast< double >( _pb_::PinkNoiseType::NoiseGenerator_PinkNoiseType_IirFilterApproximation ), out_param_info->min_value )
   SFG_GEN_TMP_GET_INFO( else if, 32, 1061, 0, "VossMcCartney Number", "Pink Noise", 4, 64, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 33, 1065, 0, "Attack", "Pink Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 34, 1066, 0, "Decay", "Pink Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 35, 1067, 0, "Sustain", "Pink Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 36, 1068, 0, "Release", "Pink Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 33, 1065, 0, "Attack", "Pink Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 34, 1066, 0, "Decay", "Pink Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 35, 1067, 0, "Sustain", "Pink Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 36, 1068, 0, "Release", "Pink Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 37, 1069, 0, "Mix", "Pink Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        38,
-                        1070,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Red Noise",
-                        static_cast< double >( _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration ),
-                        static_cast< double >( _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 39, 1075, 0, "Attack", "Red Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 40, 1076, 0, "Decay", "Red Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 41, 1077, 0, "Sustain", "Red Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 42, 1078, 0, "Release", "Red Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 38, 1070, CLAP_PARAM_IS_STEPPED, "Type", "Red Noise", static_cast< double >( _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_BasicIntegration ), static_cast< double >( _pb_::RedNoiseType::NoiseGenerator_RedNoiseType_CumulativeWithClamp ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 39, 1075, 0, "Attack", "Red Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 40, 1076, 0, "Decay", "Red Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 41, 1077, 0, "Sustain", "Red Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 42, 1078, 0, "Release", "Red Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 43, 1079, 0, "Mix", "Red Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        44,
-                        1080,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Blue Noise",
-                        static_cast< double >( _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster ),
-                        static_cast< double >( _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 45, 1085, 0, "Attack", "Blue Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 46, 1086, 0, "Decay", "Blue Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 47, 1087, 0, "Sustain", "Blue Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 48, 1088, 0, "Release", "Blue Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 44, 1080, CLAP_PARAM_IS_STEPPED, "Type", "Blue Noise", static_cast< double >( _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_VoidAndCluster ), static_cast< double >( _pb_::BlueNoiseType::NoiseGenerator_BlueNoiseType_PermutedGradientNoise ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 45, 1085, 0, "Attack", "Blue Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 46, 1086, 0, "Decay", "Blue Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 47, 1087, 0, "Sustain", "Blue Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 48, 1088, 0, "Release", "Blue Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 49, 1089, 0, "Mix", "Blue Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        50,
-                        1090,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Violet Noise",
-                        static_cast< double >( _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference ),
-                        static_cast< double >( _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 51, 1095, 0, "Attack", "Violet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 52, 1096, 0, "Decay", "Violet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 53, 1097, 0, "Sustain", "Violet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 54, 1098, 0, "Release", "Violet Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 50, 1090, CLAP_PARAM_IS_STEPPED, "Type", "Violet Noise", static_cast< double >( _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderDifference ), static_cast< double >( _pb_::VioletNoiseType::NoiseGenerator_VioletNoiseType_FirstOrderIirFilter ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 51, 1095, 0, "Attack", "Violet Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 52, 1096, 0, "Decay", "Violet Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 53, 1097, 0, "Sustain", "Violet Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 54, 1098, 0, "Release", "Violet Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 55, 1099, 0, "Mix", "Violet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        56,
-                        1100,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Grey Noise",
-                        static_cast< double >( _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter ),
-                        static_cast< double >( _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 57, 1105, 0, "Attack", "Grey Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 58, 1106, 0, "Decay", "Grey Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 59, 1107, 0, "Sustain", "Grey Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 60, 1108, 0, "Release", "Grey Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 56, 1100, CLAP_PARAM_IS_STEPPED, "Type", "Grey Noise", static_cast< double >( _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_PsychoacousticFilter ), static_cast< double >( _pb_::GreyNoiseType::NoiseGenerator_GreyNoiseType_EqualLoudnessApproximation ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 57, 1105, 0, "Attack", "Grey Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 58, 1106, 0, "Decay", "Grey Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 59, 1107, 0, "Sustain", "Grey Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 60, 1108, 0, "Release", "Grey Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 61, 1109, 0, "Mix", "Grey Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if,
-                        62,
-                        1110,
-                        CLAP_PARAM_IS_STEPPED,
-                        "Type",
-                        "Velvet Noise",
-                        static_cast< double >( _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse ),
-                        static_cast< double >( _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse ),
-                        out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 63, 1115, 0, "Attack", "Velvet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 64, 1116, 0, "Decay", "Velvet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 65, 1117, 0, "Sustain", "Velvet Noise", 0.0, 1.0, out_param_info->min_value )
-  SFG_GEN_TMP_GET_INFO( else if, 66, 1118, 0, "Release", "Velvet Noise", 0.0, 1.0, out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 62, 1110, CLAP_PARAM_IS_STEPPED, "Type", "Velvet Noise", static_cast< double >( _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse ), static_cast< double >( _pb_::VelvetNoiseType::NoiseGenerator_VelvetNoiseType_SporadicImpulse ), out_param_info->min_value )
+  SFG_GEN_TMP_GET_INFO( else if, 63, 1115, 0, "Attack", "Velvet Noise", 0.0, 5.0, 0.01 )
+  SFG_GEN_TMP_GET_INFO( else if, 64, 1116, 0, "Decay", "Velvet Noise", 0.0, 5.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 65, 1117, 0, "Sustain", "Velvet Noise", 0.0, 1.0, 1.0 )
+  SFG_GEN_TMP_GET_INFO( else if, 66, 1118, 0, "Release", "Velvet Noise", 0.0, 5.0, 0.01 )
   SFG_GEN_TMP_GET_INFO( else if, 67, 1119, 0, "Mix", "Velvet Noise", 0.0, 1.0, out_param_info->min_value )
 
 #undef SFG_GEN_TMP_GET_INFO
@@ -1911,13 +2123,7 @@ bool NoiseGenerator::params_get_info( uint32_t param_index, clap_param_info_t* o
 }
 
 bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( param_id={:d}, out_value={:p} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    param_id,
-                    static_cast< void* >( out_value ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( param_id={:d}, out_value={:p} )", __FUNCTION__, static_cast< void* >( this ), param_id, static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
 
@@ -2002,15 +2208,7 @@ bool NoiseGenerator::params_get_value( clap_id param_id, double* out_value ) {
 }
 
 bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char* out_buffer, uint32_t out_buffer_capacity ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( param_id={:d}, value={:f}, out_buffer={:p}, out_buffer_capacity={:d} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    param_id,
-                    value,
-                    static_cast< void* >( out_buffer ),
-                    out_buffer_capacity );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( param_id={:d}, value={:f}, out_buffer={:p}, out_buffer_capacity={:d} )", __FUNCTION__, static_cast< void* >( this ), param_id, value, static_cast< void* >( out_buffer ), out_buffer_capacity );
   if( !out_buffer || ( out_buffer_capacity == 0 ) )
     return false;
 
@@ -2097,14 +2295,7 @@ bool NoiseGenerator::params_value_to_text( clap_id param_id, double value, char*
 }
 
 bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& param_value_text, double* out_value ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( param_id={:d}, param_value_text={:?}, out_value={:p} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    param_id,
-                    param_value_text,
-                    static_cast< void* >( out_value ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( param_id={:d}, param_value_text={:?}, out_value={:p} )", __FUNCTION__, static_cast< void* >( this ), param_id, param_value_text, static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
   std::function< bool( std::string const&, double* ) > text_to_double = []( std::string const& param_value_text, double* out_value ) {
@@ -2208,13 +2399,7 @@ bool NoiseGenerator::params_text_to_value( clap_id param_id, std::string const& 
 }
 
 void NoiseGenerator::params_flush( clap_input_events_t const* in, clap_output_events_t const* out ) {
-  PLUGIN_LOG_TRACE( host_,
-                    host_log_,
-                    "[{:s}] [{:p}] enter( in={:p}, out={:p} )",
-                    __FUNCTION__,
-                    static_cast< void* >( this ),
-                    static_cast< void const* >( in ),
-                    static_cast< void const* >( out ) );
+  PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] enter( in={:p}, out={:p} )", __FUNCTION__, static_cast< void* >( this ), static_cast< void const* >( in ), static_cast< void const* >( out ) );
   PLUGIN_LOG_TRACE( host_, host_log_, "[{:s}] [{:p}] in_size={:d}", __FUNCTION__, static_cast< void* >( this ), in->size( in ) );
 
   for( uint32_t i = 0; i < in->size( in ); i++ ) {
@@ -2319,42 +2504,74 @@ void NoiseGenerator::guiTimerCallback() {
   sampleQueueGreyNoise_.consume_all( [this]( float sample ) { guiWidgetGreyNoiseSamples_->PushSample( sample ); } );
   sampleQueueVelvetNoise_.consume_all( [this]( float sample ) { guiWidgetVelvetNoiseSamples_->PushSample( sample ); } );
   {
-    if( state_.synth_sine_wave_mix() != guiWidgetSineWaveMix_->GetCurrentValue() ) {
-      guiWidgetSineWaveMix_->SetCurrentValue( state_.synth_sine_wave_mix() );
-    }
-    if( state_.synth_square_wave_mix() != guiWidgetSquareWaveMix_->GetCurrentValue() ) {
-      guiWidgetSquareWaveMix_->SetCurrentValue( state_.synth_square_wave_mix() );
-    }
-    if( state_.synth_saw_wave_mix() != guiWidgetSawWaveMix_->GetCurrentValue() ) {
-      guiWidgetSawWaveMix_->SetCurrentValue( state_.synth_saw_wave_mix() );
-    }
-    if( state_.synth_triangle_wave_mix() != guiWidgetTriangleWaveMix_->GetCurrentValue() ) {
-      guiWidgetTriangleWaveMix_->SetCurrentValue( state_.synth_triangle_wave_mix() );
-    }
-    if( state_.synth_white_noise_mix() != guiWidgetWhiteNoiseMix_->GetCurrentValue() ) {
-      guiWidgetWhiteNoiseMix_->SetCurrentValue( state_.synth_white_noise_mix() );
-    }
-    if( state_.synth_pink_noise_mix() != guiWidgetPinkNoiseMix_->GetCurrentValue() ) {
-      guiWidgetPinkNoiseMix_->SetCurrentValue( state_.synth_pink_noise_mix() );
-    }
-    if( state_.synth_red_noise_mix() != guiWidgetRedNoiseMix_->GetCurrentValue() ) {
-      guiWidgetRedNoiseMix_->SetCurrentValue( state_.synth_red_noise_mix() );
-    }
-    if( state_.synth_blue_noise_mix() != guiWidgetBlueNoiseMix_->GetCurrentValue() ) {
-      guiWidgetBlueNoiseMix_->SetCurrentValue( state_.synth_blue_noise_mix() );
-    }
-    if( state_.synth_violet_noise_mix() != guiWidgetVioletNoiseMix_->GetCurrentValue() ) {
-      guiWidgetVioletNoiseMix_->SetCurrentValue( state_.synth_violet_noise_mix() );
-    }
-    if( state_.synth_grey_noise_mix() != guiWidgetGreyNoiseMix_->GetCurrentValue() ) {
-      guiWidgetGreyNoiseMix_->SetCurrentValue( state_.synth_grey_noise_mix() );
-    }
-    if( state_.synth_velvet_noise_mix() != guiWidgetVelvetNoiseMix_->GetCurrentValue() ) {
-      guiWidgetVelvetNoiseMix_->SetCurrentValue( state_.synth_velvet_noise_mix() );
-    }
-    if( state_.synth_square_wave_pwm() != guiWidgetSquareWavePwm_->GetCurrentValue() ) {
-      guiWidgetSquareWavePwm_->SetCurrentValue( state_.synth_square_wave_pwm() );
-    }
+#define SFG_GEN_TMP_UPDATE_SLIDERS( stateVar, sliderWidget )       \
+  if( state_.stateVar() != ( sliderWidget )->GetCurrentValue() ) { \
+    ( sliderWidget )->SetCurrentValue( state_.stateVar() );        \
+  }
+
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_square_wave_pwm, guiWidgetSquareWavePwm_ )
+
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_sine_wave_attack, guiWidgetSineWaveAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_square_wave_attack, guiWidgetSquareWaveAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_saw_wave_attack, guiWidgetSawWaveAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_triangle_wave_attack, guiWidgetTriangleWaveAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_white_noise_attack, guiWidgetWhiteNoiseAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_pink_noise_attack, guiWidgetPinkNoiseAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_red_noise_attack, guiWidgetRedNoiseAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_blue_noise_attack, guiWidgetBlueNoiseAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_violet_noise_attack, guiWidgetVioletNoiseAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_grey_noise_attack, guiWidgetGreyNoiseAttack_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_velvet_noise_attack, guiWidgetVelvetNoiseAttack_ )
+
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_sine_wave_decay, guiWidgetSineWaveDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_square_wave_decay, guiWidgetSquareWaveDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_saw_wave_decay, guiWidgetSawWaveDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_triangle_wave_decay, guiWidgetTriangleWaveDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_white_noise_decay, guiWidgetWhiteNoiseDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_pink_noise_decay, guiWidgetPinkNoiseDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_red_noise_decay, guiWidgetRedNoiseDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_blue_noise_decay, guiWidgetBlueNoiseDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_violet_noise_decay, guiWidgetVioletNoiseDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_grey_noise_decay, guiWidgetGreyNoiseDecay_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_velvet_noise_decay, guiWidgetVelvetNoiseDecay_ )
+
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_sine_wave_sustain, guiWidgetSineWaveSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_square_wave_sustain, guiWidgetSquareWaveSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_saw_wave_sustain, guiWidgetSawWaveSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_triangle_wave_sustain, guiWidgetTriangleWaveSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_white_noise_sustain, guiWidgetWhiteNoiseSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_pink_noise_sustain, guiWidgetPinkNoiseSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_red_noise_sustain, guiWidgetRedNoiseSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_blue_noise_sustain, guiWidgetBlueNoiseSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_violet_noise_sustain, guiWidgetVioletNoiseSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_grey_noise_sustain, guiWidgetGreyNoiseSustain_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_velvet_noise_sustain, guiWidgetVelvetNoiseSustain_ )
+
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_sine_wave_release, guiWidgetSineWaveRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_square_wave_release, guiWidgetSquareWaveRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_saw_wave_release, guiWidgetSawWaveRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_triangle_wave_release, guiWidgetTriangleWaveRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_white_noise_release, guiWidgetWhiteNoiseRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_pink_noise_release, guiWidgetPinkNoiseRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_red_noise_release, guiWidgetRedNoiseRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_blue_noise_release, guiWidgetBlueNoiseRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_violet_noise_release, guiWidgetVioletNoiseRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_grey_noise_release, guiWidgetGreyNoiseRelease_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_velvet_noise_release, guiWidgetVelvetNoiseRelease_ )
+
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_sine_wave_mix, guiWidgetSineWaveMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_square_wave_mix, guiWidgetSquareWaveMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_saw_wave_mix, guiWidgetSawWaveMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_triangle_wave_mix, guiWidgetTriangleWaveMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_white_noise_mix, guiWidgetWhiteNoiseMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_pink_noise_mix, guiWidgetPinkNoiseMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_red_noise_mix, guiWidgetRedNoiseMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_blue_noise_mix, guiWidgetBlueNoiseMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_violet_noise_mix, guiWidgetVioletNoiseMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_grey_noise_mix, guiWidgetGreyNoiseMix_ )
+    SFG_GEN_TMP_UPDATE_SLIDERS( synth_velvet_noise_mix, guiWidgetVelvetNoiseMix_ )
+
+#undef SFG_GEN_TMP_UPDATE_SLIDERS
   }
   guiRootWidget_->OnLogic();
 

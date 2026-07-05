@@ -18,9 +18,7 @@ bool NoteMap::NoteDescription::operator==( NoteMap::NoteDescription const& b ) c
 }
 
 bool NoteMap::NoteDescription::operator<( NoteMap::NoteDescription const& b ) const {
-  return ( ( this->portIndex < b.portIndex ) ) || ( ( this->portIndex == b.portIndex ) && ( this->channelId < b.channelId ) )
-         || ( ( this->portIndex == b.portIndex ) && ( this->channelId == b.channelId ) && ( this->key < b.key ) )
-         || ( ( this->portIndex == b.portIndex ) && ( this->channelId == b.channelId ) && ( this->key == b.key ) && ( this->noteId < b.noteId ) );
+  return ( ( this->portIndex < b.portIndex ) ) || ( ( this->portIndex == b.portIndex ) && ( this->channelId < b.channelId ) ) || ( ( this->portIndex == b.portIndex ) && ( this->channelId == b.channelId ) && ( this->key < b.key ) ) || ( ( this->portIndex == b.portIndex ) && ( this->channelId == b.channelId ) && ( this->key == b.key ) && ( this->noteId < b.noteId ) );
 }
 
 NoteMap::NoteMap( double sampleRate ) : sampleRate_( sampleRate ), sampleTime_( 1.0 / sampleRate ) {}
@@ -89,8 +87,7 @@ void NoteMap::handleEvent( clap_event_note_t const* ev ) {
   if( ev->header.space_id != CLAP_CORE_EVENT_SPACE_ID ) {
     return;
   }
-  if( ( ev->header.type != CLAP_EVENT_NOTE_ON ) && ( ev->header.type != CLAP_EVENT_NOTE_OFF ) && ( ev->header.type != CLAP_EVENT_NOTE_CHOKE )
-      && ( ev->header.type != CLAP_EVENT_NOTE_END ) ) {
+  if( ( ev->header.type != CLAP_EVENT_NOTE_ON ) && ( ev->header.type != CLAP_EVENT_NOTE_OFF ) && ( ev->header.type != CLAP_EVENT_NOTE_CHOKE ) && ( ev->header.type != CLAP_EVENT_NOTE_END ) ) {
     return;
   }
   NoteMap::NoteDescription note;
@@ -141,7 +138,12 @@ void NoteMap::handleEvent( clap_event_midi_t const* ev ) {
 void NoteMap::handleNoteOn( NoteMap::NoteDescription const& note, double velocity ) {
   std::lock_guard< std::mutex > lock( noteMapMutex_ );
   if( ( ( note.portIndex != -1 ) && ( note.channelId != -1 ) && ( note.key != -1 ) && ( note.noteId != -1 ) ) && ( noteMap_.find( note ) == noteMap_.end() ) ) {
-    noteMap_.insert( { note, NoteMap::NoteData{ .attack = attack_, .decay = decay_, .sustain = sustain_, .release = release_ } } );
+    NoteMap::NoteData tmp;
+    tmp.attack = attack_;
+    tmp.decay = decay_;
+    tmp.sustain = sustain_;
+    tmp.release = release_;
+    noteMap_.insert( { note, tmp } );
   }
   for( auto iter = noteMap_.begin(); iter != noteMap_.end(); ) {
     if( ( note.portIndex != -1 ) && ( note.portIndex != iter->first.portIndex ) ) {
@@ -243,8 +245,7 @@ void NoteMap::updateEnvelope( NoteData& noteData ) {
   if( noteData.envelopePhase == NoteMap::NoteData::EnvelopePhase::Attack ) {
     if( noteData.envelopeTime >= noteData.attack ) {
       noteData.envelopeLevel = 1.0;
-      noteData.envelopePhase
-          = ( noteData.decay > 0.0 ) ? NoteMap::NoteData::EnvelopePhase::Decay : NoteMap::NoteData::EnvelopePhase::Sustain;  // Go to decay or sustain
+      noteData.envelopePhase = ( noteData.decay > 0.0 ) ? NoteMap::NoteData::EnvelopePhase::Decay : NoteMap::NoteData::EnvelopePhase::Sustain;  // Go to decay or sustain
       noteData.envelopeTime = 0.0;
     } else {
       noteData.envelopeLevel = noteData.envelopeTime / noteData.attack;

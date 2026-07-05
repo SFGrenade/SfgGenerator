@@ -104,6 +104,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetSineWavePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetSineWaveCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetSineWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSineWaveAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSineWaveDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSineWaveSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSineWaveRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetSineWaveMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetSineWaveSamples_ = nullptr;
   // square wave
@@ -112,6 +116,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Label > guiWidgetSquareWaveCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetSquareWaveNextType_ = nullptr;
   std::shared_ptr< Slider > guiWidgetSquareWavePwm_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSquareWaveAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSquareWaveDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSquareWaveSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSquareWaveRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetSquareWaveMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetSquareWaveSamples_ = nullptr;
   // saw wave
@@ -119,6 +127,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetSawWavePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetSawWaveCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetSawWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSawWaveAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSawWaveDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSawWaveSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetSawWaveRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetSawWaveMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetSawWaveSamples_ = nullptr;
   // triangle wave
@@ -126,6 +138,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetTriangleWavePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetTriangleWaveCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetTriangleWaveNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetTriangleWaveAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetTriangleWaveDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetTriangleWaveSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetTriangleWaveRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetTriangleWaveMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetTriangleWaveSamples_ = nullptr;
   // white noise
@@ -133,6 +149,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetWhiteNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetWhiteNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetWhiteNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetWhiteNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetWhiteNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetWhiteNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetWhiteNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetWhiteNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetWhiteNoiseSamples_ = nullptr;
   // pink noise
@@ -140,6 +160,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetPinkNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetPinkNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetPinkNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetPinkNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetPinkNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetPinkNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetPinkNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetPinkNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetPinkNoiseSamples_ = nullptr;
   // red noise
@@ -147,6 +171,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetRedNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetRedNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetRedNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetRedNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetRedNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetRedNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetRedNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetRedNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetRedNoiseSamples_ = nullptr;
   // blue noise
@@ -154,6 +182,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetBlueNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetBlueNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetBlueNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetBlueNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetBlueNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetBlueNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetBlueNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetBlueNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetBlueNoiseSamples_ = nullptr;
   // violet noise
@@ -161,6 +193,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetVioletNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetVioletNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetVioletNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVioletNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVioletNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVioletNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVioletNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetVioletNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetVioletNoiseSamples_ = nullptr;
   // grey noise
@@ -168,6 +204,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetGreyNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetGreyNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetGreyNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetGreyNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetGreyNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetGreyNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetGreyNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetGreyNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetGreyNoiseSamples_ = nullptr;
   // velvet noise
@@ -175,6 +215,10 @@ class NoiseGenerator : BasePlugin {
   std::shared_ptr< Button > guiWidgetVelvetNoisePreviousType_ = nullptr;
   std::shared_ptr< Label > guiWidgetVelvetNoiseCurrentType_ = nullptr;
   std::shared_ptr< Button > guiWidgetVelvetNoiseNextType_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVelvetNoiseAttack_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVelvetNoiseDecay_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVelvetNoiseSustain_ = nullptr;
+  std::shared_ptr< Slider > guiWidgetVelvetNoiseRelease_ = nullptr;
   std::shared_ptr< Slider > guiWidgetVelvetNoiseMix_ = nullptr;
   std::shared_ptr< AudioSampleDisplay > guiWidgetVelvetNoiseSamples_ = nullptr;
   // gui
@@ -234,7 +278,17 @@ class NoiseGenerator : BasePlugin {
   double red_leaky_integrator_prev_ = 0.0;
 
   // temporary values
-  NoteMap noteMap_;
+  NoteMap noteMapSineWave_;
+  NoteMap noteMapSquareWave_;
+  NoteMap noteMapSawWave_;
+  NoteMap noteMapTriangleWave_;
+  NoteMap noteMapWhiteNoise_;
+  NoteMap noteMapPinkNoise_;
+  NoteMap noteMapRedNoise_;
+  NoteMap noteMapBlueNoise_;
+  NoteMap noteMapVioletNoise_;
+  NoteMap noteMapGreyNoise_;
+  NoteMap noteMapVelvetNoise_;
 
   // shit for the factory
   public:
