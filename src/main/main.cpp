@@ -8,16 +8,6 @@
 #include "plugin/OrganGenerator.hpp"
 #include "plugin/ParamMultiplex.hpp"
 
-#define DEBUG_LOG_ARGS_PLUGIN( fmt_string, ... ) \
-  plug->host_log->log( plug->host,               \
-                       CLAP_LOG_DEBUG,           \
-                       fmt::format( "[{}] plugin={:p}, " fmt_string, __FUNCTION__, static_cast< void const* >( plugin ), ##__VA_ARGS__ ).c_str() )
-
-#define DEBUG_LOG_ARGS_PLUG( fmt_string, ... ) \
-  plug->host_log->log( plug->host,             \
-                       CLAP_LOG_DEBUG,         \
-                       fmt::format( "[{}] plug={:p}, " fmt_string, __FUNCTION__, static_cast< void* >( plug ), ##__VA_ARGS__ ).c_str() )
-
 static struct {
   clap_plugin_descriptor_t const* desc;
   clap_plugin_t*( CLAP_ABI* create )( clap_host_t const* host );
@@ -85,7 +75,12 @@ bool entry_init( char const* plugin_path ) {
   // perform the plugin initialization
   ClapGlobals::PLUGIN_PATH = plugin_path;
 
-  std::filesystem::path tempFolder = std::getenv( "TEMP" );
+  std::filesystem::path tempFolder;
+  if( std::getenv( "TEMP" ) ) {
+    tempFolder = std::getenv( "TEMP" );
+  } else if( std::getenv( "TMPDIR" ) ) {
+    tempFolder = std::getenv( "TMPDIR" );
+  }
   auto fileSink = std::make_shared< spdlog::sinks::basic_file_sink_mt >( ( tempFolder / "SfgGenerator.log" ).string(), false );
   fileSink->set_level( spdlog::level::level_enum::trace );
   ClapGlobals::PLUGIN_LOGGER = std::make_shared< spdlog::logger >( "main", fileSink );

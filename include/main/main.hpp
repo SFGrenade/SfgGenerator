@@ -17,7 +17,3 @@ bool entry_init( char const* plugin_path );
 void entry_deinit( void );
 // factory
 void const* entry_get_factory( char const* factory_id );
-
-#if defined( SFG_GEN_API )
-#undef SFG_GEN_API
-#endif
