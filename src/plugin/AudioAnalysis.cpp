@@ -203,7 +203,7 @@ void AudioAnalysis::process_event( clap_event_header_t const* hdr, clap_output_e
     //   // control change channel 0
     //   int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
     //   double value = double( ev->data[2] ) / double( 0x7F );
-    //   if( param_id == 1 ) {
+    //   if( param_id == 1001 ) {
     //     state_.set_time_window( value );
     //     last_time_window_ = value;  // we only want to show things when UI changes state
     //   }
@@ -269,7 +269,7 @@ clap_process_status AudioAnalysis::process( clap_process_t const* process ) {
     //   out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
     //   out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
     //   out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-    //   out_ev.param_id = 1;
+    //   out_ev.param_id = 1001;
     //   out_ev.value = state_.time_window();
     //   last_time_window_ = out_ev.value;
     //   process->out_events->try_push( process->out_events, &out_ev.header );
@@ -565,7 +565,7 @@ bool AudioAnalysis::gui_hide( void ) {
 //                  static_cast< void* >( out_value ) );
 //   if( !out_value )
 //     return false;
-//   if( param_id == 1 ) {
+//   if( param_id == 1001 ) {
 //     ( *out_value ) = state_.time_window();
 //     return true;
 //   }
@@ -584,7 +584,7 @@ bool AudioAnalysis::gui_hide( void ) {
 //                  out_buffer_capacity );
 //   if( !out_buffer || ( out_buffer_capacity == 0 ) )
 //     return false;
-//   if( param_id == 1 ) {
+//   if( param_id == 1001 ) {
 //     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
 //     std::string tmp_str = std::to_string( value );
 //     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
@@ -615,7 +615,7 @@ bool AudioAnalysis::gui_hide( void ) {
 //       return false;
 //     }
 //   };
-//   if( param_id == 1 ) {
+//   if( param_id == 1001 ) {
 //     return text_to_double( param_value_text, out_value );
 //   }
 //   return false;

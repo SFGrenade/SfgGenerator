@@ -106,7 +106,7 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
     //                ev->channel,
     //                ev->key,
     //                ev->value );
-    if( ev->param_id == 1 ) {
+    if( ev->param_id == 1001 ) {
       state_.set_a_b( ev->value );
       last_ab_ = ev->value;  // we only want to show things when UI changes state
     }
@@ -165,7 +165,7 @@ void AudioLerpEffect::process_event( clap_event_header_t const* hdr, clap_output
       // control change channel 0
       int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
       double value = double( ev->data[2] ) / double( 0x7F );
-      if( param_id == 1 ) {
+      if( param_id == 1001 ) {
         state_.set_a_b( value );
         last_ab_ = value;  // we only want to show things when UI changes state
       }
@@ -231,7 +231,7 @@ clap_process_status AudioLerpEffect::process( clap_process_t const* process ) {
       out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
       out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
       out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-      out_ev.param_id = 1;
+      out_ev.param_id = 1001;
       out_ev.value = state_.a_b();
       last_ab_ = out_ev.value;
       process->out_events->try_push( process->out_events, &out_ev.header );
@@ -568,7 +568,7 @@ bool AudioLerpEffect::params_get_value( clap_id param_id, double* out_value ) {
                  static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     ( *out_value ) = state_.a_b();
     return true;
   }
@@ -587,7 +587,7 @@ bool AudioLerpEffect::params_value_to_text( clap_id param_id, double value, char
                  out_buffer_capacity );
   if( !out_buffer || ( out_buffer_capacity == 0 ) )
     return false;
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
@@ -618,7 +618,7 @@ bool AudioLerpEffect::params_text_to_value( clap_id param_id, std::string const&
       return false;
     }
   };
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     return text_to_double( param_value_text, out_value );
   }
   return false;

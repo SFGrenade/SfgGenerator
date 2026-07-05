@@ -8,8 +8,8 @@ message ParamMultiplex {
   uint32 gui_height = 102;
 
   // params
-  double output_param = 1;
-  uint64 amount_params = 2;
-  uint64 selected_param = 3;
-  repeated double params = 4;
+  double output_param = 1001;
+  uint64 amount_params = 1002;
+  uint64 selected_param = 1003;
+  repeated double params = 1004;
 }

@@ -563,7 +563,7 @@ bool OrganGenerator::params_get_value( clap_id param_id, double* out_value ) {
                     static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     ( *out_value ) = 0;
     return true;
   }
@@ -607,7 +607,7 @@ bool OrganGenerator::params_text_to_value( clap_id param_id, std::string const& 
       return false;
     }
   };
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     return text_to_double( param_value_text, out_value );
   }
   return false;

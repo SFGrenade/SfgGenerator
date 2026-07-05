@@ -8,5 +8,5 @@ message AudioAnalysis {
   uint32 gui_height = 102;
 
   // params
-  double time_window = 1;
+  double time_window = 1001;
 }

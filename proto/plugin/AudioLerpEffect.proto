@@ -8,5 +8,5 @@ message AudioLerpEffect {
   uint32 gui_height = 102;
 
   // params
-  double a_b = 1;
+  double a_b = 1001;
 }

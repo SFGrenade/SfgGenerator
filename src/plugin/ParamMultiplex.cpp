@@ -59,7 +59,7 @@ void ParamMultiplex::deactivate( void ) {
     clap_param_info_t param_amount_range;
     params_get_info( 1, &param_amount_range );
     for( clap_id param_id_offset = clap_id( param_amount_range.min_value ); param_id_offset <= clap_id( param_amount_range.max_value ); param_id_offset++ ) {
-      host_params_->clear( host_, 3 + param_id_offset, CLAP_PARAM_CLEAR_ALL );
+      host_params_->clear( host_, 10000 + param_id_offset, CLAP_PARAM_CLEAR_ALL );
     }
     host_params_->rescan( host_, CLAP_PARAM_RESCAN_ALL );
   }
@@ -179,16 +179,16 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
                    ev->channel,
                    ev->key,
                    ev->value );
-    if( ev->param_id == 1 ) {
+    if( ev->param_id == 1001 ) {
       // this is output
       state_.set_output_param( ev->value );
-    } else if( ev->param_id == 2 ) {
+    } else if( ev->param_id == 1002 ) {
       // we don't support resizing the amount of params
       state_.set_amount_params( ev->value );
       state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
       doClearAndRescan_ = true;
       host_->request_restart( host_ );
-    } else if( ev->param_id == 3 ) {
+    } else if( ev->param_id == 1003 ) {
       state_.set_selected_param( ev->value );
       {
         // send event to check for output param
@@ -198,15 +198,15 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
         out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
         out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
         out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-        out_ev.param_id = 1;
+        out_ev.param_id = 1001;
         out_ev.value = state_.params( state_.selected_param() - 1 );
         state_.set_output_param( out_ev.value );
         bool success = out_events->try_push( out_events, &out_ev.header );
         PLUGIN_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
       }
-    } else if( ( ev->param_id - 4 ) < state_.amount_params() ) {
-      state_.set_params( ev->param_id - 4, ev->value );
-      if( ( ev->param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
+    } else if( ( ev->param_id - 10000 ) < state_.amount_params() ) {
+      state_.set_params( ev->param_id - 10000, ev->value );
+      if( ( ev->param_id - 10000 ) == ( state_.selected_param() - 1 ) ) {
         // if selected param was changed, have it rescan for the output param
 
         // send event to check for output param
@@ -216,7 +216,7 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
         out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
         out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
         out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-        out_ev.param_id = 1;
+        out_ev.param_id = 1001;
         out_ev.value = state_.params( state_.selected_param() - 1 );
         state_.set_output_param( out_ev.value );
         bool success = out_events->try_push( out_events, &out_ev.header );
@@ -278,16 +278,16 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
       // control change channel 0
       int param_id = ev->data[1] + 1;  // who knows if it's actually data[1]
       double value = double( ev->data[2] ) / double( 0x7F );
-      if( param_id == 1 ) {
+      if( param_id == 1001 ) {
         // this is output
         state_.set_output_param( value );
-      } else if( param_id == 2 ) {
+      } else if( param_id == 1002 ) {
         // we don't support resizing the amount of params
         state_.set_amount_params( value );
         state_.mutable_params()->Resize( state_.amount_params(), 0.0 );
         doClearAndRescan_ = true;
         host_->request_restart( host_ );
-      } else if( param_id == 3 ) {
+      } else if( param_id == 1003 ) {
         state_.set_selected_param( value );
         {
           // send event to check for output param
@@ -297,15 +297,15 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
           out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
           out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
           out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-          out_ev.param_id = 1;
+          out_ev.param_id = 1001;
           out_ev.value = state_.params( state_.selected_param() - 1 );
           state_.set_output_param( out_ev.value );
           bool success = out_events->try_push( out_events, &out_ev.header );
           PLUGIN_LOG_DEBUG( host_, host_log_, "[{:s}] [{:p}] sending event = {}", __FUNCTION__, static_cast< void* >( this ), success );
         }
-      } else if( ( param_id - 4 ) < state_.amount_params() ) {
-        state_.set_params( param_id - 4, value );
-        if( ( param_id - 4 ) == ( state_.selected_param() - 1 ) ) {
+      } else if( ( param_id - 10000 ) < state_.amount_params() ) {
+        state_.set_params( param_id - 10000, value );
+        if( ( param_id - 10000 ) == ( state_.selected_param() - 1 ) ) {
           // if selected param was changed, have it rescan for the output param
 
           // send event to check for output param
@@ -315,7 +315,7 @@ void ParamMultiplex::process_event( clap_event_header_t const* hdr, clap_output_
           out_ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
           out_ev.header.type = CLAP_EVENT_PARAM_VALUE;
           out_ev.header.flags = CLAP_EVENT_IS_LIVE;
-          out_ev.param_id = 1;
+          out_ev.param_id = 1001;
           out_ev.value = state_.params( state_.selected_param() - 1 );
           state_.set_output_param( out_ev.value );
           bool success = out_events->try_push( out_events, &out_ev.header );
@@ -674,17 +674,17 @@ bool ParamMultiplex::params_get_value( clap_id param_id, double* out_value ) {
                  static_cast< void* >( out_value ) );
   if( !out_value )
     return false;
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     ( *out_value ) = state_.output_param();
     return true;
-  } else if( param_id == 2 ) {
+  } else if( param_id == 1002 ) {
     ( *out_value ) = state_.amount_params();
     return true;
-  } else if( param_id == 3 ) {
+  } else if( param_id == 1003 ) {
     ( *out_value ) = state_.selected_param();
     return true;
-  } else if( ( param_id - 4 ) < state_.amount_params() ) {
-    ( *out_value ) = state_.params( param_id - 4 );
+  } else if( ( param_id - 10000 ) < state_.amount_params() ) {
+    ( *out_value ) = state_.params( param_id - 10000 );
     return true;
   }
   return false;
@@ -702,25 +702,25 @@ bool ParamMultiplex::params_value_to_text( clap_id param_id, double value, char*
                  out_buffer_capacity );
   if( !out_buffer || ( out_buffer_capacity == 0 ) )
     return false;
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   }
-  if( param_id == 2 ) {
+  if( param_id == 1002 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   }
-  if( param_id == 3 ) {
+  if( param_id == 1003 ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
     return true;
   }
-  if( ( param_id - 4 ) < state_.amount_params() ) {
+  if( ( param_id - 10000 ) < state_.amount_params() ) {
     std::fill( out_buffer, out_buffer + out_buffer_capacity, 0 );
     std::string tmp_str = std::to_string( value );
     tmp_str.copy( out_buffer, std::min( static_cast< uint32_t >( tmp_str.size() ), out_buffer_capacity ) );
@@ -759,16 +759,16 @@ bool ParamMultiplex::params_text_to_value( clap_id param_id, std::string const& 
       return false;
     }
   };
-  if( param_id == 1 ) {
+  if( param_id == 1001 ) {
     return text_to_double( param_value_text, out_value );
   }
-  if( param_id == 2 ) {
+  if( param_id == 1002 ) {
     return text_to_double_no_scale( param_value_text, out_value );
   }
-  if( param_id == 3 ) {
+  if( param_id == 1003 ) {
     return text_to_double_no_scale( param_value_text, out_value );
   }
-  if( ( param_id - 4 ) < state_.amount_params() ) {
+  if( ( param_id - 10000 ) < state_.amount_params() ) {
     return text_to_double( param_value_text, out_value );
   }
   return false;
