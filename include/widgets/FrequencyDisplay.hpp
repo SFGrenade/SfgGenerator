@@ -58,7 +58,7 @@ class FrequencyDisplay : public Widget {
   private:
   static constexpr float const FFT_DISPLAY_MIN_MAGNITUDE_DB = -60.0f;
   static constexpr float const FFT_DISPLAY_MAX_MAGNITUDE_DB = 0.0f;
-  static constexpr float const FFT_DISPLAY_MIN_FREQ = 18.0f;
+  static constexpr float const FFT_DISPLAY_MIN_FREQ = 10.0f;
   float FFT_DISPLAY_MAX_FREQ = 44100.0f / 2.0f;  // set dynamically with the sampleRate_
   float MIN_FREQ_LOG = 0.0f;
   float MAX_FREQ_LOG = 0.0f;
