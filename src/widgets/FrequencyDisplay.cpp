@@ -10,16 +10,8 @@
 // C++ std includes
 #include <numbers>
 
-FrequencyDisplay::FrequencyDisplay( double sampleRate, std::shared_ptr< spdlog::logger > logger, SDL_FRect position )
-    : _base_( logger, position ), sampleRate_( sampleRate ), samples_( sampleRate * 0.4 ), FFT_DISPLAY_MAX_FREQ( sampleRate / 2.0f ) {
-  logger_->trace( "[{:s}] [{:p}] enter( sampleRate={:f}, position=({:f}, {:f}, {:f}, {:f}) )",
-                  __FUNCTION__,
-                  static_cast< void* >( this ),
-                  sampleRate,
-                  position.x,
-                  position.y,
-                  position.w,
-                  position.h );
+FrequencyDisplay::FrequencyDisplay( double sampleRate, std::shared_ptr< spdlog::logger > logger, SDL_FRect position ) : _base_( logger, position ), sampleRate_( sampleRate ), samples_( sampleRate * 0.4 ), FFT_DISPLAY_MAX_FREQ( sampleRate / 2.0f ) {
+  logger_->trace( "[{:s}] [{:p}] enter( sampleRate={:f}, position=({:f}, {:f}, {:f}, {:f}) )", __FUNCTION__, static_cast< void* >( this ), sampleRate, position.x, position.y, position.w, position.h );
   MIN_FREQ_LOG = std::log10( FFT_DISPLAY_MIN_FREQ );
   MAX_FREQ_LOG = std::log10( FFT_DISPLAY_MAX_FREQ );
 
@@ -53,13 +45,9 @@ void FrequencyDisplay::InitUi( std::shared_ptr< Widget > parent ) {
 
     std::shared_ptr< Label > tmp = nullptr;
     if( frequency < 1000.0f ) {
-      tmp = std::make_shared< Label >( fmt::format( "{:.0f} Hz", frequency ),
-                                       logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ),
-                                       SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
+      tmp = std::make_shared< Label >( fmt::format( "{:.0f} Hz", frequency ), logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ), SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
     } else if( 1000.0f <= frequency ) {
-      tmp = std::make_shared< Label >( fmt::format( "{:.0f} kHz", frequency / 1000.0f ),
-                                       logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ),
-                                       SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
+      tmp = std::make_shared< Label >( fmt::format( "{:.0f} kHz", frequency / 1000.0f ), logger_->clone( fmt::format( "tmp {:.0f}", frequency ) ), SDL_FRect{ centerXRelative - 0.25f, 0.0f, 0.5f, 1.0f } );
     }
     tmp->InitUi( self );
     tmp->SetHorizontalAlignment( Label::HorizontalAlignment::Centered );
@@ -108,18 +96,14 @@ void FrequencyDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     }
     std::vector< float > magnitudeHelperLines{ -0.0f, -10.0f, -20.0f, -30.0f, -40.0f, -50.0f, -60.0f };
     for( float magnitude : magnitudeHelperLines ) {
-      float y = global_position_.y
-                + ( global_position_.h
-                    * ( 1.0f - ( float( magnitude - FFT_DISPLAY_MIN_MAGNITUDE_DB ) / ( FFT_DISPLAY_MAX_MAGNITUDE_DB - FFT_DISPLAY_MIN_MAGNITUDE_DB ) ) ) );
+      float y = global_position_.y + ( global_position_.h * ( 1.0f - ( float( magnitude - FFT_DISPLAY_MIN_MAGNITUDE_DB ) / ( FFT_DISPLAY_MAX_MAGNITUDE_DB - FFT_DISPLAY_MIN_MAGNITUDE_DB ) ) ) );
       WRAP_SDL_CALL_INST( SDL_RenderLine, renderer.get(), global_position_.x, y, global_position_.x + global_position_.w, y );
     }
   }
   {
     // have vertical lines for [20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
     // 9000, 10000, 20000] Hz
-    std::vector< float > frequencyHelperLines{ 20.0f,   30.0f,   40.0f,   50.0f,   60.0f,   70.0f,   80.0f,    90.0f,   100.0f,  200.0f,
-                                               300.0f,  400.0f,  500.0f,  600.0f,  700.0f,  800.0f,  900.0f,   1000.0f, 2000.0f, 3000.0f,
-                                               4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f, 20000.0f };
+    std::vector< float > frequencyHelperLines{ 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f, 90.0f, 100.0f, 200.0f, 300.0f, 400.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 2000.0f, 3000.0f, 4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f, 20000.0f };
     std::vector< float > brighterHelperLines{ 20.0f, 50.0f, 100.0f, 200.0f, 500.0f, 1000.0f, 2000.0f, 5000.0f, 10000.0f, 20000.0f };
     for( float frequency : frequencyHelperLines ) {
       if( std::find( brighterHelperLines.begin(), brighterHelperLines.end(), frequency ) != brighterHelperLines.end() ) {
@@ -186,9 +170,7 @@ void FrequencyDisplay::OnRender( std::shared_ptr< SDL_Renderer > renderer ) {
     float magnitudeSumDb = 20.0f * std::log10( binMagnitudeSum + 1e-12f );
 
     float x = global_position_.x + float( i );
-    float y = global_position_.y
-              + ( global_position_.h
-                  * ( 1.0f - ( float( magnitudeSumDb - FFT_DISPLAY_MIN_MAGNITUDE_DB ) / ( FFT_DISPLAY_MAX_MAGNITUDE_DB - FFT_DISPLAY_MIN_MAGNITUDE_DB ) ) ) );
+    float y = global_position_.y + ( global_position_.h * ( 1.0f - ( float( magnitudeSumDb - FFT_DISPLAY_MIN_MAGNITUDE_DB ) / ( FFT_DISPLAY_MAX_MAGNITUDE_DB - FFT_DISPLAY_MIN_MAGNITUDE_DB ) ) ) );
     WRAP_SDL_CALL_INST( SDL_RenderLine, renderer.get(), x, global_position_.y + global_position_.h, x, y );
 
     // SDL_FRect tmp;
@@ -236,13 +218,12 @@ void FrequencyDisplay::TryCalcFft() {
   fftwf_execute( fftPlan_.get() );
 
   for( size_t i = 0; i < fftOutputSize_; i++ ) {
-    float outReal = fftOutput_[i][0];
-    float outImaginary = fftOutput_[i][1];
+    std::complex< float > out( fftOutput_[i][0], fftOutput_[i][1] );
 
     curatedFftOutput_[i].frequency = float( i ) * float( sampleRate_ ) / float( fftInputSize_ );
-    curatedFftOutput_[i].magnitude = std::sqrt( ( outReal * outReal ) + ( outImaginary * outImaginary ) ) / float( fftInputSize_ );
+    curatedFftOutput_[i].magnitude = std::abs( out ) / float( fftOutputSize_ - 1 );
     curatedFftOutput_[i].magnitudeInDB = 20.0f * std::log10( curatedFftOutput_[i].magnitude + 1e-12f );
-    curatedFftOutput_[i].phase = std::atan2( outImaginary, outReal ) * 180.0f / std::numbers::pi_v< float >;
+    curatedFftOutput_[i].phase = std::arg( out ) * 180.0f / std::numbers::pi_v< float >;
   }
 }
 

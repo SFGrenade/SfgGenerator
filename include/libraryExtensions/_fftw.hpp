@@ -8,6 +8,7 @@
 #include <fftw3.h>
 
 // C++ std includes
+#include <complex>
 #include <memory>
 
 std::shared_ptr< fftwf_plan_s > make_fftw_shared_ptr( fftwf_plan s );

@@ -16,15 +16,15 @@
 #define NOMINMAX
 #endif
 #include <Windows.h>
-typedef HMODULE LoadedDllHandle;
+using LoadedDllHandle = HMODULE;
 #elif defined( __APPLE__ ) || defined( __linux__ )
 #include <dlfcn.h>
-typedef void* LoadedDllHandle;
+using LoadedDllHandle = void*;
 #endif
 
-typedef bool ( *ClapEntryInitFunc )( char const* plugin_path );
-typedef void ( *ClapEntryDeinitFunc )( void );
-typedef void const* ( *ClapEntryGetFactoryFunc )( char const* factory_id );
+using ClapEntryInitFunc = bool (*)( char const* plugin_path );
+using ClapEntryDeinitFunc = void (*)( void );
+using ClapEntryGetFactoryFunc = void const* (*)( char const* factory_id );
 
 static std::mutex G_ENTRY_LOCK;
 static std::atomic_int32_t G_ENTRY_INIT_COUNTER = 0;
